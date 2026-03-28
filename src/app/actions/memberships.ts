@@ -1,0 +1,108 @@
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { revalidatePath } from 'next/cache'
+import { z } from 'zod'
+import type { ActionState } from './auth'
+
+// ─── Create Staff (Admin only) ────────────────────────────────────────────────
+
+const CreateStaffSchema = z.object({
+  fullName: z.string().min(2, 'Full name required'),
+  username: z.string().min(2, 'Username required'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+})
+
+export async function createStaffAccount(_: ActionState, formData: FormData): Promise<ActionState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { data: membership } = await supabase
+    .from('account_memberships')
+    .select('role, restaurant_id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (membership?.role !== 'admin' || !membership.restaurant_id) {
+    return { error: 'Unauthorized — admin only' }
+  }
+
+  const parsed = CreateStaffSchema.safeParse({
+    fullName: formData.get('fullName'),
+    username: formData.get('username'),
+    password: formData.get('password'),
+  })
+
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+  const adminClient = createAdminClient()
+
+  const email = parsed.data.username.includes('@')
+    ? parsed.data.username
+    : `${parsed.data.username}@system.local`
+
+  const { data: newUser, error: userError } = await adminClient.auth.admin.createUser({
+    email,
+    password: parsed.data.password,
+    email_confirm: true,
+    user_metadata: { full_name: parsed.data.fullName },
+  })
+
+  if (userError) return { error: userError.message }
+
+  const { error: membershipError } = await supabase
+    .from('account_memberships')
+    .insert({
+      user_id: newUser.user.id,
+      restaurant_id: membership.restaurant_id,
+      role: 'staff',
+    })
+
+  if (membershipError) return { error: membershipError.message }
+
+  revalidatePath('/dashboard/staff')
+  return { success: `Staff account for "${parsed.data.fullName}" created.` }
+}
+
+// ─── Toggle member active status ─────────────────────────────────────────────
+
+export async function toggleMemberStatus(_: ActionState, formData: FormData): Promise<ActionState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { data: membership } = await supabase
+    .from('account_memberships')
+    .select('role, restaurant_id')
+    .eq('user_id', user.id)
+    .single()
+
+  const memberId = formData.get('memberId') as string
+  const isActive = formData.get('isActive') === 'true'
+
+  if (membership?.role === 'superadmin') {
+    // Superadmin can toggle any member
+    const { error } = await supabase
+      .from('account_memberships')
+      .update({ is_active: isActive })
+      .eq('id', memberId)
+    if (error) return { error: error.message }
+  } else if (membership?.role === 'admin') {
+    // Admin can only toggle staff in their restaurant
+    const { error } = await supabase
+      .from('account_memberships')
+      .update({ is_active: isActive })
+      .eq('id', memberId)
+      .eq('restaurant_id', membership.restaurant_id!)
+      .eq('role', 'staff')
+    if (error) return { error: error.message }
+  } else {
+    return { error: 'Unauthorized' }
+  }
+
+  revalidatePath('/dashboard/staff')
+  revalidatePath('/superadmin/admins')
+  return { success: `Account ${isActive ? 'enabled' : 'disabled'}.` }
+}
