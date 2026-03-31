@@ -2,11 +2,12 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { buttonVariants } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button-variants'
 import { Card, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { parseTsRange } from '@/lib/utils'
 import { CancelReservationButton, UpdateStatusButton } from './ReservationActions'
-import type { AccountMembership, Reservation, PhysicalTable } from '@/lib/types/database'
+import type { Tables } from '@/lib/types/database'
 
 export const metadata = { title: 'Reservations — TableBook' }
 
@@ -29,7 +30,7 @@ export default async function ReservationsPage() {
     .eq('user_id', user.id)
     .single()
 
-  const membership = membershipRaw as AccountMembership | null
+  const membership = membershipRaw as Tables<'account_memberships'> | null
   if (!membership?.restaurant_id) return null
 
   const { data: raw } = await supabase
@@ -39,7 +40,7 @@ export default async function ReservationsPage() {
     .order('created_at', { ascending: false })
     .limit(50)
 
-  const reservations = (raw ?? []) as unknown as Array<Reservation & { physical_tables: Pick<PhysicalTable, 'table_name' | 'capacity'> | null }>
+  const reservations = (raw ?? []) as unknown as Array<Tables<'reservations'> & { physical_tables: Pick<Tables<'physical_tables'>, 'table_name' | 'capacity'> | null }>
   const isAdmin = membership.role === 'admin'
 
   return (
@@ -70,8 +71,7 @@ export default async function ReservationsPage() {
             </TableHeader>
             <TableBody>
               {reservations.map((res) => {
-                const timeStr = res.reservation_time?.replace(/[[\]()]/g, '').split(',')
-                const start = timeStr?.[0]?.trim()
+                const { start } = parseTsRange(res.reservation_time)
                 const canCancel = !['cancelled', 'completed'].includes(res.status)
                 return (
                   <TableRow key={res.id} className="border-slate-800 hover:bg-slate-800/30 transition-colors">
@@ -95,7 +95,18 @@ export default async function ReservationsPage() {
                           <UpdateStatusButton reservationId={res.id} currentStatus={res.status} />
                         )}
                         {canCancel && (
-                          <CancelReservationButton reservationId={res.id} />
+                          <>
+                            <Link 
+                              href={`/dashboard/reservations/${res.id}/edit`}
+                              className={cn(
+                                buttonVariants({ variant: 'ghost', size: 'sm' }),
+                                "text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800"
+                              )}
+                            >
+                              Edit
+                            </Link>
+                            <CancelReservationButton reservationId={res.id} />
+                          </>
                         )}
                       </div>
                     </TableCell>

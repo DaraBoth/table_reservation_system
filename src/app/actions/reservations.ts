@@ -8,15 +8,15 @@ import type { ActionState } from './auth'
 
 // ─── Create reservation ───────────────────────────────────────────────────────
 
-const CreateReservationSchema = z.object({
+const ReservationSchema = z.object({
+  id: z.string().uuid().optional(),
   tableId: z.string().uuid('Invalid table'),
   guestName: z.string().min(1, 'Guest name is required'),
   guestPhone: z.string().optional(),
-  guestEmail: z.string().email().optional().or(z.literal('')),
-  partySize: z.coerce.number().int().min(1, 'Party size must be at least 1'),
+  party_size: z.coerce.number().int().min(1, 'Party size must be at least 1'),
   notes: z.string().optional(),
   startTime: z.string().min(1, 'Start time is required'),
-  endTime: z.string().min(1, 'End time is required'),
+  saveToCommon: z.boolean().optional(),
 })
 
 export async function createReservation(_: ActionState, formData: FormData): Promise<ActionState> {
@@ -24,7 +24,7 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  // Resolve tenant — restaurant_id ALWAYS comes from server, never client
+  // Resolve tenant
   const { data: membership } = await supabase
     .from('account_memberships')
     .select('role, restaurant_id')
@@ -34,34 +34,34 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
   if (!membership || !membership.restaurant_id) return { error: 'No restaurant assigned' }
   if (!['admin', 'staff'].includes(membership.role)) return { error: 'Unauthorized' }
 
-  const parsed = CreateReservationSchema.safeParse({
+  const parsed = ReservationSchema.safeParse({
     tableId: formData.get('tableId'),
     guestName: formData.get('guestName'),
     guestPhone: formData.get('guestPhone'),
-    guestEmail: formData.get('guestEmail'),
-    partySize: formData.get('partySize'),
+    party_size: formData.get('partySize'),
     notes: formData.get('notes'),
     startTime: formData.get('startTime'),
-    endTime: formData.get('endTime'),
+    saveToCommon: formData.get('saveToCommon') === 'true',
   })
 
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-  const { tableId, guestName, guestPhone, guestEmail, partySize, notes, startTime, endTime } = parsed.data
+  const { tableId, guestName, guestPhone, party_size: partySize, notes, startTime, saveToCommon } = parsed.data
 
-  if (new Date(startTime) >= new Date(endTime)) {
-    return { error: 'End time must be after start time' }
-  }
+  // Calculate default 2-hour end time for the database range
+  const startObj = new Date(startTime)
+  const endObj = new Date(startObj.getTime() + 2 * 60 * 60 * 1000)
+  const endTime = endObj.toISOString()
 
   // Build tsrange string: '[start, end)'
   const reservationTime = `[${startTime}, ${endTime})`
 
   const { error } = await supabase.from('reservations').insert({
-    restaurant_id: membership.restaurant_id, // injected server-side
+    restaurant_id: membership.restaurant_id,
     table_id: tableId,
     guest_name: guestName,
     guest_phone: guestPhone || null,
-    guest_email: guestEmail || null,
+    guest_email: null, // explicitly null per user request
     party_size: partySize,
     notes: notes || null,
     status: 'confirmed',
@@ -71,14 +71,25 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
 
   if (error) {
     if (error.code === '23P01') {
-      return { error: 'This table is already booked for that time slot. Please choose a different table or time.' }
+      return { error: 'Table is busy at this slot. Please choose another table/time.' }
     }
     return { error: error.message }
   }
 
+  // Handle Common Customer saving
+  if (saveToCommon) {
+    await supabase.from('common_customers').upsert({
+      restaurant_id: membership.restaurant_id,
+      name: guestName,
+      phone: guestPhone || null,
+      default_party_size: partySize,
+      notes: notes || null,
+    }, { onConflict: 'restaurant_id,phone' })
+  }
+
   revalidatePath('/dashboard/reservations')
   revalidatePath('/dashboard')
-  return { success: 'Reservation created successfully!' }
+  return { success: 'Reservation confirmed!' }
 }
 
 // ─── Cancel reservation ───────────────────────────────────────────────────────
@@ -140,4 +151,66 @@ export async function updateReservationStatus(_: ActionState, formData: FormData
 
   revalidatePath('/dashboard/reservations')
   return { success: 'Status updated.' }
+}
+
+// ─── Update reservation (edit) ────────────────────────────────────────────────
+
+export async function updateReservation(_: ActionState, formData: FormData): Promise<ActionState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { data: membership } = await supabase
+    .from('account_memberships')
+    .select('role, restaurant_id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!membership || !membership.restaurant_id) return { error: 'Unauthorized' }
+  if (!['admin', 'staff'].includes(membership.role)) return { error: 'Unauthorized' }
+
+  const reservationId = formData.get('id') as string
+  if (!reservationId) return { error: 'Reservation ID required for update' }
+
+  const parsed = ReservationSchema.safeParse({
+    id: reservationId,
+    tableId: formData.get('tableId'),
+    guestName: formData.get('guestName'),
+    guestPhone: formData.get('guestPhone'),
+    party_size: formData.get('partySize'),
+    notes: formData.get('notes'),
+    startTime: formData.get('startTime'),
+  })
+
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+  const { tableId, guestName, guestPhone, party_size: partySize, notes, startTime } = parsed.data
+
+  const startObj = new Date(startTime)
+  const endObj = new Date(startObj.getTime() + 2 * 60 * 60 * 1000)
+  const range = `[${startTime}, ${endObj.toISOString()})`
+
+  const { error } = await supabase
+    .from('reservations')
+    .update({
+      table_id: tableId,
+      guest_name: guestName,
+      guest_phone: guestPhone || null,
+      party_size: partySize,
+      notes: notes || null,
+      reservation_time: range,
+    })
+    .eq('id', reservationId)
+    .eq('restaurant_id', membership.restaurant_id)
+
+  if (error) {
+    if (error.code === '23P01') {
+      return { error: 'Table is busy at this slot for the new selection.' }
+    }
+    return { error: error.message }
+  }
+
+  revalidatePath('/dashboard/reservations')
+  revalidatePath(`/dashboard/reservations/${reservationId}`)
+  return { success: 'Reservation updated successfully!' }
 }

@@ -146,3 +146,42 @@ export async function resetUserPassword(_: ActionState, formData: FormData): Pro
   revalidatePath('/dashboard/staff')
   return { success: 'Password reset successfully.' }
 }
+
+// ─── TEMPORARY: Superadmin Registration (REMOVE AFTER USE) ───────────────────
+
+export async function tempRegisterSuperadmin(_: ActionState, formData: FormData): Promise<ActionState> {
+  const fullName = formData.get('fullName') as string
+  const username = formData.get('username') as string
+  const password = formData.get('password') as string
+
+  if (!fullName || !username || !password) return { error: 'All fields are required' }
+
+  const email = username.includes('@') ? username : `${username}@system.local`
+  const adminClient = createAdminClient()
+
+  // 1. Create the user
+  const { data: newUser, error: userError } = await adminClient.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: fullName },
+  })
+
+  if (userError) return { error: userError.message }
+
+  // 2. Assign Superadmin role
+  const { error: membershipError } = await adminClient
+    .from('account_memberships')
+    .insert({
+      user_id: newUser.user.id,
+      role: 'superadmin',
+    })
+
+  if (membershipError) {
+    // Cleanup if membership fails
+    await adminClient.auth.admin.deleteUser(newUser.user.id)
+    return { error: membershipError.message }
+  }
+
+  return { success: `Superadmin account "${username}" created successfully. Please delete this page now.` }
+}
