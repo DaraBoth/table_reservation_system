@@ -106,3 +106,91 @@ export async function toggleMemberStatus(_: ActionState, formData: FormData): Pr
   revalidatePath('/superadmin/admins')
   return { success: `Account ${isActive ? 'enabled' : 'disabled'}.` }
 }
+
+// ─── Superadmin: Create User with any Role ────────────────────────────────────
+
+const SuperadminCreateUserSchema = z.object({
+  fullName: z.string().min(2, 'Full name required'),
+  username: z.string().min(2, 'Username required'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  role: z.enum(['superadmin', 'admin', 'staff']),
+  restaurantId: z.string().uuid().optional().or(z.literal('')),
+})
+
+export async function superadminCreateUser(_: ActionState, formData: FormData): Promise<ActionState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { data: membership } = await supabase
+    .from('account_memberships')
+    .select('role')
+    .eq('user_id', user.id)
+    .single()
+
+  if (membership?.role !== 'superadmin') return { error: 'Unauthorized — superadmin only' }
+
+  const parsed = SuperadminCreateUserSchema.safeParse({
+    fullName: formData.get('fullName'),
+    username: formData.get('username'),
+    password: formData.get('password'),
+    role: formData.get('role'),
+    restaurantId: formData.get('restaurantId'),
+  })
+
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+  const email = parsed.data.username.includes('@')
+    ? parsed.data.username
+    : `${parsed.data.username}@system.local`
+
+  const adminClient = createAdminClient()
+  const { data: newUser, error: userError } = await adminClient.auth.admin.createUser({
+    email,
+    password: parsed.data.password,
+    email_confirm: true,
+    user_metadata: { full_name: parsed.data.fullName },
+  })
+
+  if (userError) return { error: userError.message }
+
+  const { error: membershipError } = await supabase
+    .from('account_memberships')
+    .insert({
+      user_id: newUser.user.id,
+      restaurant_id: parsed.data.restaurantId || null,
+      role: parsed.data.role,
+    })
+
+  if (membershipError) return { error: membershipError.message }
+
+  revalidatePath('/superadmin/users')
+  return { success: `Account for "${parsed.data.fullName}" created as ${parsed.data.role}.` }
+}
+
+// ─── Superadmin: Delete User Account ──────────────────────────────────────────
+
+export async function deleteUserAccount(_: ActionState, formData: FormData): Promise<ActionState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { data: membership } = await supabase
+    .from('account_memberships')
+    .select('role')
+    .eq('user_id', user.id)
+    .single()
+
+  if (membership?.role !== 'superadmin') return { error: 'Unauthorized' }
+
+  const targetUserId = formData.get('userId') as string
+  if (targetUserId === user.id) return { error: 'Cannot delete your own account' }
+
+  const adminClient = createAdminClient()
+  const { error } = await adminClient.auth.admin.deleteUser(targetUserId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/superadmin/users')
+  return { success: 'Account deleted successfully.' }
+}

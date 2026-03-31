@@ -10,6 +10,7 @@ import type { AccountMembership, Profile } from '@/lib/types/database'
 const navItems = [
   { href: '/superadmin', label: 'Overview', icon: '⊞' },
   { href: '/superadmin/restaurants', label: 'Restaurants', icon: '🏢' },
+  { href: '/superadmin/users', label: 'User Management', icon: '👥' },
   { href: '/superadmin/admins', label: 'Admin Accounts', icon: '👤' },
 ]
 
