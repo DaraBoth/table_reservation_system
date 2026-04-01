@@ -127,6 +127,7 @@ export async function updateRestaurant(_: ActionState, formData: FormData): Prom
       contact_email: formData.get('contactEmail') as string || null,
       contact_phone: formData.get('contactPhone') as string || null,
       address: formData.get('address') as string || null,
+      business_type: formData.get('businessType') as any || 'restaurant',
     })
     .eq('id', restaurantId)
 
@@ -135,6 +136,73 @@ export async function updateRestaurant(_: ActionState, formData: FormData): Prom
   revalidatePath('/superadmin/restaurants')
   revalidatePath(`/superadmin/restaurants/${restaurantId}`)
   return { success: 'Restaurant updated.' }
+}
+
+// ─── Update Own Restaurant Info (Admin) ──────────────────────────────────────
+
+export async function updateOwnRestaurantInfo(_: ActionState, formData: FormData): Promise<ActionState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { data: membership } = await supabase
+    .from('account_memberships')
+    .select('role, restaurant_id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!['admin', 'superadmin'].includes(membership?.role || '') || !membership?.restaurant_id) {
+    return { error: 'Unauthorized — business owner only' }
+  }
+
+  const { error } = await supabase
+    .from('restaurants')
+    .update({
+      name: formData.get('name') as string,
+      contact_email: formData.get('contactEmail') as string || null,
+      contact_phone: formData.get('contactPhone') as string || null,
+      address: formData.get('address') as string || null,
+      logo_url: formData.get('logoUrl') as string || null,
+    })
+    .eq('id', membership.restaurant_id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/dashboard/account')
+  return { success: 'Business info updated.' }
+}
+
+// ─── Finish Restaurant Setup ──────────────────────────────────────────────────
+
+export async function completeRestaurantSetup(_: ActionState, formData: FormData): Promise<ActionState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { data: membership } = await supabase
+    .from('account_memberships')
+    .select('role, restaurant_id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!['admin', 'superadmin'].includes(membership?.role || '') || !membership?.restaurant_id) {
+    return { error: 'Unauthorized' }
+  }
+
+  const { error } = await supabase
+    .from('restaurants')
+    .update({
+      is_new: false,
+      name: formData.get('name') as string,
+      business_type: formData.get('businessType') as any || 'restaurant',
+    })
+    .eq('id', membership.restaurant_id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/dashboard')
+  return { success: 'Setup complete.' }
 }
 
 // ─── Update subscription ──────────────────────────────────────────────────────

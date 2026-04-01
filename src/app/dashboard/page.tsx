@@ -36,12 +36,16 @@ export default async function DashboardPage() {
 
   const { data: membershipRaw } = await supabase
     .from('account_memberships')
-    .select('role, restaurant_id, restaurants(business_type)')
+    .select('role, restaurant_id, restaurants(business_type, is_new)')
     .eq('user_id', user.id)
     .single()
 
-  const membership = membershipRaw as Tables<'account_memberships'> & { restaurants: { business_type: string } | null } | null
+  const membership = membershipRaw as any
   if (!membership?.restaurant_id) return null
+
+  if (membership.restaurants?.is_new) {
+    redirect('/dashboard/setup')
+  }
 
   const rid = membership.restaurant_id
   const businessType = (membership.restaurants?.business_type ?? 'restaurant') as BusinessType

@@ -22,8 +22,9 @@ export async function createPhysicalTable(_: ActionState, formData: FormData): P
     .eq('user_id', user.id)
     .single()
 
-  if (membership?.role !== 'admin' || !membership.restaurant_id) {
-    return { error: 'Unauthorized — admin only' }
+  const canManage = membership?.role === 'admin' || membership?.role === 'superadmin' || membership?.role === 'staff'
+  if (!canManage || !membership.restaurant_id) {
+    return { error: 'Unauthorized' }
   }
 
   const parsed = TableSchema.safeParse({
@@ -58,8 +59,8 @@ export async function updatePhysicalTable(_: ActionState, formData: FormData): P
     .eq('user_id', user.id)
     .single()
 
-  const canEdit = membership?.role === 'admin' || membership?.role === 'staff'
-  if (!canEdit) return { error: 'Unauthorized — admin or staff only' }
+  const canEdit = membership?.role === 'admin' || membership?.role === 'superadmin' || membership?.role === 'staff'
+  if (!canEdit) return { error: 'Unauthorized' }
 
   const tableId = formData.get('tableId') as string
   const parsed = TableSchema.safeParse({
@@ -85,4 +86,43 @@ export async function updatePhysicalTable(_: ActionState, formData: FormData): P
 
   revalidatePath('/dashboard/tables')
   return { success: 'Table updated.' }
+}
+
+export async function deletePhysicalTable(_: ActionState, formData: FormData): Promise<ActionState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { data: membership } = await supabase
+    .from('account_memberships')
+    .select('role, restaurant_id')
+    .eq('user_id', user.id)
+    .single()
+
+  const isAdmin = membership?.role === 'admin' || membership?.role === 'superadmin'
+  if (!isAdmin) return { error: 'Unauthorized — Admin only' }
+
+  const tableId = formData.get('tableId') as string
+  if (!tableId) return { error: 'Table ID missing' }
+
+  // Check for reservations first to give a better error message than DB constraint
+  const { count } = await supabase
+    .from('reservations')
+    .select('*', { count: 'exact', head: true })
+    .eq('table_id', tableId)
+
+  if (count && count > 0) {
+    return { error: 'Cannot delete unit with booking history. Please use "Active Status" to hide it instead.' }
+  }
+
+  const { error } = await supabase
+    .from('physical_tables')
+    .delete()
+    .eq('id', tableId)
+    .eq('restaurant_id', membership.restaurant_id!)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/dashboard/tables')
+  return { success: 'Unit deleted successfully.' }
 }

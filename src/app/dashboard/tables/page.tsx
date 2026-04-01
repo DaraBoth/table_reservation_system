@@ -22,12 +22,14 @@ export default async function TablesPage() {
     .single()
 
   const membership = membershipRaw as any
-  const isAdmin = membership?.role === 'admin'
-  const isStaff = membership?.role === 'staff'
+  const role = membership?.role
+  const isAdmin = role === 'admin' || role === 'superadmin'
+  const isStaff = role === 'staff'
+  const canManage = isAdmin || isStaff // User wants staff to edit/manage too
   const businessType = (membership?.restaurants?.business_type ?? 'restaurant') as BusinessType
   const terms = getTerms(businessType)
 
-  if (!isAdmin && !isStaff) redirect('/dashboard')
+  if (!canManage) redirect('/dashboard')
 
   const { data: raw } = await supabase
     .from('physical_tables')
@@ -70,7 +72,7 @@ export default async function TablesPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {isAdmin && (
+          {canManage && (
             <Link
               href="/dashboard/reports"
               className="flex items-center gap-1.5 h-9 px-3 bg-slate-800/80 border border-slate-700 rounded-xl text-slate-300 text-xs font-black uppercase tracking-tight hover:border-violet-500/50 hover:text-violet-300 transition-all"
@@ -78,7 +80,7 @@ export default async function TablesPage() {
               <BarChart3 className="w-3.5 h-3.5" /> Reports
             </Link>
           )}
-          {isAdmin && <CreateTableDialog businessType={businessType} />}
+          {canManage && <CreateTableDialog businessType={businessType} />}
         </div>
       </div>
 
@@ -119,6 +121,7 @@ export default async function TablesPage() {
                 isTappable={isTappable}
                 terms={terms}
                 businessType={businessType}
+                isAdmin={isAdmin}
               />
             )
           })}
@@ -128,7 +131,7 @@ export default async function TablesPage() {
           <div className="text-5xl mb-4 grayscale opacity-50">{terms.emoji}</div>
           <p className="text-slate-300 font-black text-lg italic tracking-tight">No {terms.unitsLower} yet</p>
           <p className="text-slate-500 text-xs mt-1 mb-8 font-bold uppercase tracking-widest">Get started by adding your first unit</p>
-          {isAdmin && <CreateTableDialog businessType={businessType} />}
+          {canManage && <CreateTableDialog businessType={businessType} />}
         </div>
       )}
 

@@ -30,8 +30,8 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
   const unitIcon = terms.hasCheckout ? BedDouble : LayoutGrid
 
   const primaryItems = [
-    { href: '/dashboard/reservations', label: terms.bookings,  icon: CalendarDays,    exact: false },
     { href: '/dashboard/tables',       label: terms.units,     icon: unitIcon,        exact: false },
+    { href: '/dashboard/reservations', label: terms.bookings,  icon: CalendarDays,    exact: false },
     { href: '/dashboard/customers',    label: 'Customers',     icon: BookUser,        exact: false },
     { href: '/dashboard/reports', label: 'Reports', icon: BarChart3, exact: false },
   ]

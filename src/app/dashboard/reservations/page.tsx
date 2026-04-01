@@ -85,7 +85,14 @@ export default async function ReservationsPage() {
 
       {/* Header */}
       <div className="flex items-center justify-between pt-2">
-        <p className="text-slate-400 text-sm">{reservations.length} total {terms.bookingsLower}</p>
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-xl font-black text-white italic tracking-tight uppercase">
+            {terms.bookings}
+          </h1>
+          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest leading-none">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          </p>
+        </div>
         <Link
           href="/dashboard/reservations/new"
           className={cn(
@@ -96,6 +103,10 @@ export default async function ReservationsPage() {
           <Plus className="w-4 h-4" /> New {terms.booking}
         </Link>
       </div>
+
+      <p className="text-slate-400 text-xs font-semibold px-1">
+        Showing {reservations.length} {terms.bookingsLower} total
+      </p>
 
       {/* Active bookings */}
       {active.length > 0 && (

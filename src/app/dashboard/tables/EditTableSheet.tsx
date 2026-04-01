@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState, useState } from 'react'
-import { updatePhysicalTable } from '@/app/actions/tables'
+import { updatePhysicalTable, deletePhysicalTable } from '@/app/actions/tables'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,14 +15,17 @@ import type { Tables } from '@/lib/types/database'
 interface EditTableSheetProps {
   table: Tables<'physical_tables'>
   businessType?: string
+  isAdmin: boolean
 }
 
-export function EditTableSheet({ table, businessType = 'restaurant' }: EditTableSheetProps) {
+export function EditTableSheet({ table, businessType = 'restaurant', isAdmin }: EditTableSheetProps) {
   const [state, action, pending] = useActionState(updatePhysicalTable, null)
+  const [deleteState, deleteAction, deletePending] = useActionState(deletePhysicalTable, null)
   const terms = getTerms(businessType)
   const isHotel = businessType === 'hotel' || businessType === 'guesthouse'
   const [beds, setBeds] = useState(table.capacity)
   const [isActive, setIsActive] = useState(table.is_active)
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false)
 
   return (
     <Sheet>
@@ -108,10 +111,54 @@ export function EditTableSheet({ table, businessType = 'restaurant' }: EditTable
           {state?.error && <p className="text-red-400 text-sm text-center">{state.error}</p>}
           {state?.success && <p className="text-emerald-400 text-sm text-center">{state.success}</p>}
           
-          <Button type="submit" disabled={pending}
+          <Button type="submit" disabled={pending || deletePending}
             className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 border-0 h-12 rounded-2xl font-black text-base shadow-lg shadow-violet-500/20">
             {pending ? 'Saving...' : `Update ${terms.unit}`}
           </Button>
+
+          {/* Danger Zone for Admins */}
+          {isAdmin && (
+            <div className="pt-6 mt-6 border-t border-slate-800 space-y-3">
+              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest px-1">Danger Zone</p>
+              {!showConfirmDelete ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setShowConfirmDelete(true)}
+                  className="w-full h-12 rounded-2xl border border-red-500/20 text-red-400 font-bold hover:bg-red-500/10 hover:text-red-400 transition-all"
+                >
+                  Delete {terms.unit}
+                </Button>
+              ) : (
+                <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <p className="text-xs text-rose-400 font-medium text-center px-4">
+                    Deleting is permanent and only works if there is no booking history.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setShowConfirmDelete(false)}
+                      className="flex-1 h-12 rounded-2xl bg-slate-800 text-slate-300 font-bold"
+                    >
+                      Cancel
+                    </Button>
+                    <form action={deleteAction} className="flex-1">
+                      <input type="hidden" name="tableId" value={table.id} />
+                      <Button
+                        type="submit"
+                        disabled={deletePending}
+                        className="w-full h-12 rounded-2xl bg-rose-600 text-white font-black hover:bg-rose-500 border-0"
+                      >
+                        {deletePending ? 'Deleting...' : 'Confirm'}
+                      </Button>
+                    </form>
+                  </div>
+                  {deleteState?.error && <p className="text-rose-400 text-xs text-center mt-2 font-bold">{deleteState.error}</p>}
+                </div>
+              )}
+            </div>
+          )}
         </form>
       </SheetContent>
     </Sheet>
