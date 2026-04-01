@@ -169,7 +169,7 @@ export function TableTabs({ tables, busyMap, terms, isAdmin, businessType }: Tab
                   </div>
                 </div>
                 
-                <EditTableSheet table={t} businessType={businessType} />
+                <EditTableSheet table={t} businessType={businessType} isAdmin={isAdmin} />
               </div>
             ))}
           </div>
