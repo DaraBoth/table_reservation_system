@@ -26,19 +26,21 @@ export async function getCommonCustomers(restaurantId: string) {
 export async function getOccupiedTableIds(restaurantId: string, startTime: Date) {
   const supabase = await createClient()
   
-  // Format the selected time range for Postgres tsrange
-  // Format the selected time range for Postgres tsrange
-  const startStr = format(startTime, "yyyy-MM-dd HH:mm:ssXXX") // Use ISO-like format
-  const endStr = format(addHours(startTime, 2), "yyyy-MM-dd HH:mm:ssXXX")
-  const rangeStr = `[${startStr}, ${endStr})`
+  const targetDate = format(startTime, 'yyyy-MM-dd')
+  const targetStartTime = format(startTime, 'HH:mm:ss')
+  const targetEndTime = format(addHours(startTime, 2), 'HH:mm:ss')
 
-  // Query overlapping reservations
+  // To find if a table is currently occupied during the requested [targetStartTime, targetEndTime] window:
+  // Existing start_time must be BEFORE requested end_time
+  // Existing end_time must be AFTER requested start_time
   const { data, error } = await supabase
     .from('reservations')
     .select('table_id')
     .eq('restaurant_id', restaurantId)
     .neq('status', 'cancelled')
-    .filter('reservation_time', 'ov', rangeStr) // Overlap operator
+    .eq('reservation_date', targetDate)
+    .lt('start_time', targetEndTime)
+    .gt('end_time', targetStartTime)
 
   if (error) {
     console.error('Occupancy check failed:', error)

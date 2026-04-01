@@ -45,3 +45,24 @@ export async function addCommonCustomer(_: unknown, formData: FormData) {
   revalidatePath('/dashboard/customers')
   return { success: true }
 }
+export async function updateCommonCustomer(_: unknown, formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const id    = formData.get('id') as string
+  const name  = (formData.get('name') as string)?.trim()
+  const phone = (formData.get('phone') as string)?.trim() || null
+
+  if (!id) return { error: 'Missing ID' }
+  if (!name) return { error: 'Name is required' }
+
+  const { error } = await supabase
+    .from('common_customers')
+    .update({ name, phone })
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard/customers')
+  return { success: true }
+}

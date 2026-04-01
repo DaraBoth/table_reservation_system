@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { Tables } from '@/lib/types/database'
-import { parseTsRange } from '@/lib/utils'
+import { parseTsRange } from '@/lib/utils' // Removed
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -58,16 +58,17 @@ export default async function ReportsPage({ searchParams }: Props) {
   }
 
   const rangeEnd = new Date(now)
-  rangeEnd.setHours(23, 59, 59, 999)
-
-  const rangeStr = `["${rangeStart.toISOString()}","${rangeEnd.toISOString()}"]`
+  
+  const startIso = rangeStart.getFullYear() + '-' + String(rangeStart.getMonth()+1).padStart(2,'0') + '-' + String(rangeStart.getDate()).padStart(2,'0')
+  const endIso = rangeEnd.getFullYear() + '-' + String(rangeEnd.getMonth()+1).padStart(2,'0') + '-' + String(rangeEnd.getDate()).padStart(2,'0')
 
   // ── Fetch reservations in period ───────────────────────────────────────────
   const { data: resRaw } = await supabase
     .from('reservations')
     .select('*, physical_tables(table_name, capacity)')
     .eq('restaurant_id', rid)
-    .filter('reservation_time', 'ov', rangeStr)
+    .gte('reservation_date', startIso)
+    .lte('reservation_date', endIso)
     .order('created_at', { ascending: false })
 
   type ResWithTable = Tables<'reservations'> & {
@@ -94,7 +95,8 @@ export default async function ReportsPage({ searchParams }: Props) {
       people: prev.people + (r.party_size || 0)
     })
   }
-  const topTables = Array.from(tableCount.values())
+  const topTables = Array.from(tableCount.entries())
+    .map(([id, v]) => ({ id, ...v }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 5)
 
@@ -186,7 +188,7 @@ export default async function ReportsPage({ searchParams }: Props) {
           </div>
           <div className="space-y-3">
             {topTables.map((t, i) => (
-              <div key={t.name} className="space-y-1.5">
+              <div key={t.id} className="space-y-1.5">
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <span className="w-5 h-5 rounded-lg bg-slate-800 flex items-center justify-center text-xs font-black text-slate-400">
@@ -219,7 +221,7 @@ export default async function ReportsPage({ searchParams }: Props) {
           </div>
           <div className="space-y-3">
             {topCustomers.map((c, i) => (
-              <div key={c.name} className="space-y-1.5">
+              <div key={`${c.name}-${c.phone}-${i}`} className="space-y-1.5">
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <span className="w-5 h-5 rounded-lg bg-slate-800 flex items-center justify-center text-xs font-black text-slate-400">
@@ -252,7 +254,7 @@ export default async function ReportsPage({ searchParams }: Props) {
           </h2>
           <div className="space-y-2">
             {reservations.map(res => {
-              const { start } = parseTsRange(res.reservation_time)
+              const start = new Date(`${res.reservation_date}T${res.start_time}`)
               const timeStr = start
                 ? new Date(start).toLocaleDateString('en-US', {
                     weekday: 'short', month: 'short', day: 'numeric',

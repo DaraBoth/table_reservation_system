@@ -47,44 +47,16 @@ export function AddCustomerForm() {
             />
           </div>
 
-          {/* Phone + Party Size */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">
-                Phone
-              </label>
-              <input
-                name="phone"
-                type="tel"
-                placeholder="e.g. 012 345 678"
-                className="w-full h-12 px-4 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-semibold placeholder:text-slate-600 focus:outline-none focus:border-violet-500 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">
-                Party Size
-              </label>
-              <input
-                name="partySize"
-                type="number"
-                defaultValue={2}
-                min={1}
-                max={50}
-                className="w-full h-12 px-4 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-semibold focus:outline-none focus:border-violet-500 transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* Notes */}
+          {/* Phone */}
           <div>
             <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">
-              Notes (optional)
+              Phone
             </label>
-            <textarea
-              name="notes"
-              rows={2}
-              placeholder="e.g. Prefers window seat, allergic to nuts"
-              className="w-full px-4 py-3 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-semibold placeholder:text-slate-600 focus:outline-none focus:border-violet-500 transition-colors resize-none"
+            <input
+              name="phone"
+              type="tel"
+              placeholder="e.g. 012 345 678"
+              className="w-full h-12 px-4 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-semibold placeholder:text-slate-600 focus:outline-none focus:border-violet-500 transition-colors"
             />
           </div>
 

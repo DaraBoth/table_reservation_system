@@ -18,7 +18,7 @@ import type { BusinessType } from '@/lib/business-type'
 interface Props {
   tables: Tables<'physical_tables'>[]
   restaurantId: string
-  initialData?: Tables<'reservations'> & { start_time: Date; end_time?: Date }
+  initialData?: Omit<Tables<'reservations'>, 'start_time' | 'end_time'> & { start_time: Date; end_time?: Date }
   preSelectedTableId?: string
   businessType?: BusinessType
 }
@@ -114,7 +114,7 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
         {/* Hotel: use endTime; Restaurant: action computes +2h */}
         {terms.hasCheckout && <input type="hidden" name="endTime" value={endTime.toISOString()} />}
         <input type="hidden" name="tableId" value={selectedTableId} />
-        <input type="hidden" name="saveToCommon" value={String(saveToCommon)} />
+        <input type="hidden" name="saveToCommon" value="false" />
         <input type="hidden" name="guestName" value={guestName} />
         <input type="hidden" name="guestPhone" value={guestPhone} />
         <input type="hidden" name="partySize" value={partySize} />
@@ -357,20 +357,7 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
                 />
               </div>
 
-              {!isEdit && (
-                <label className="flex items-center gap-3 p-4 bg-slate-950 border border-slate-800 rounded-2xl cursor-pointer hover:border-violet-500/30 transition-all">
-                  <input
-                    type="checkbox"
-                    checked={saveToCommon}
-                    onChange={e => setSaveToCommon(e.target.checked)}
-                    className="w-5 h-5 rounded-lg accent-violet-500 flex-shrink-0"
-                  />
-                  <div>
-                    <p className="text-sm font-bold text-white">Save this customer</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Quick fill next time</p>
-                  </div>
-                </label>
-              )}
+
             </div>
 
             {/* Action buttons */}

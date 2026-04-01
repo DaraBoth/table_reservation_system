@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { ReservationForm } from '@/components/restaurant/reservation-form'
-import { parseTsRange } from '@/lib/utils'
 import type { Tables } from '@/lib/types/database'
 import type { BusinessType } from '@/lib/business-type'
 import { CancelReservationButton, UpdateStatusButton } from '../../ReservationActions'
@@ -62,9 +61,10 @@ export default async function EditReservationPage({ params }: Props) {
     .eq('is_active', true)
     .order('table_name')
 
-  const { start, end } = parseTsRange(reservation.reservation_time)
+  const start = new Date(`${reservation.reservation_date}T${reservation.start_time}`)
+  const end = new Date(`${reservation.reservation_date}T${reservation.end_time}`)
 
-  if (!start) {
+  if (isNaN(start.getTime())) {
     return (
       <div className="p-8 text-center space-y-3">
         <p className="text-2xl">⚠️</p>

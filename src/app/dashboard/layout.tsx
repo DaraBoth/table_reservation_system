@@ -3,6 +3,7 @@ import { BottomNav } from '@/components/layout/bottom-nav'
 import { TopBar } from '@/components/layout/top-bar'
 import { redirect } from 'next/navigation'
 import type { BusinessType } from '@/lib/business-type'
+import { RealtimeListener } from '@/components/realtime-listener'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -34,6 +35,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-950">
+      <RealtimeListener restaurantId={membership.restaurant_id ?? undefined} />
       <TopBar brandName={restaurantName} userName={displayName} userEmail={user.email} />
       <main className="flex-1 px-4 pt-4 pb-24 overflow-y-auto">
         {children}

@@ -54,10 +54,12 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
   // Use provided checkout time (hotel) or default to +2 hours (restaurant)
   const startObj = new Date(startTime)
   const endObj   = providedEnd ? new Date(providedEnd) : new Date(startObj.getTime() + 2 * 60 * 60 * 1000)
-  const resolvedEnd = endObj.toISOString()
-
-  // Build tsrange string: '[start, end)'
-  const reservationTime = `[${startTime}, ${resolvedEnd})`
+  
+  // Format as pure, predictable strings to store natively in Postgres
+  // This bypasses any timezone coercion that previously corrupted dates!
+  const reservationDate = startObj.getFullYear() + '-' + String(startObj.getMonth() + 1).padStart(2,'0') + '-' + String(startObj.getDate()).padStart(2,'0')
+  const startTimeStr = String(startObj.getHours()).padStart(2,'0') + ':' + String(startObj.getMinutes()).padStart(2,'0') + ':00'
+  const endTimeStr = String(endObj.getHours()).padStart(2,'0') + ':' + String(endObj.getMinutes()).padStart(2,'0') + ':00'
 
   const { error } = await supabase.from('reservations').insert({
     restaurant_id: membership.restaurant_id,
@@ -67,8 +69,10 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
     guest_email: null, // explicitly null per user request
     party_size: partySize,
     notes: notes || null,
-    status: 'confirmed',
-    reservation_time: reservationTime,
+    status: 'pending', // Usually defaults to pending for UI updates unless directly confirmed
+    reservation_date: reservationDate,
+    start_time: startTimeStr,
+    end_time: endTimeStr,
     created_by: user.id,
   })
 
@@ -192,7 +196,10 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
 
   const startObj = new Date(startTime)
   const endObj   = providedEnd ? new Date(providedEnd) : new Date(startObj.getTime() + 2 * 60 * 60 * 1000)
-  const range    = `[${startTime}, ${endObj.toISOString()})`
+  
+  const reservationDate = startObj.getFullYear() + '-' + String(startObj.getMonth() + 1).padStart(2,'0') + '-' + String(startObj.getDate()).padStart(2,'0')
+  const startTimeStr = String(startObj.getHours()).padStart(2,'0') + ':' + String(startObj.getMinutes()).padStart(2,'0') + ':00'
+  const endTimeStr = String(endObj.getHours()).padStart(2,'0') + ':' + String(endObj.getMinutes()).padStart(2,'0') + ':00'
 
   const { error } = await supabase
     .from('reservations')
@@ -202,7 +209,9 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
       guest_phone: guestPhone || null,
       party_size: partySize,
       notes: notes || null,
-      reservation_time: range,
+      reservation_date: reservationDate,
+      start_time: startTimeStr,
+      end_time: endTimeStr,
     })
     .eq('id', reservationId)
     .eq('restaurant_id', membership.restaurant_id)

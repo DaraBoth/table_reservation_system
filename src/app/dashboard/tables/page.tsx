@@ -38,21 +38,15 @@ export default async function TablesPage() {
 
   const tables = (raw ?? []) as Tables<'physical_tables'>[]
 
-  // ── Busy = has pending OR confirmed reservation ANYWHERE today ─────────────
-  const todayStart = new Date()
-  todayStart.setHours(0, 0, 0, 0)
-  const todayEnd = new Date()
-  todayEnd.setHours(23, 59, 59, 999)
-
-  // Format as a tsrange that covers all of today
-  const todayRange = `["${todayStart.toISOString()}","${todayEnd.toISOString()}"]`
+  const today = new Date()
+  const todayDate = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0')
 
   const { data: busyRows } = await supabase
     .from('reservations')
     .select('table_id, guest_name, status')
     .eq('restaurant_id', membership.restaurant_id!)
     .in('status', ['pending', 'confirmed'])       // completed/cancelled = free
-    .filter('reservation_time', 'ov', todayRange) // has a booking today
+    .eq('reservation_date', todayDate)            // has a booking today
 
   const busyMap = new Map<string, { guestName: string; status: string }>()
   for (const row of busyRows ?? []) {

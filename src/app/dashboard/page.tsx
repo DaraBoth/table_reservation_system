@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button-variants'
 import type { Tables } from '@/lib/types/database'
 import { CalendarDays, Users, Table2, Clock, Plus, ChevronRight, BedDouble } from 'lucide-react'
-import { parseTsRange } from '@/lib/utils'
+import { parseTsRange } from '@/lib/utils' // Removed
 import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
 
@@ -133,7 +133,7 @@ export default async function DashboardPage() {
         {upcomingReservations.length > 0 ? (
           <div className="space-y-2">
             {upcomingReservations.map((res) => {
-              const { start } = parseTsRange(res.reservation_time)
+              const start = new Date(`${res.reservation_date}T${res.start_time}`)
               const dateDisplay = start
                 ? new Date(start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                 : null

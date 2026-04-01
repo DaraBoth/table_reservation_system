@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button-variants'
-import { parseTsRange } from '@/lib/utils'
+import { parseTsRange } from '@/lib/utils' // removed from use
 import type { Tables } from '@/lib/types/database'
 import { Plus, ChevronRight } from 'lucide-react'
 import { getTerms } from '@/lib/business-type'
@@ -137,7 +137,7 @@ function BookingCard({
 }: {
   res: Tables<'reservations'> & { physical_tables: Pick<Tables<'physical_tables'>, 'table_name' | 'capacity'> | null }
 }) {
-  const { start } = parseTsRange(res.reservation_time)
+  const start = new Date(`${res.reservation_date}T${res.start_time}`)
   const canEdit = !['cancelled', 'completed'].includes(res.status)
 
   const dayStr = start

@@ -1,0 +1,82 @@
+'use client'
+
+import { useActionState, useState, useEffect } from 'react'
+import { updateCommonCustomer } from '@/app/actions/customers'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Pencil } from 'lucide-react'
+
+interface EditCustomerDialogProps {
+  customer: {
+    id: string
+    name: string
+    phone: string | null
+  }
+}
+
+export function EditCustomerDialog({ customer }: EditCustomerDialogProps) {
+  const [state, action, pending] = useActionState(updateCommonCustomer, null)
+  const [open, setOpen] = useState(false)
+
+  // Close dialog on success
+  useEffect(() => {
+    if (state && 'success' in state) {
+      setOpen(false)
+    }
+  }, [state])
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger
+        render={
+          <Button variant="ghost" size="icon-sm" className="text-slate-400 hover:text-violet-400 hover:bg-violet-500/10 rounded-xl">
+            <Pencil className="w-4 h-4" />
+          </Button>
+        }
+      />
+      <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Edit Customer</DialogTitle>
+        </DialogHeader>
+        <form action={action} className="space-y-4 mt-2">
+          <input type="hidden" name="id" value={customer.id} />
+          
+          <div className="space-y-1.5">
+            <Label className="text-slate-300 text-sm">Full Name *</Label>
+            <Input 
+              name="name" 
+              required 
+              defaultValue={customer.name}
+              placeholder="e.g. Sokha Chan"
+              className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-violet-500" 
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-slate-300 text-sm">Phone</Label>
+            <Input 
+              name="phone" 
+              type="tel"
+              defaultValue={customer.phone || ''}
+              placeholder="e.g. 012 345 678"
+              className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-violet-500" 
+            />
+          </div>
+
+          {state && 'error' in state && (
+            <p className="text-red-400 text-xs bg-red-400/10 border border-red-400/20 rounded-lg p-2.5">
+              ⚠️ {state.error}
+            </p>
+          )}
+
+          <Button type="submit" disabled={pending}
+            className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 border-0 shadow-lg shadow-violet-500/20 h-11 font-bold">
+            {pending ? 'Saving Changes...' : 'Save Changes'}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}

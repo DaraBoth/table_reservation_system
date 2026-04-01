@@ -32,8 +32,11 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
   ]
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/60 safe-area-bottom">
-      <div className="flex items-stretch justify-around h-16" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/60 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+      <div 
+        className="flex items-stretch justify-around px-1" 
+        style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))', paddingTop: '0.75rem' }}
+      >
         {navItems.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
@@ -44,16 +47,14 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
             <Link
               key={item.href}
               href={item.href}
+              prefetch={true}
               className={cn(
-                'flex flex-col items-center justify-center flex-1 gap-1 transition-all duration-200 relative',
+                'flex flex-col items-center justify-start flex-1 gap-1.5 transition-all duration-200 relative min-w-[3.5rem]',
                 isActive ? 'text-violet-400' : 'text-slate-500'
               )}
             >
-              {isActive && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-violet-500" />
-              )}
-              <Icon className={cn('w-6 h-6 transition-transform duration-200', isActive && 'scale-110')} />
-              <span className={cn('text-[11px] font-semibold tracking-wide', isActive ? 'text-violet-400' : 'text-slate-500')}>
+              <Icon className={cn('w-7 h-7 transition-all duration-300', isActive && 'scale-110 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]')} />
+              <span className={cn('text-[10px] font-bold tracking-wide transition-colors', isActive ? 'text-violet-400' : 'text-slate-500')}>
                 {item.label}
               </span>
             </Link>

@@ -170,7 +170,9 @@ export type Database = {
           id: string
           notes: string | null
           party_size: number
-          reservation_time: string // tsrange is returned as a string by PostgREST
+          reservation_date: string
+          start_time: string
+          end_time: string
           restaurant_id: string
           status: Database["public"]["Enums"]["reservation_status"]
           table_id: string
@@ -185,7 +187,9 @@ export type Database = {
           id?: string
           notes?: string | null
           party_size?: number
-          reservation_time: string
+          reservation_date: string
+          start_time: string
+          end_time: string
           restaurant_id: string
           status?: Database["public"]["Enums"]["reservation_status"]
           table_id: string
@@ -200,7 +204,9 @@ export type Database = {
           id?: string
           notes?: string | null
           party_size?: number
-          reservation_time?: string
+          reservation_date?: string
+          start_time?: string
+          end_time?: string
           restaurant_id?: string
           status?: Database["public"]["Enums"]["reservation_status"]
           table_id?: string

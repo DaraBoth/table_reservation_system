@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { AddCustomerForm } from './AddCustomerForm'
 import { DeleteCustomerButton } from './DeleteCustomerButton'
 import { Users, Phone, Users2, StickyNote } from 'lucide-react'
+import { EditCustomerDialog } from './EditCustomerDialog'
 
 export const metadata = { title: 'Saved Customers — TableBook' }
 
@@ -69,19 +70,22 @@ export default async function CustomersPage() {
                       <Phone className="w-3 h-3" /> {c.phone}
                     </span>
                   )}
-                  <span className="text-xs text-slate-400 flex items-center gap-1">
-                    <Users2 className="w-3 h-3" /> {c.default_party_size ?? 2} people
-                  </span>
-                  {c.notes && (
-                    <span className="text-xs text-slate-500 flex items-center gap-1 truncate max-w-[180px]">
-                      <StickyNote className="w-3 h-3 flex-shrink-0" /> {c.notes}
-                    </span>
-                  )}
+
+
                 </div>
               </div>
 
-              {/* Delete */}
-              <DeleteCustomerButton id={c.id} name={c.name} />
+              {/* Actions */}
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <EditCustomerDialog 
+                  customer={{
+                    id: c.id,
+                    name: c.name,
+                    phone: c.phone
+                  }} 
+                />
+                <DeleteCustomerButton id={c.id} name={c.name} />
+              </div>
             </div>
           ))}
         </div>
