@@ -13,30 +13,31 @@ export function RealtimeListener({ restaurantId }: { restaurantId?: string }) {
     // We only listen if they are attached to a restaurant ID
     if (!restaurantId) return
 
-    const tablesChannel = supabase.channel('public:physical_tables')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'physical_tables', filter: `restaurant_id=eq.${restaurantId}` },
-        (payload) => {
-          // Tell Next.js to quietly re-evaluate and fetch the current route again!
-          router.refresh()
-        }
-      )
-      .subscribe()
+    console.log('📡 Real-time: Initializing listeners for restaurant:', restaurantId)
 
-    const reservationsChannel = supabase.channel('public:reservations')
+    const channel = supabase.channel(`db-changes-${restaurantId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'reservations', filter: `restaurant_id=eq.${restaurantId}` },
         (payload) => {
+          console.log('🔄 Real-time: Reservation change detected!', payload)
           router.refresh()
         }
       )
-      .subscribe()
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'physical_tables', filter: `restaurant_id=eq.${restaurantId}` },
+        (payload) => {
+          console.log('🔄 Real-time: Table status updated!', payload)
+          router.refresh()
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Real-time status:', status)
+      })
 
     return () => {
-      supabase.removeChannel(tablesChannel)
-      supabase.removeChannel(reservationsChannel)
+      supabase.removeChannel(channel)
     }
   }, [supabase, router, restaurantId])
 

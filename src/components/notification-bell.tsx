@@ -78,12 +78,19 @@ export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
       else if (userAgent.match(/Windows/i)) deviceInfo = 'Windows'
       else if (userAgent.match(/Macintosh/i)) deviceInfo = 'Mac'
 
-      await supabase.from('push_subscriptions').upsert({
+      const { error } = await supabase.from('push_subscriptions').upsert({
         user_id: user.id,
         restaurant_id: restaurantId || null,
         subscription: subscription as any,
         device_info: deviceInfo,
       }, { onConflict: 'user_id, subscription' })
+
+      if (error) {
+        toast.error('Failed to sync notification settings.')
+        console.error('Sync error:', error)
+      } else {
+        toast.success('This device is now linked to booking alerts!')
+      }
 
     } catch (err) {
       console.error('Subscription failed:', err)
