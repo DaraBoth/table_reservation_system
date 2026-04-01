@@ -75,6 +75,8 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
     end_time: endTimeStr,
     created_by: user.id,
   })
+    .select()
+    .single()
 
   if (error) {
     if (error.code === '23P01') {
@@ -82,6 +84,10 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
     }
     return { error: error.message }
   }
+
+  // 🔔 Trigger Push Notification
+  const { notifyNewBooking } = await import('@/lib/notifications')
+  notifyNewBooking(data.id)
 
   // Handle Common Customer saving
   if (saveToCommon) {
@@ -125,6 +131,10 @@ export async function cancelReservation(_: ActionState, formData: FormData): Pro
 
   if (error) return { error: error.message }
 
+  // 🔔 Trigger Push Notification
+  const { notifyCancellation } = await import('@/lib/notifications')
+  notifyCancellation(reservationId)
+
   revalidatePath('/dashboard/reservations')
   revalidatePath('/dashboard')
   return { success: 'Reservation cancelled.' }
@@ -155,6 +165,12 @@ export async function updateReservationStatus(_: ActionState, formData: FormData
     .eq('restaurant_id', membership.restaurant_id!)
 
   if (error) return { error: error.message }
+
+  // 🔔 Trigger Push Notification
+  if (status === 'arrived') {
+    const { notifyArrival } = await import('@/lib/notifications')
+    notifyArrival(reservationId)
+  }
 
   revalidatePath('/dashboard/reservations')
   return { success: 'Status updated.' }

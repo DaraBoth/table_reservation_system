@@ -160,6 +160,41 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          created_at: string | null
+          device_info: string | null
+          id: string
+          restaurant_id: string | null
+          subscription: Json
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          device_info?: string | null
+          id?: string
+          restaurant_id?: string | null
+          subscription: Json
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          device_info?: string | null
+          id?: string
+          restaurant_id?: string | null
+          subscription?: Json
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservations: {
         Row: {
           created_at: string
@@ -237,6 +272,8 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          is_new: boolean
+          business_type: string
           logo_url: string | null
           name: string
           slug: string
@@ -250,6 +287,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          is_new?: boolean
+          business_type?: string
           logo_url?: string | null
           name: string
           slug: string
@@ -263,6 +302,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          is_new?: boolean
+          business_type?: string
           logo_url?: string | null
           name?: string
           slug?: string
