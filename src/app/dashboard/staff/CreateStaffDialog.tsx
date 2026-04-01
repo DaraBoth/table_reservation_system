@@ -5,23 +5,24 @@ import { createStaffAccount } from '@/app/actions/memberships'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 
 export function CreateStaffDialog() {
   const [state, action, pending] = useActionState(createStaffAccount, null)
   return (
-    <Dialog>
-      <DialogTrigger
+    <Sheet>
+      <SheetTrigger
         render={
           <Button className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 shadow-lg shadow-violet-500/25">
             + Add Staff
           </Button>
         }
       />
-      <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Create Staff Account</DialogTitle>
-        </DialogHeader>
+      <SheetContent side="bottom" className="bg-slate-900 border-slate-800 text-white p-6 rounded-t-3xl">
+        <SheetHeader className="p-0 mb-4">
+          <SheetTitle className="text-white text-lg font-black italic tracking-tight">Expand Your Crew</SheetTitle>
+          <p className="text-xs text-slate-500">Create a secure login for a new team member</p>
+        </SheetHeader>
         <form action={action} className="space-y-4 mt-2">
           <div className="space-y-1.5">
             <Label className="text-slate-300 text-sm">Full Name *</Label>
@@ -45,7 +46,7 @@ export function CreateStaffDialog() {
             {pending ? 'Creating...' : 'Create Staff Account'}
           </Button>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   )
 }

@@ -38,7 +38,8 @@ export default async function ReportsPage({ searchParams }: Props) {
     .single()
 
   const membership = membershipRaw as Tables<'account_memberships'> | null
-  if (membership?.role !== 'admin') redirect('/dashboard')
+  const canView = membership?.role === 'admin' || membership?.role === 'staff'
+  if (!canView) redirect('/dashboard')
 
   const rid = membership.restaurant_id!
   const { period = 'week' } = await searchParams

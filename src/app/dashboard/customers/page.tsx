@@ -39,18 +39,6 @@ export default async function CustomersPage() {
         </div>
       </div>
 
-      {/* Add Customer Form */}
-      <AddCustomerForm />
-
-      {/* Divider */}
-      {customers.length > 0 && (
-        <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-slate-800" />
-          <span className="text-xs text-slate-500 font-bold uppercase tracking-widest">Saved List</span>
-          <div className="flex-1 h-px bg-slate-800" />
-        </div>
-      )}
-
       {/* Customer List */}
       {customers.length > 0 ? (
         <div className="space-y-3">
@@ -93,11 +81,14 @@ export default async function CustomersPage() {
         <div className="text-center py-16 bg-slate-900 rounded-3xl border border-slate-800">
           <div className="text-5xl mb-4">👥</div>
           <p className="text-slate-300 font-bold text-base">No saved customers yet</p>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-slate-500 text-sm mt-1 mb-6">
             Add customers above, or tick "Save to customer list" when creating a booking.
           </p>
         </div>
       )}
+
+      {/* FAB with Bottom Sheet */}
+      <AddCustomerForm />
     </div>
   )
 }

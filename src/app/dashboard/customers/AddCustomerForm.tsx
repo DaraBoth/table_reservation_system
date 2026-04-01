@@ -2,7 +2,9 @@
 
 import { useActionState, useState } from 'react'
 import { addCommonCustomer } from '@/app/actions/customers'
-import { UserPlus, ChevronDown, ChevronUp } from 'lucide-react'
+import { UserPlus, ChevronDown, ChevronUp, Plus } from 'lucide-react'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { Button } from '@/components/ui/button'
 
 type ActionState = { error: string } | { success: true } | null
 
@@ -11,29 +13,21 @@ export function AddCustomerForm() {
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden">
-      {/* Toggle header */}
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-3 p-5 text-left transition-colors hover:bg-slate-800/40"
-      >
-        <div className="w-10 h-10 rounded-2xl bg-violet-600/15 flex items-center justify-center flex-shrink-0">
-          <UserPlus className="w-5 h-5 text-violet-400" />
-        </div>
-        <div className="flex-1">
-          <p className="text-sm font-bold text-white">Add New Customer</p>
-          <p className="text-xs text-slate-500">Save a customer so staff can select them quickly</p>
-        </div>
-        {open
-          ? <ChevronUp className="w-5 h-5 text-slate-500" />
-          : <ChevronDown className="w-5 h-5 text-slate-500" />
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger
+        render={
+          <Button className="fixed bottom-24 right-5 w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 border-0 shadow-2xl shadow-violet-500/40 z-30 group active:scale-90 transition-all duration-300">
+            <Plus className="w-7 h-7 text-white group-hover:rotate-90 transition-transform duration-300" />
+            <span className="sr-only">Add Customer</span>
+          </Button>
         }
-      </button>
-
-      {/* Form body */}
-      {open && (
-        <form action={action} className="px-5 pb-5 space-y-4 border-t border-slate-800 pt-4">
+      />
+      <SheetContent side="bottom" className="bg-slate-900 border-slate-800 text-white p-6 rounded-t-3xl">
+        <SheetHeader className="p-0 mb-4">
+          <SheetTitle className="text-white text-lg font-black italic tracking-tight">Create User Profile</SheetTitle>
+          <p className="text-xs text-slate-500">Quickly save contact details for future seatings</p>
+        </SheetHeader>
+        <form action={action} className="space-y-4 mt-2">
           {/* Name */}
           <div>
             <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">
@@ -61,12 +55,12 @@ export function AddCustomerForm() {
           </div>
 
           {/* Error / success */}
-          {state && 'error' in state && (
+          {(state as any)?.error && (
             <p className="text-xs text-red-400 font-bold bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
-              ⚠️ {state.error}
+              ⚠️ {(state as any).error}
             </p>
           )}
-          {state && 'success' in state && (
+          {(state as any)?.success && (
             <p className="text-xs text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2">
               ✅ Customer saved!
             </p>
@@ -80,7 +74,7 @@ export function AddCustomerForm() {
             {pending ? 'Saving…' : 'Save Customer'}
           </button>
         </form>
-      )}
-    </div>
+      </SheetContent>
+    </Sheet>
   )
 }

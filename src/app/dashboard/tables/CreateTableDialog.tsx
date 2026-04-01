@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { getTerms } from '@/lib/business-type'
 
 export function CreateTableDialog({ businessType = 'restaurant' }: { businessType?: string }) {
@@ -14,18 +14,18 @@ export function CreateTableDialog({ businessType = 'restaurant' }: { businessTyp
   const terms = getTerms(businessType)
 
   return (
-    <Dialog>
-      <DialogTrigger
+    <Sheet>
+      <SheetTrigger
         render={
           <Button className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 shadow-lg shadow-violet-500/25">
             + Add {terms.unit}
           </Button>
         }
       />
-      <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Add {terms.unit}</DialogTitle>
-        </DialogHeader>
+      <SheetContent side="bottom" className="bg-slate-900 border-slate-800 text-white p-6 rounded-t-3xl">
+        <SheetHeader className="p-0 mb-4">
+          <SheetTitle className="text-white text-lg font-black italic tracking-tight">Add New {terms.unit}</SheetTitle>
+        </SheetHeader>
         <form action={action} className="space-y-4 mt-2">
           <div className="space-y-1.5">
             <Label className="text-slate-300 text-sm">{terms.unit} Name *</Label>
@@ -49,7 +49,7 @@ export function CreateTableDialog({ businessType = 'restaurant' }: { businessTyp
             {pending ? 'Creating...' : `Create ${terms.unit}`}
           </Button>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   )
 }

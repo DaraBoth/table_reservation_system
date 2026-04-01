@@ -3,8 +3,18 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, CalendarDays, Grid3X3, UserCircle, Users, BarChart3, BookUser, BedDouble } from 'lucide-react'
+import { LayoutDashboard, CalendarDays, LayoutGrid, UserCircle, Users, BarChart3, BookUser, BedDouble, Menu, LogOut, ChevronRight, Home, Settings } from 'lucide-react'
 import { getTerms } from '@/lib/business-type'
+import { logout } from '@/app/actions/auth'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import type { BusinessType } from '@/lib/business-type'
 
 interface BottomNavProps {
@@ -16,19 +26,14 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
   const pathname = usePathname()
   const terms = getTerms(businessType)
 
-  // Use BedDouble icon for hotel/guesthouse rooms, Grid3X3 for restaurant tables
-  const unitIcon = terms.hasCheckout ? BedDouble : Grid3X3
+  // Use BedDouble icon for hotel/guesthouse rooms, LayoutGrid for restaurant tables
+  const unitIcon = terms.hasCheckout ? BedDouble : LayoutGrid
 
-  const navItems = [
-    { href: '/dashboard',              label: 'Home',          icon: LayoutDashboard, exact: true  },
+  const primaryItems = [
     { href: '/dashboard/reservations', label: terms.bookings,  icon: CalendarDays,    exact: false },
     { href: '/dashboard/tables',       label: terms.units,     icon: unitIcon,        exact: false },
     { href: '/dashboard/customers',    label: 'Customers',     icon: BookUser,        exact: false },
-    ...(isAdmin ? [
-      { href: '/dashboard/staff',   label: 'Staff',   icon: Users,     exact: false },
-      { href: '/dashboard/reports', label: 'Reports', icon: BarChart3, exact: false },
-    ] : []),
-    { href: '/dashboard/account', label: 'Account', icon: UserCircle, exact: false },
+    { href: '/dashboard/reports', label: 'Reports', icon: BarChart3, exact: false },
   ]
 
   return (
@@ -37,7 +42,7 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
         className="flex items-stretch justify-around px-1" 
         style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))', paddingTop: '0.75rem' }}
       >
-        {navItems.map((item) => {
+        {primaryItems.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
             : pathname.startsWith(item.href)
@@ -49,18 +54,93 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
               href={item.href}
               prefetch={true}
               className={cn(
-                'flex flex-col items-center justify-start flex-1 gap-1.5 transition-all duration-200 relative min-w-[3.5rem]',
+                'flex flex-col items-center justify-start flex-1 gap-1.5 transition-all duration-200 relative min-w-[4rem]',
                 isActive ? 'text-violet-400' : 'text-slate-500'
               )}
             >
-              <Icon className={cn('w-7 h-7 transition-all duration-300', isActive && 'scale-110 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]')} />
+              <Icon 
+                className={cn('w-6 h-6 transition-all duration-300', isActive && 'scale-110 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]')} 
+                fill={isActive ? 'currentColor' : 'none'}
+              />
               <span className={cn('text-[10px] font-bold tracking-wide transition-colors', isActive ? 'text-violet-400' : 'text-slate-500')}>
                 {item.label}
               </span>
             </Link>
           )
         })}
+
+        {/* More Menu Trigger */}
+        <Sheet>
+          <SheetTrigger
+            render={
+              <button
+                className={cn(
+                  'flex flex-col items-center justify-start flex-1 gap-1.5 transition-all duration-200 relative min-w-[4rem]',
+                   pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname === '/dashboard' ? 'text-violet-400' : 'text-slate-500'
+                )}
+              >
+                <div className={cn(
+                  "w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-300 overflow-hidden border border-transparent",
+                  (pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname === '/dashboard') && "border-violet-500/50 scale-110"
+                )}>
+                  <Menu className="w-5 h-5" fill={pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname === '/dashboard' ? 'currentColor' : 'none'} />
+                </div>
+                <span className="text-[10px] font-bold tracking-wide">More</span>
+              </button>
+            }
+          />
+          <SheetContent side="right" className="bg-slate-950 border-slate-800 p-0 sm:max-w-xs">
+            <div className="flex flex-col h-full">
+              <SheetHeader className="p-6 border-b border-slate-800">
+                <SheetTitle className="text-white text-lg font-black">Menu</SheetTitle>
+              </SheetHeader>
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                <MenuLink href="/dashboard" icon={Home} label="Dashboard Home" active={pathname === '/dashboard'} />
+                {isAdmin && (
+                  <MenuLink href="/dashboard/staff" icon={Users} label="Staff Management" active={pathname.startsWith('/dashboard/staff')} />
+                )}
+                <MenuLink href="/dashboard/account" icon={UserCircle} label="System Settings" active={pathname.startsWith('/dashboard/account')} />
+                
+                <div className="pt-4 mt-4 border-t border-slate-800">
+                   <form action={logout}>
+                    <button
+                      type="submit"
+                      className="w-full flex items-center gap-3 p-4 rounded-2xl text-red-400 hover:bg-red-500/10 transition-colors font-bold text-sm"
+                    >
+                      <LogOut className="w-5 h-5" />
+                      Sign Out
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              <div className="p-6 bg-slate-900/50 border-t border-slate-800">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest text-center">
+                  TableBook © 2026
+                </p>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </nav>
+  )
+}
+
+function MenuLink({ href, icon: Icon, label, active }: { href: string; icon: any; label: string; active: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "flex items-center gap-3 p-4 rounded-2xl transition-all font-bold text-sm",
+        active 
+          ? "bg-violet-500/10 text-violet-400 border border-violet-500/20" 
+          : "text-slate-400 hover:bg-slate-800/50 hover:text-white"
+      )}
+    >
+      <Icon className="w-5 h-5" fill={active ? 'currentColor' : 'none'} />
+      {label}
+    </Link>
   )
 }

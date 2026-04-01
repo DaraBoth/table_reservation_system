@@ -5,7 +5,7 @@ import { updateCommonCustomer } from '@/app/actions/customers'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Pencil } from 'lucide-react'
 
 interface EditCustomerDialogProps {
@@ -28,18 +28,18 @@ export function EditCustomerDialog({ customer }: EditCustomerDialogProps) {
   }, [state])
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger
         render={
           <Button variant="ghost" size="icon-sm" className="text-slate-400 hover:text-violet-400 hover:bg-violet-500/10 rounded-xl">
             <Pencil className="w-4 h-4" />
           </Button>
         }
       />
-      <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Edit Customer</DialogTitle>
-        </DialogHeader>
+      <SheetContent side="bottom" className="bg-slate-900 border-slate-800 text-white p-6 rounded-t-3xl">
+        <SheetHeader className="p-0 mb-4">
+          <SheetTitle className="text-white text-lg font-black italic tracking-tight">Edit Customer Reference</SheetTitle>
+        </SheetHeader>
         <form action={action} className="space-y-4 mt-2">
           <input type="hidden" name="id" value={customer.id} />
           
@@ -76,7 +76,7 @@ export function EditCustomerDialog({ customer }: EditCustomerDialogProps) {
             {pending ? 'Saving Changes...' : 'Save Changes'}
           </Button>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   )
 }
