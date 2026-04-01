@@ -3,23 +3,22 @@
 import * as React from 'react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { LayoutGrid, Settings2, Plus, Users, ShieldCheck } from 'lucide-react'
+import { LayoutGrid, Settings2, Plus, Users, ShieldCheck, CircleCheck, CircleX, User } from 'lucide-react'
 import { CreateTableDialog } from './CreateTableDialog'
 import { EditTableSheet } from './EditTableSheet'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import type { Tables } from '@/lib/types/database'
-import type { BusinessTerms } from '@/lib/business-type'
 
 interface TableTabsProps {
   tables: Tables<'physical_tables'>[]
   busyMap: Map<string, { guestName: string; status: string }>
-  terms: BusinessTerms
+  unitsLabel: string
   isAdmin: boolean
   businessType: string
 }
 
-export function TableTabs({ tables, busyMap, terms, isAdmin, businessType }: TableTabsProps) {
+export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType }: TableTabsProps) {
   const [activeTab, setActiveTab] = useState<'status' | 'settings'>('status')
 
   const freeTables = tables.filter(t => !busyMap.has(t.id) && t.is_active).length
@@ -61,14 +60,18 @@ export function TableTabs({ tables, busyMap, terms, isAdmin, businessType }: Tab
           {/* Summary strip */}
           <div className="flex gap-3">
             <div className="flex-1 bg-slate-900 border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center text-lg">✅</div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+                <CircleCheck className="w-5 h-5 text-emerald-400" />
+              </div>
               <div>
                 <p className="text-2xl font-black text-white">{freeTables}</p>
                 <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Free Today</p>
               </div>
             </div>
             <div className="flex-1 bg-slate-900 border border-rose-500/20 rounded-2xl p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center text-lg">🔴</div>
+              <div className="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center">
+                <CircleX className="w-5 h-5 text-rose-400" />
+              </div>
               <div>
                 <p className="text-2xl font-black text-white">{busyTables}</p>
                 <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Busy Today</p>
@@ -123,8 +126,8 @@ export function TableTabs({ tables, busyMap, terms, isAdmin, businessType }: Tab
                   </div>
 
                   {isBusy && busyInfo?.guestName && (
-                    <p className="text-[10px] text-rose-400/80 font-bold truncate mt-2">
-                      👤 {busyInfo.guestName}
+                    <p className="text-[10px] text-rose-400/80 font-bold truncate mt-2 flex items-center gap-1">
+                      <User className="w-3 h-3 flex-shrink-0" /> {busyInfo.guestName}
                     </p>
                   )}
                 </div>
@@ -144,7 +147,7 @@ export function TableTabs({ tables, busyMap, terms, isAdmin, businessType }: Tab
         /* Management View */
         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
            <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-black text-white italic tracking-tight">{terms.units} Management</h3>
+            <h3 className="text-sm font-black text-white italic tracking-tight">{unitsLabel} Management</h3>
             <CreateTableDialog businessType={businessType} />
           </div>
 

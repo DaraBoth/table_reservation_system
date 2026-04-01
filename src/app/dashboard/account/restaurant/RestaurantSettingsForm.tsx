@@ -5,6 +5,7 @@ import { updateOwnRestaurantInfo } from '@/app/actions/restaurants'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { AlertTriangle, CircleCheck } from 'lucide-react'
 
 export function RestaurantSettingsForm({ restaurant }: { restaurant: any }) {
   const [state, action, pending] = useActionState(updateOwnRestaurantInfo, null)
@@ -64,8 +65,8 @@ export function RestaurantSettingsForm({ restaurant }: { restaurant: any }) {
       </div>
 
       <div className="pt-2">
-        {state?.error && <p className="text-rose-400 text-sm font-bold px-1 mb-3 animate-in fade-in slide-in-from-top-1">⚠️ {state.error}</p>}
-        {state?.success && <p className="text-emerald-400 text-sm font-bold px-1 mb-3 animate-in fade-in slide-in-from-top-1">✅ {state.success}</p>}
+        {state?.error && <p className="text-rose-400 text-sm font-bold px-1 mb-3 animate-in fade-in slide-in-from-top-1 flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 flex-shrink-0" /> {state.error}</p>}
+        {state?.success && <p className="text-emerald-400 text-sm font-bold px-1 mb-3 animate-in fade-in slide-in-from-top-1 flex items-center gap-1.5"><CircleCheck className="w-4 h-4 flex-shrink-0" /> {state.success}</p>}
         
         <Button
           type="submit"

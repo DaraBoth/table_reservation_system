@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { CreateStaffDialog } from './CreateStaffDialog'
 import { StaffPasswordResetButton } from './StaffPasswordReset'
 import type { Tables } from '@/lib/types/database'
-import { UserCheck, UserX, Plus } from 'lucide-react'
+import { UserCheck, UserX, Plus, Users } from 'lucide-react'
 
 export const metadata = { title: 'Staff — TableBook' }
 
@@ -118,7 +118,9 @@ export default async function StaffPage() {
         </div>
       ) : (
         <div className="text-center py-16 bg-slate-900 rounded-3xl border border-slate-800">
-          <div className="text-5xl mb-4">👥</div>
+          <div className="mb-4 flex justify-center">
+            <Users className="w-12 h-12 text-slate-600" />
+          </div>
           <p className="text-slate-300 font-bold text-base">No staff members yet</p>
           <p className="text-slate-500 text-sm mt-1 mb-6">Add your first staff member to get started</p>
           <CreateStaffDialog />

@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button-variants'
 import { parseTsRange } from '@/lib/utils' // removed from use
 import type { Tables } from '@/lib/types/database'
-import { Plus, ChevronRight } from 'lucide-react'
+import { Plus, ChevronRight, ClipboardList, Calendar } from 'lucide-react'
 import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
 
@@ -131,7 +131,9 @@ export default async function ReservationsPage() {
       {/* Empty state */}
       {reservations.length === 0 && (
         <div className="text-center py-16 bg-slate-900 rounded-3xl border border-slate-800">
-          <div className="text-5xl mb-4">📋</div>
+          <div className="mb-4 flex justify-center">
+            <ClipboardList className="w-12 h-12 text-slate-600" />
+          </div>
           <p className="text-slate-300 font-bold text-base">No {terms.bookingsLower} yet</p>
           <p className="text-slate-500 text-sm mt-1 mb-6">Add your first {terms.bookingLower} now</p>
           <Link
@@ -211,7 +213,7 @@ function BookingCard({
       {/* Date/time */}
       {dayStr && (
         <p className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
-          <span>📅</span> {dayStr}{timeStr && ` · ${timeStr}`}
+          <Calendar className="w-3 h-3" /> {dayStr}{timeStr && ` · ${timeStr}`}
         </p>
       )}
 

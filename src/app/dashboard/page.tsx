@@ -185,7 +185,9 @@ export default async function DashboardPage() {
           </div>
         ) : (
           <div className="text-center py-12 bg-slate-900 rounded-2xl border border-slate-800">
-            <div className="text-4xl mb-3">📅</div>
+            <div className="mb-3 flex justify-center">
+              <CalendarDays className="w-10 h-10 text-slate-600" />
+            </div>
             <p className="text-slate-400 text-sm font-medium">No {terms.bookingsLower} yet</p>
             <Link
               href="/dashboard/reservations/new"

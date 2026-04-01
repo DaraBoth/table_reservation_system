@@ -79,10 +79,11 @@ export function NotificationManager({ restaurantId }: { restaurantId?: string })
       .upsert({
         user_id: user.id,
         restaurant_id: restaurantId || null,
+        endpoint: subscription.endpoint,
         subscription: subscription as any,
         device_info: deviceInfo,
       }, {
-        onConflict: 'user_id, subscription'
+        onConflict: 'user_id,endpoint'
       })
 
     if (error) {

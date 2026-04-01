@@ -3,6 +3,8 @@
 import { useActionState, useState } from 'react'
 import { cancelReservation, updateReservationStatus } from '@/app/actions/reservations'
 import { cn } from '@/lib/utils'
+import { Clock, CircleCheck, UserCheck, CheckCheck, UserX, Ban, Check } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 export function CancelReservationButton({ reservationId }: { reservationId: string }) {
   const [, action, pending] = useActionState(cancelReservation, null)
@@ -14,20 +16,25 @@ export function CancelReservationButton({ reservationId }: { reservationId: stri
         disabled={pending}
         className="w-full flex items-center justify-center gap-2 h-12 rounded-2xl border-2 border-red-500/30 text-red-400 bg-red-500/5 hover:bg-red-500/10 active:scale-[0.98] transition-all font-bold text-sm"
       >
-        <span className="text-base">🚫</span>
+        <Ban className="w-4 h-4" />
         {pending ? 'Cancelling...' : 'Cancel This Booking'}
       </button>
     </form>
   )
 }
 
-const STATUS_OPTIONS = [
-  { value: 'pending',   label: 'Waiting',    emoji: '⏳', color: 'border-amber-500/40   bg-amber-500/10   text-amber-300'  },
-  { value: 'confirmed', label: 'Confirmed',   emoji: '✅', color: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'},
-  { value: 'arrived',   label: 'Arrived',     emoji: '🛋️', color: 'border-blue-500/40    bg-blue-500/10    text-blue-300'   },
-  { value: 'completed', label: 'Done',        emoji: '🎉', color: 'border-slate-500/40   bg-slate-500/10   text-slate-300'  },
-  { value: 'no_show',   label: 'No Show',     emoji: '👻', color: 'border-orange-500/40  bg-orange-500/10  text-orange-300' },
-] as const
+const STATUS_OPTIONS: Array<{
+  value: 'pending' | 'confirmed' | 'arrived' | 'completed' | 'no_show'
+  label: string
+  icon: LucideIcon
+  color: string
+}> = [
+  { value: 'pending',   label: 'Waiting',   icon: Clock,       color: 'border-amber-500/40   bg-amber-500/10   text-amber-300'  },
+  { value: 'confirmed', label: 'Confirmed', icon: CircleCheck, color: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'},
+  { value: 'arrived',   label: 'Arrived',   icon: UserCheck,   color: 'border-blue-500/40    bg-blue-500/10    text-blue-300'   },
+  { value: 'completed', label: 'Done',      icon: CheckCheck,  color: 'border-slate-500/40   bg-slate-500/10   text-slate-300'  },
+  { value: 'no_show',   label: 'No Show',   icon: UserX,       color: 'border-orange-500/40  bg-orange-500/10  text-orange-300' },
+]
 
 export function UpdateStatusButton({
   reservationId,
@@ -60,10 +67,10 @@ export function UpdateStatusButton({
                   : 'border-slate-800 bg-slate-950 text-slate-500 hover:border-slate-700 hover:text-slate-300'
               )}
             >
-              <span className="text-base leading-none">{opt.emoji}</span>
+              <opt.icon className="w-4 h-4 flex-shrink-0" />
               <span className="truncate">{opt.label}</span>
               {isActive && (
-                <span className="ml-auto text-[10px] font-black opacity-70">✓</span>
+                <Check className="ml-auto w-3 h-3 opacity-70" />
               )}
             </button>
           )
@@ -85,7 +92,7 @@ export function UpdateStatusButton({
       </button>
 
       {state?.error && <p className="text-xs text-red-400 text-center">{state.error}</p>}
-      {state?.success && <p className="text-xs text-emerald-400 text-center">✓ Status updated</p>}
+      {state?.success && <p className="text-xs text-emerald-400 text-center flex items-center justify-center gap-1"><Check className="w-3 h-3" /> Status updated</p>}
     </form>
   )
 }
