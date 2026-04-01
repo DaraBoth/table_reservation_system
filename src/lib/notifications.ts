@@ -120,3 +120,27 @@ export async function notifyCancellation(reservationId: string) {
     url: `/dashboard/reservations`,
   })
 }
+
+/**
+ * High-level helper for booking updates
+ */
+export async function notifyBookingUpdate(reservationId: string) {
+  const supabase = createAdminClient()
+  
+  const { data: res, error } = await supabase
+    .from('reservations')
+    .select('*, physical_tables(table_name)')
+    .eq('id', reservationId)
+    .single()
+
+  if (error || !res) return
+
+  const tableName = (res.physical_tables as any)?.table_name || '—'
+  
+  await dispatchPushNotification({
+    restaurantId: res.restaurant_id,
+    title: `Booking Updated: ${res.guest_name}`,
+    body: `${tableName} | ${res.party_size} People | Status: ${res.status.toUpperCase()}`,
+    url: `/dashboard/reservations/${res.id}/edit`,
+  })
+}

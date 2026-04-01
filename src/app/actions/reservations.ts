@@ -167,9 +167,11 @@ export async function updateReservationStatus(_: ActionState, formData: FormData
   if (error) return { error: error.message }
 
   // 🔔 Trigger Push Notification
+  const { notifyArrival, notifyBookingUpdate } = await import('@/lib/notifications')
   if (status === 'arrived') {
-    const { notifyArrival } = await import('@/lib/notifications')
     notifyArrival(reservationId)
+  } else {
+    notifyBookingUpdate(reservationId)
   }
 
   revalidatePath('/dashboard/reservations')
@@ -238,6 +240,10 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
     }
     return { error: error.message }
   }
+
+  // 🔔 Trigger Push Notification
+  const { notifyBookingUpdate } = await import('@/lib/notifications')
+  notifyBookingUpdate(reservationId)
 
   revalidatePath('/dashboard/reservations')
   revalidatePath(`/dashboard/reservations/${reservationId}`)

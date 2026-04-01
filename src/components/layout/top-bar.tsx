@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { logout } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { LogOut, ChevronRight } from 'lucide-react'
+import { NotificationBell } from '@/components/notification-bell'
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Home',
@@ -19,9 +20,10 @@ interface TopBarProps {
   brandName: string
   userName: string
   userEmail?: string
+  restaurantId?: string
 }
 
-export function TopBar({ brandName, userName }: TopBarProps) {
+export function TopBar({ brandName, userName, restaurantId }: TopBarProps) {
   const pathname = usePathname()
 
   // Find matching title (longest match wins for nested routes)
@@ -59,9 +61,11 @@ export function TopBar({ brandName, userName }: TopBarProps) {
           {title}
         </h1>
 
-        {/* Right: Sign Out */}
-        <form action={logout}>
-          <Button
+        {/* Right: Actions */}
+        <div className="flex items-center gap-1.5 translate-x-1.5">
+          <NotificationBell restaurantId={restaurantId} />
+          <form action={logout}>
+            <Button
             variant="ghost"
             size="icon"
             type="submit"
@@ -71,6 +75,7 @@ export function TopBar({ brandName, userName }: TopBarProps) {
             <LogOut className="w-4 h-4" />
           </Button>
         </form>
+        </div>
       </div>
     </header>
   )
