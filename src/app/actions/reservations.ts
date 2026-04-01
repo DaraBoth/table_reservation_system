@@ -61,7 +61,7 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
   const startTimeStr = String(startObj.getHours()).padStart(2,'0') + ':' + String(startObj.getMinutes()).padStart(2,'0') + ':00'
   const endTimeStr = String(endObj.getHours()).padStart(2,'0') + ':' + String(endObj.getMinutes()).padStart(2,'0') + ':00'
 
-  const { error } = await supabase.from('reservations').insert({
+  const { data, error } = await supabase.from('reservations').insert({
     restaurant_id: membership.restaurant_id,
     table_id: tableId,
     guest_name: guestName,
