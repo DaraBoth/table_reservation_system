@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
-import { Sidebar } from '@/components/layout/sidebar'
-import type { AccountMembership, Profile } from '@/lib/types/database'
 import { redirect } from 'next/navigation'
+import { SuperadminNav } from '@/components/layout/superadmin-nav'
+import type { Tables } from '@/lib/types/database'
 
 export default async function SuperadminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -14,7 +14,7 @@ export default async function SuperadminLayout({ children }: { children: React.R
     .eq('user_id', user.id)
     .single()
 
-  const membership = membershipRaw as Pick<AccountMembership, 'role'> | null
+  const membership = membershipRaw as Pick<Tables<'account_memberships'>, 'role'> | null
   if (membership?.role !== 'superadmin') redirect('/dashboard')
 
   const { data: profileRaw } = await supabase
@@ -23,24 +23,16 @@ export default async function SuperadminLayout({ children }: { children: React.R
     .eq('id', user.id)
     .single()
 
-  const profile = profileRaw as Pick<Profile, 'full_name'> | null
+  const profile = profileRaw as Pick<Tables<'profiles'>, 'full_name'> | null
   const displayName = profile?.full_name || user.email?.split('@')[0] || 'Superadmin'
 
   return (
-    <div className="flex h-screen bg-slate-950 overflow-hidden">
-      <Sidebar 
-        user={{
-          email: user.email,
-          name: displayName
-        }}
-        role="Superadmin"
-        brandName="TableBook"
-        type="superadmin"
-      />
+    <div className="min-h-screen bg-slate-950 flex flex-col lg:flex-row">
+      <SuperadminNav userName={displayName} userEmail={user.email} />
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
-        <div className="p-10 lg:p-12 w-full min-h-full">
+      <main className="flex-1 min-w-0 pt-14 lg:pt-0 overflow-x-hidden">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10 w-full">
           {children}
         </div>
       </main>

@@ -10,11 +10,11 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import type { Restaurant, MembershipWithProfile } from '@/lib/types/database'
+import type { Tables } from '@/lib/types/database'
 
 interface Props {
-  restaurant: Restaurant
-  members: MembershipWithProfile[]
+  restaurant: Tables<'restaurants'>
+  members: (Tables<'account_memberships'> & { profiles: Pick<Tables<'profiles'>, 'full_name' | 'avatar_url'> | null })[]
 }
 
 export function RestaurantDetailClient({ restaurant, members }: Props) {

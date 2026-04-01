@@ -1,10 +1,9 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { buttonVariants } from '@/components/ui/button-variants'
-import type { Restaurant } from '@/lib/types/database'
+import { Plus, ArrowRight, ShieldCheck } from 'lucide-react'
+import type { Tables } from '@/lib/types/database'
 
 export const metadata = { title: 'Restaurants — Superadmin' }
 
@@ -12,75 +11,102 @@ export default async function RestaurantsPage() {
   const supabase = await createClient()
   const { data: raw } = await supabase
     .from('restaurants')
-    .select('*')
+    .select('*, account_memberships(role, profiles(full_name))')
     .order('created_at', { ascending: false })
 
-  const restaurants = (raw ?? []) as Restaurant[]
+  const restaurants = (raw ?? []) as any[]
+  const activeCount = restaurants.filter(r => r.is_active).length
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 pb-10">
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Restaurants</h1>
-          <p className="text-slate-400 text-sm mt-1">{restaurants.length} tenants registered</p>
+          <h1 className="text-2xl font-black text-white">Restaurants</h1>
+          <p className="text-slate-500 text-sm mt-0.5">
+            {restaurants.length} registered · <span className="text-emerald-400 font-bold">{activeCount} active</span>
+          </p>
         </div>
-        <Link href="/superadmin/restaurants/new"
-          className={cn(buttonVariants(), 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 shadow-lg shadow-violet-500/25')}>
-          + New Restaurant
+        <Link
+          href="/superadmin/restaurants/new"
+          className="flex items-center gap-2 h-11 px-5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-violet-500/25 active:scale-[0.98] transition-all whitespace-nowrap"
+        >
+          <Plus className="w-4 h-4" />
+          New Restaurant
         </Link>
       </div>
 
-      <div className="grid gap-4">
-        {restaurants.map((r) => {
-          const isExpired = r.subscription_expires_at && new Date(r.subscription_expires_at) < new Date()
-          const expireDate = r.subscription_expires_at ? new Date(r.subscription_expires_at).toLocaleDateString() : 'No expiry'
-          return (
-            <Card key={r.id} className="bg-slate-900/50 border-slate-800 hover:border-slate-700 transition-colors">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center text-sm font-bold text-white">
-                      {r.name.slice(0, 2).toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-white">{r.name}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">{r.contact_email || '—'} · {r.address || '—'}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Subscription: <span className={isExpired ? 'text-red-400' : 'text-slate-300'}>{expireDate}</span>
-                      </p>
-                    </div>
+      {/* Cards */}
+      {restaurants.length > 0 ? (
+        <div className="space-y-3">
+          {restaurants.map((r) => {
+            const isExpired = r.subscription_expires_at && new Date(r.subscription_expires_at) < new Date()
+            const expireDate = r.subscription_expires_at
+              ? new Date(r.subscription_expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+              : 'No expiry'
+            const leadAdmin = r.account_memberships?.find((m: any) => m.role === 'admin')?.profiles?.full_name || 'No admin'
+
+            return (
+              <div key={r.id} className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden">
+                {/* Top row */}
+                <div className="flex items-center gap-4 p-5">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-800 border border-slate-700 flex items-center justify-center text-base font-black text-white flex-shrink-0">
+                    {r.name.slice(0, 2).toUpperCase()}
                   </div>
-                  <div className="flex items-center gap-3">
-                    {isExpired ? (
-                      <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Expired</Badge>
-                    ) : (
-                      <Badge className={r.is_active ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-700 text-slate-400'}>
-                        {r.is_active ? 'Active' : 'Suspended'}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-base font-black text-white">{r.name}</p>
+                      <Badge className={cn(
+                        'text-[10px] font-bold px-2 py-0.5 rounded-lg border',
+                        isExpired ? 'bg-red-500/15 text-red-400 border-red-500/30'
+                          : r.is_active ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                          : 'bg-slate-700 text-slate-400 border-slate-600'
+                      )}>
+                        {isExpired ? 'Expired' : r.is_active ? 'Active' : 'Suspended'}
                       </Badge>
-                    )}
-                    <Link href={`/superadmin/restaurants/${r.id}`}
-                      className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800')}>
-                      Manage →
-                    </Link>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <ShieldCheck className="w-3 h-3 text-violet-400 flex-shrink-0" />
+                      <p className="text-xs text-slate-500 truncate">Admin: {leadAdmin}</p>
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          )
-        })}
 
-        {!restaurants.length && (
-          <Card className="bg-slate-900/50 border-slate-800 border-dashed">
-            <CardContent className="p-12 text-center">
-              <p className="text-slate-500 mb-4">No restaurants yet</p>
-              <Link href="/superadmin/restaurants/new"
-                className={cn(buttonVariants(), 'bg-gradient-to-r from-violet-600 to-indigo-600 border-0')}>
-                Create your first restaurant
-              </Link>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+                {/* Detail row */}
+                <div className="border-t border-slate-800 px-5 py-3 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap gap-4 text-xs text-slate-500">
+                    {r.contact_email && <span>{r.contact_email}</span>}
+                    {r.address && <span>{r.address}</span>}
+                    <span className={isExpired ? 'text-red-400 font-bold' : 'text-slate-400'}>
+                      Subscription: {expireDate}
+                    </span>
+                  </div>
+                  <Link
+                    href={`/superadmin/restaurants/${r.id}`}
+                    className="flex items-center gap-1 text-sm font-bold text-violet-400 hover:text-violet-300 transition-colors whitespace-nowrap"
+                  >
+                    Manage <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="text-center py-16 bg-slate-900 border border-slate-800 rounded-3xl">
+          <div className="text-5xl mb-4">🍽️</div>
+          <p className="text-slate-300 font-bold mb-1">No restaurants yet</p>
+          <p className="text-slate-500 text-sm mb-6">Create the first restaurant to get started</p>
+          <Link
+            href="/superadmin/restaurants/new"
+            className="inline-flex items-center gap-2 h-11 px-6 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-2xl font-bold text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Create First Restaurant
+          </Link>
+        </div>
+      )}
     </div>
   )
 }

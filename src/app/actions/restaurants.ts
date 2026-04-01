@@ -15,6 +15,7 @@ const CreateRestaurantSchema = z.object({
   contactPhone: z.string().optional(),
   address: z.string().optional(),
   subscriptionExpiresAt: z.string().optional(),
+  businessType: z.enum(['restaurant', 'hotel', 'guesthouse']).default('restaurant'),
   // Admin to create alongside the restaurant
   adminFullName: z.string().min(2, 'Admin name required'),
   adminUsername: z.string().min(2, 'Admin username required'),
@@ -41,6 +42,7 @@ export async function createRestaurant(_: ActionState, formData: FormData): Prom
     contactPhone: formData.get('contactPhone'),
     address: formData.get('address'),
     subscriptionExpiresAt: formData.get('subscriptionExpiresAt'),
+    businessType: formData.get('businessType') || 'restaurant',
     adminFullName: formData.get('adminFullName'),
     adminUsername: formData.get('adminUsername'),
     adminPassword: formData.get('adminPassword'),
@@ -60,6 +62,7 @@ export async function createRestaurant(_: ActionState, formData: FormData): Prom
       contact_phone: parsed.data.contactPhone || null,
       address: parsed.data.address || null,
       subscription_expires_at: parsed.data.subscriptionExpiresAt || null,
+      business_type: parsed.data.businessType,
     })
     .select()
     .single()

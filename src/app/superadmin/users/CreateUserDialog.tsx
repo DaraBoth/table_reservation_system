@@ -7,9 +7,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import type { Restaurant } from '@/lib/types/database'
+import type { Tables } from '@/lib/types/database'
 
-export function CreateUserDialog({ restaurants }: { restaurants: Restaurant[] }) {
+export function CreateUserDialog({ restaurants }: { restaurants: Tables<'restaurants'>[] }) {
   const [state, action, pending] = useActionState(superadminCreateUser, null)
   const [role, setRole] = useState<string>('staff')
 

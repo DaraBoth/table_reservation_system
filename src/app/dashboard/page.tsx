@@ -1,19 +1,30 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button-variants'
-import type { AccountMembership, Reservation } from '@/lib/types/database'
+import type { Tables } from '@/lib/types/database'
+import { CalendarDays, Users, Table2, Clock, Plus, ChevronRight, BedDouble } from 'lucide-react'
+import { parseTsRange } from '@/lib/utils'
+import { getTerms } from '@/lib/business-type'
+import type { BusinessType } from '@/lib/business-type'
 
-export const metadata = { title: 'Dashboard — TableBook' }
+export const metadata = { title: 'Home — TableBook' }
 
 const statusColors: Record<string, string> = {
   pending: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
   confirmed: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
   cancelled: 'bg-red-500/20 text-red-400 border-red-500/30',
-  completed: 'bg-slate-600 text-slate-300',
+  completed: 'bg-slate-600/40 text-slate-300 border-slate-700',
   no_show: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+}
+
+const statusLabels: Record<string, string> = {
+  pending: 'Waiting',
+  confirmed: 'Confirmed',
+  cancelled: 'Cancelled',
+  completed: 'Done',
+  no_show: 'No Show',
 }
 
 export default async function DashboardPage() {
@@ -23,14 +34,17 @@ export default async function DashboardPage() {
 
   const { data: membershipRaw } = await supabase
     .from('account_memberships')
-    .select('role, restaurant_id')
+    .select('role, restaurant_id, restaurants(business_type)')
     .eq('user_id', user.id)
     .single()
 
-  const membership = membershipRaw as AccountMembership | null
+  const membership = membershipRaw as Tables<'account_memberships'> & { restaurants: { business_type: string } | null } | null
   if (!membership?.restaurant_id) return null
 
   const rid = membership.restaurant_id
+  const businessType = (membership.restaurants?.business_type ?? 'restaurant') as BusinessType
+  const terms = getTerms(businessType)
+  const UnitIcon = terms.hasCheckout ? BedDouble : Table2
 
   const { data: reservationsRaw } = await supabase
     .from('reservations')
@@ -48,134 +62,132 @@ export default async function DashboardPage() {
     .from('physical_tables').select('*', { count: 'exact', head: true })
     .eq('restaurant_id', rid).eq('is_active', true)
 
-  const { count: totalStaff } = await supabase
-    .from('account_memberships').select('*', { count: 'exact', head: true })
-    .eq('restaurant_id', rid).eq('role', 'staff').eq('is_active', true)
-
   const { count: pendingCount } = await supabase
     .from('reservations').select('*', { count: 'exact', head: true })
     .eq('restaurant_id', rid).eq('status', 'pending')
 
-  const upcomingReservations = (reservationsRaw ?? []) as unknown as Array<Reservation & { physical_tables: { table_name: string; capacity: number } | null }>
+  const upcomingReservations = (reservationsRaw ?? []) as unknown as Array<Tables<'reservations'> & { physical_tables: { table_name: string; capacity: number } | null }>
 
-  const stats = [
-    { label: 'Total Reservations', value: totalToday ?? 0, icon: '📅', gradient: 'from-violet-600 to-indigo-600' },
-    { label: 'Active Tables', value: totalTables ?? 0, icon: '🪑', gradient: 'from-emerald-600 to-teal-600' },
-    { label: 'Staff Members', value: totalStaff ?? 0, icon: '👥', gradient: 'from-amber-600 to-orange-600' },
-    { label: 'Pending', value: pendingCount ?? 0, icon: '⏳', gradient: 'from-rose-600 to-pink-600' },
-  ]
+  const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-          <p className="text-slate-400 mt-1">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-        </div>
-        <Link href="/dashboard/reservations/new"
-          className={cn(buttonVariants(), 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 shadow-lg shadow-violet-500/25')}>
-          + New Booking
-        </Link>
+    <div className="space-y-6 max-w-2xl mx-auto">
+
+      {/* Greeting Section */}
+      <div className="pt-2">
+        <p className="text-slate-400 text-sm">{todayStr}</p>
+        <h1 className="text-2xl font-black text-white mt-0.5">Today&apos;s Overview</h1>
       </div>
 
-      {/* Bento Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat) => (
-          <Card key={stat.label} className="bg-slate-900/50 border-slate-800 overflow-hidden relative group hover:border-slate-700 transition-all duration-200 hover:-translate-y-0.5">
-            <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-5 group-hover:opacity-10 transition-opacity`} />
-            <CardContent className="p-6 relative">
-              <div className="text-3xl mb-3">{stat.icon}</div>
-              <div className="text-4xl font-bold text-white tabular-nums">{stat.value}</div>
-              <div className="text-sm text-slate-400 mt-1">{stat.label}</div>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Stats Row */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2">
+          <div className="w-9 h-9 rounded-xl bg-violet-500/15 flex items-center justify-center">
+            <CalendarDays className="w-5 h-5 text-violet-400" />
+          </div>
+          <div className="text-3xl font-black text-white tabular-nums">{totalToday ?? 0}</div>
+          <div className="text-xs text-slate-400 font-medium leading-tight">Total {terms.bookings}</div>
+        </div>
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center">
+            <Clock className="w-5 h-5 text-amber-400" />
+          </div>
+          <div className="text-3xl font-black text-white tabular-nums">{pendingCount ?? 0}</div>
+          <div className="text-xs text-slate-400 font-medium leading-tight">Waiting</div>
+        </div>
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2">
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+            <UnitIcon className="w-5 h-5 text-emerald-400" />
+          </div>
+          <div className="text-3xl font-black text-white tabular-nums">{totalTables ?? 0}</div>
+          <div className="text-xs text-slate-400 font-medium leading-tight">{terms.units}</div>
+        </div>
       </div>
 
-      {/* Live Upcoming Reservations */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Card className="bg-slate-900/50 border-slate-800 h-full">
-            <CardHeader className="flex flex-row items-center justify-between pb-4">
-              <CardTitle className="text-white">Upcoming Reservations</CardTitle>
-              <Link href="/dashboard/reservations"
-                className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'text-slate-400 hover:text-white text-xs')}>
-                View all →
-              </Link>
-            </CardHeader>
-            <CardContent>
-              {upcomingReservations.length > 0 ? (
-                <div className="space-y-3">
-                  {upcomingReservations.map((res) => {
-                    const timeStr = res.reservation_time?.replace(/[[\]()]/g, '').split(',')[0]?.trim()
-                    return (
-                      <div key={res.id} className="flex items-center gap-4 p-3 rounded-xl bg-slate-800/40 border border-slate-700/50 hover:border-slate-600 transition-colors">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-600/30 to-indigo-600/30 border border-violet-500/20 flex items-center justify-center text-lg flex-shrink-0">
-                          👤
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-white truncate">{res.guest_name}</p>
-                          <p className="text-xs text-slate-500">
-                            {res.physical_tables?.table_name ?? '—'} · {res.party_size} guests
-                          </p>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <Badge className={`text-xs ${statusColors[res.status] ?? ''}`}>{res.status}</Badge>
-                          {timeStr && (
-                            <p className="text-xs text-slate-500 mt-1">
-                              {new Date(timeStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <p className="text-slate-500 text-sm">No upcoming reservations</p>
-                  <Link href="/dashboard/reservations/new"
-                    className={cn(buttonVariants({ size: 'sm' }), 'mt-4 bg-gradient-to-r from-violet-600 to-indigo-600 border-0')}>
-                    Create first booking
-                  </Link>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+      {/* Quick Action: New Booking */}
+      <Link
+        href="/dashboard/reservations/new"
+        className="flex items-center justify-between w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-2xl p-4 shadow-lg shadow-violet-500/25 transition-all active:scale-[0.98]"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center">
+            <Plus className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="font-bold text-base leading-tight">New {terms.booking}</p>
+            <p className="text-white/70 text-xs mt-0.5">Add a new {terms.unitLower} {terms.bookingLower}</p>
+          </div>
+        </div>
+        <ChevronRight className="w-5 h-5 text-white/60" />
+      </Link>
+
+      {/* Upcoming Bookings */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-bold text-white">Upcoming {terms.bookings}</h2>
+          <Link href="/dashboard/reservations" className="text-sm text-violet-400 font-semibold">
+            See all
+          </Link>
         </div>
 
-        {/* Live Activity */}
-        <Card className="bg-slate-900/50 border-slate-800">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-white text-base flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              Live Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {upcomingReservations.slice(0, 6).map((res, i) => (
-                <div key={res.id}
-                  className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800/50 transition-all duration-300">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-600/40 to-indigo-600/40 border border-violet-500/20 flex items-center justify-center text-xs font-medium text-violet-300 flex-shrink-0">
+        {upcomingReservations.length > 0 ? (
+          <div className="space-y-2">
+            {upcomingReservations.map((res) => {
+              const { start } = parseTsRange(res.reservation_time)
+              const dateDisplay = start
+                ? new Date(start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                : null
+              const timeDisplay = start
+                ? new Date(start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                : null
+              return (
+                <Link
+                  key={res.id}
+                  href={`/dashboard/reservations/${res.id}/edit`}
+                  className="flex items-center gap-4 p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 active:scale-[0.99] transition-all"
+                >
+                  {/* Avatar */}
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-600/30 to-indigo-600/30 border border-violet-500/20 flex items-center justify-center text-base font-black text-violet-300 flex-shrink-0">
                     {res.guest_name.slice(0, 1).toUpperCase()}
                   </div>
+
+                  {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-white truncate font-medium">{res.guest_name}</p>
-                    <p className="text-xs text-slate-500">{res.party_size} guests</p>
+                    <p className="text-sm font-bold text-white truncate">{res.guest_name}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {res.physical_tables?.table_name ?? '—'} {!terms.hasCheckout && `· ${res.party_size} ${res.party_size === 1 ? 'person' : 'people'}`}
+                    </p>
                   </div>
-                  <Badge className={`text-xs ${statusColors[res.status] ?? ''} flex-shrink-0`}>{res.status}</Badge>
-                </div>
-              ))}
-              {!upcomingReservations.length && (
-                <p className="text-slate-500 text-xs text-center py-6">No recent activity</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+
+                  {/* Time + Status */}
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <Badge className={cn('text-[10px] font-bold px-2 py-0.5 border rounded-lg', statusColors[res.status] ?? '')}>
+                      {statusLabels[res.status] ?? res.status}
+                    </Badge>
+                    {(dateDisplay || timeDisplay) && (
+                      <span className="text-xs text-slate-500">
+                        {dateDisplay && <span>{dateDisplay}</span>}
+                        {dateDisplay && timeDisplay && ' · '}
+                        {timeDisplay && <span>{timeDisplay}</span>}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-12 bg-slate-900 rounded-2xl border border-slate-800">
+            <div className="text-4xl mb-3">📅</div>
+            <p className="text-slate-400 text-sm font-medium">No {terms.bookingsLower} yet</p>
+            <Link
+              href="/dashboard/reservations/new"
+              className={cn(buttonVariants({ size: 'sm' }), 'mt-4 bg-gradient-to-r from-violet-600 to-indigo-600 border-0 rounded-xl')}
+            >
+              Add First {terms.booking}
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   )

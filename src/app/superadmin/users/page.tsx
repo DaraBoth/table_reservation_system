@@ -1,20 +1,23 @@
 import { createClient } from '@/lib/supabase/server'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle, ShieldAlert, Users, Info } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { ShieldAlert, Users, User } from 'lucide-react'
 import { CreateUserDialog } from './CreateUserDialog'
 import { DeleteUserButton } from './DeleteUserButton'
-import { cn } from '@/lib/utils'
-import type { Restaurant } from '@/lib/types/database'
+import type { Tables } from '@/lib/types/database'
 
 export const metadata = { title: 'User Management — Superadmin' }
+
+const ROLE_CONFIG = {
+  superadmin: { label: 'Superadmin', icon: ShieldAlert, gradient: 'from-indigo-500 to-blue-600',  bg: 'bg-indigo-600/15', text: 'text-indigo-400' },
+  admin:       { label: 'Admins',    icon: Users,       gradient: 'from-amber-500 to-orange-600',  bg: 'bg-amber-600/15',  text: 'text-amber-400' },
+  staff:       { label: 'Staff',     icon: User,        gradient: 'from-slate-600 to-slate-700',   bg: 'bg-slate-700/30',  text: 'text-slate-400' },
+} as const
 
 export default async function UsersPage() {
   const supabase = await createClient()
 
-  const { data: membersRaw, error: membersError } = await supabase
+  const { data: membersRaw, error } = await supabase
     .from('account_memberships')
     .select('*, profiles(full_name, avatar_url), restaurants(name)')
     .order('role', { ascending: true })
@@ -25,116 +28,106 @@ export default async function UsersPage() {
     .order('name')
 
   const members = (membersRaw ?? []) as any[]
-  const restaurants = (restaurantsRaw ?? []) as Restaurant[]
+  const restaurants = (restaurantsRaw ?? []) as Tables<'restaurants'>[]
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 pb-10">
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight">User Management</h1>
-          <p className="text-slate-400 mt-2 font-medium flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Manage global access for all {members.length} platform participants
-          </p>
+          <h1 className="text-2xl font-black text-white">User Management</h1>
+          <p className="text-slate-500 text-sm mt-0.5">{members.length} total platform users</p>
         </div>
         <CreateUserDialog restaurants={restaurants} />
       </div>
 
-      {membersError && (
-        <Alert variant="destructive" className="bg-red-500/10 border-red-500/20 text-red-400 rounded-3xl p-6">
-          <AlertCircle className="h-5 w-5" />
-          <AlertTitle className="font-black uppercase tracking-widest text-xs ml-2">Database Access Error</AlertTitle>
-          <AlertDescription className="mt-2 text-sm opacity-90">
-            {membersError.message}. This might be due to a security policy restriction.
-          </AlertDescription>
-        </Alert>
+      {/* Error */}
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
+          <p className="text-sm font-bold text-red-400">Database error: {error.message}</p>
+        </div>
       )}
 
-      {/* Diagnostics for Superadmin */}
-      {members.length === 0 && !membersError && (
-        <Alert className="bg-amber-500/10 border-amber-500/20 text-amber-400 rounded-3xl p-6">
-          <Info className="h-5 w-5" />
-          <AlertTitle className="font-black uppercase tracking-widest text-xs ml-2">Visibility Insight</AlertTitle>
-          <AlertDescription className="mt-2 text-sm opacity-90">
-            The system found 0 records matching your permissions. If you expect users here, check if their profiles are correctly provisioned in the base platform.
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Role sections */}
+      {(['superadmin', 'admin', 'staff'] as const).map((role) => {
+        const roleMembers = members.filter(m => m.role === role)
+        if (roleMembers.length === 0 && role !== 'admin') return null
 
-      <div className="grid gap-8">
-        {['superadmin', 'admin', 'staff'].map((role) => {
-          const roleMembers = members.filter(m => m.role === role)
-          if (roleMembers.length === 0 && role !== 'admin') return null
+        const config = ROLE_CONFIG[role]
+        const Icon = config.icon
 
-          return (
-            <Card key={role} className="bg-slate-900/40 backdrop-blur-xl border-slate-800/60 shadow-3xl overflow-hidden rounded-[2.5rem] transition-all hover:border-slate-700/50">
-              <CardHeader className="border-b border-slate-800/40 pb-6 p-8">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl font-black text-white capitalize flex items-center gap-3 tracking-tight">
-                    <div className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center",
-                      role === 'superadmin' ? 'bg-indigo-600/20 text-indigo-400' : role === 'admin' ? 'bg-amber-600/20 text-amber-400' : 'bg-slate-700/20 text-slate-400'
-                    )}>
-                      {role === 'superadmin' ? <ShieldAlert className="h-5 w-5" /> : role === 'admin' ? <Users className="h-5 w-5" /> : <Users className="h-5 w-5" />}
-                    </div>
-                    {role}s
-                  </CardTitle>
-                  <Badge variant="outline" className="bg-slate-800/40 text-slate-500 border-slate-800 text-[10px] uppercase font-black tracking-widest px-4 py-1 rounded-full">
-                    {roleMembers.length} Accounts
-                  </Badge>
+        return (
+          <section key={role}>
+            {/* Section header */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className={cn('w-7 h-7 rounded-xl flex items-center justify-center', config.bg)}>
+                  <Icon className={cn('w-4 h-4', config.text)} />
                 </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y divide-slate-800/40">
-                  {roleMembers.map((m) => (
-                    <div key={m.id} className="flex items-center justify-between p-6 hover:bg-slate-800/20 transition-all duration-300">
-                      <div className="flex items-center gap-5">
-                        <Avatar className="h-14 w-14 border-2 border-slate-800 ring-2 ring-transparent group-hover:ring-violet-500/20 transition-all">
-                          <AvatarFallback className={cn(
-                            "font-black text-white",
-                            m.role === 'superadmin' ? 'bg-gradient-to-br from-indigo-500 to-blue-600' : m.role === 'admin' ? 'bg-gradient-to-br from-amber-500 to-orange-600' : 'bg-slate-700'
-                          )}>
-                            {(m.profiles?.full_name || 'U').slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-black text-lg text-white leading-tight">{m.profiles?.full_name || 'System Identity'}</p>
-                          <div className="flex items-center gap-3 mt-1.5">
-                            {m.restaurants && (
-                              <Badge className="bg-slate-800/60 text-slate-400 border-0 text-[10px] py-0 px-2 rounded-md font-bold">
-                                {m.restaurants.name}
-                              </Badge>
-                            )}
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">Provisioned {new Date(m.created_at).toLocaleDateString()}</p>
-                          </div>
+                <h2 className="text-base font-black text-white capitalize">{config.label}</h2>
+                <Badge className="bg-slate-800 text-slate-400 border-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-lg">
+                  {roleMembers.length}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Member cards */}
+            {roleMembers.length > 0 ? (
+              <div className="space-y-2">
+                {roleMembers.map((m) => {
+                  const name = m.profiles?.full_name || 'Unknown User'
+                  const joinedDate = new Date(m.created_at).toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric', year: 'numeric'
+                  })
+
+                  return (
+                    <div key={m.id} className="bg-slate-900 border border-slate-800 rounded-3xl p-4 flex items-center gap-4">
+                      {/* Avatar */}
+                      <div className={cn(
+                        'w-12 h-12 rounded-2xl bg-gradient-to-br flex items-center justify-center text-base font-black text-white flex-shrink-0',
+                        config.gradient
+                      )}>
+                        {name.slice(0, 2).toUpperCase()}
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-black text-white truncate">{name}</p>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          {m.restaurants && (
+                            <span className="text-xs text-slate-500 truncate">{m.restaurants.name}</span>
+                          )}
+                          <span className="text-xs text-slate-600">· {joinedDate}</span>
                         </div>
                       </div>
-                      
-                      <div className="flex items-center gap-6">
+
+                      {/* Status + delete */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         <Badge className={cn(
-                          "text-[10px] font-black uppercase tracking-widest px-4 py-1 rounded-full",
-                          m.is_active ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'
+                          'text-[10px] font-bold border px-2 py-0.5 rounded-xl hidden sm:inline-flex',
+                          m.is_active
+                            ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                            : 'bg-red-500/15 text-red-400 border-red-500/30'
                         )}>
-                          {m.is_active ? 'Authorized' : 'Deactivated'}
+                          {m.is_active ? 'Active' : 'Disabled'}
                         </Badge>
-                        
                         {m.role !== 'superadmin' && (
                           <DeleteUserButton userId={m.user_id} />
                         )}
                       </div>
                     </div>
-                  ))}
-                  {roleMembers.length === 0 && (
-                    <div className="p-12 text-center text-slate-600 text-xs font-black uppercase tracking-[0.2em]">
-                      No active {role} nodes detect.
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="bg-slate-900 border border-slate-800 border-dashed rounded-2xl py-8 text-center">
+                <p className="text-slate-600 text-xs font-bold uppercase tracking-widest">No {config.label.toLowerCase()} yet</p>
+              </div>
+            )}
+          </section>
+        )
+      })}
     </div>
   )
 }

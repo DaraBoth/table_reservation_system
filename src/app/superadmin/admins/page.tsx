@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import { AdminPasswordResetCard } from './AdminPasswordResetClient'
+import { ShieldCheck, KeyRound } from 'lucide-react'
 
 export const metadata = { title: 'Admin Accounts — Superadmin' }
 
@@ -14,45 +15,79 @@ export default async function AdminsPage() {
     .eq('role', 'admin')
     .order('created_at', { ascending: false })
 
+  const list = (members ?? []) as any[]
+  const activeCount = list.filter(m => m.is_active).length
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-10">
+
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Admin Accounts</h1>
-        <p className="text-slate-400 text-sm mt-1">{members?.length ?? 0} admin accounts across all restaurants</p>
+        <h1 className="text-2xl font-black text-white">Admin Accounts</h1>
+        <p className="text-slate-500 text-sm mt-0.5">
+          {list.length} admins across all restaurants ·{' '}
+          <span className="text-emerald-400 font-bold">{activeCount} active</span>
+        </p>
       </div>
 
-      <div className="grid gap-4">
-        {members?.map((m: any) => (
-          <Card key={m.id} className="bg-slate-900/50 border-slate-800">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center text-sm font-bold text-white">
-                    {(m.profiles?.full_name || 'A').slice(0, 2).toUpperCase()}
+      {/* Cards */}
+      {list.length > 0 ? (
+        <div className="space-y-3">
+          {list.map((m) => {
+            const name = m.profiles?.full_name || 'Admin'
+            const restaurant = m.restaurants?.name || 'Unknown Restaurant'
+            const joinedDate = new Date(m.created_at).toLocaleDateString('en-US', {
+              month: 'short', day: 'numeric', year: 'numeric',
+            })
+
+            return (
+              <div key={m.id} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 flex items-center gap-4">
+                {/* Avatar */}
+                <div className="relative flex-shrink-0">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-lg font-black text-white shadow-lg shadow-amber-500/20">
+                    {name.slice(0, 2).toUpperCase()}
                   </div>
-                  <div>
-                    <p className="font-medium text-white">{m.profiles?.full_name || 'Admin'}</p>
-                    <p className="text-xs text-slate-500">{m.restaurants?.name || 'Unknown Restaurant'}</p>
-                  </div>
+                  <span className={cn(
+                    'absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-slate-900',
+                    m.is_active ? 'bg-emerald-500' : 'bg-red-500'
+                  )} />
                 </div>
-                <div className="flex items-center gap-3">
-                  <Badge className={m.is_active ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs' : 'bg-slate-700 text-slate-400 text-xs'}>
-                    {m.is_active ? 'Active' : 'Disabled'}
-                  </Badge>
-                  <AdminPasswordResetCard userId={m.user_id} name={m.profiles?.full_name || 'Admin'} />
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-base font-black text-white">{name}</p>
+                    <Badge className={cn(
+                      'text-[10px] font-bold border px-2 py-0.5 rounded-xl',
+                      m.is_active
+                        ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                        : 'bg-red-500/15 text-red-400 border-red-500/30'
+                    )}>
+                      {m.is_active ? 'Active' : 'Disabled'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <ShieldCheck className="w-3 h-3 text-violet-400 flex-shrink-0" />
+                    <p className="text-xs text-slate-500 truncate">{restaurant}</p>
+                  </div>
+                  <p className="text-xs text-slate-600 mt-0.5">Joined {joinedDate}</p>
+                </div>
+
+                {/* Reset password */}
+                <div className="flex-shrink-0">
+                  <AdminPasswordResetCard userId={m.user_id} name={name} />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-        {!members?.length && (
-          <Card className="bg-slate-900/50 border-slate-800 border-dashed">
-            <CardContent className="p-12 text-center">
-              <p className="text-slate-500">No admin accounts yet. Create a restaurant to add an admin.</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="text-center py-16 bg-slate-900 border border-slate-800 rounded-3xl">
+          <div className="text-5xl mb-4">🛡️</div>
+          <p className="text-slate-300 font-bold mb-1">No admin accounts yet</p>
+          <p className="text-slate-500 text-sm">Create a restaurant and assign an admin to get started.</p>
+        </div>
+      )}
     </div>
   )
 }

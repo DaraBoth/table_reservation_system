@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import type { ActionState } from './auth'
 
@@ -16,6 +17,7 @@ const ReservationSchema = z.object({
   party_size: z.coerce.number().int().min(1, 'Party size must be at least 1'),
   notes: z.string().optional(),
   startTime: z.string().min(1, 'Start time is required'),
+  endTime: z.string().optional(), // hotel checkout
   saveToCommon: z.boolean().optional(),
 })
 
@@ -41,20 +43,21 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
     party_size: formData.get('partySize'),
     notes: formData.get('notes'),
     startTime: formData.get('startTime'),
+    endTime: formData.get('endTime') as string | null || undefined,
     saveToCommon: formData.get('saveToCommon') === 'true',
   })
 
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-  const { tableId, guestName, guestPhone, party_size: partySize, notes, startTime, saveToCommon } = parsed.data
+  const { tableId, guestName, guestPhone, party_size: partySize, notes, startTime, endTime: providedEnd, saveToCommon } = parsed.data
 
-  // Calculate default 2-hour end time for the database range
+  // Use provided checkout time (hotel) or default to +2 hours (restaurant)
   const startObj = new Date(startTime)
-  const endObj = new Date(startObj.getTime() + 2 * 60 * 60 * 1000)
-  const endTime = endObj.toISOString()
+  const endObj   = providedEnd ? new Date(providedEnd) : new Date(startObj.getTime() + 2 * 60 * 60 * 1000)
+  const resolvedEnd = endObj.toISOString()
 
   // Build tsrange string: '[start, end)'
-  const reservationTime = `[${startTime}, ${endTime})`
+  const reservationTime = `[${startTime}, ${resolvedEnd})`
 
   const { error } = await supabase.from('reservations').insert({
     restaurant_id: membership.restaurant_id,
@@ -82,14 +85,14 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
       restaurant_id: membership.restaurant_id,
       name: guestName,
       phone: guestPhone || null,
-      default_party_size: partySize,
-      notes: notes || null,
+      // party_size optional — not required for saved customers
     }, { onConflict: 'restaurant_id,phone' })
   }
 
   revalidatePath('/dashboard/reservations')
+  revalidatePath('/dashboard/tables')
   revalidatePath('/dashboard')
-  return { success: 'Reservation confirmed!' }
+  redirect('/dashboard/tables')
 }
 
 // ─── Cancel reservation ───────────────────────────────────────────────────────
@@ -180,15 +183,16 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
     party_size: formData.get('partySize'),
     notes: formData.get('notes'),
     startTime: formData.get('startTime'),
+    endTime: formData.get('endTime') as string | null || undefined,
   })
 
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-  const { tableId, guestName, guestPhone, party_size: partySize, notes, startTime } = parsed.data
+  const { tableId, guestName, guestPhone, party_size: partySize, notes, startTime, endTime: providedEnd } = parsed.data
 
   const startObj = new Date(startTime)
-  const endObj = new Date(startObj.getTime() + 2 * 60 * 60 * 1000)
-  const range = `[${startTime}, ${endObj.toISOString()})`
+  const endObj   = providedEnd ? new Date(providedEnd) : new Date(startObj.getTime() + 2 * 60 * 60 * 1000)
+  const range    = `[${startTime}, ${endObj.toISOString()})`
 
   const { error } = await supabase
     .from('reservations')
@@ -212,5 +216,6 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
 
   revalidatePath('/dashboard/reservations')
   revalidatePath(`/dashboard/reservations/${reservationId}`)
-  return { success: 'Reservation updated successfully!' }
+  revalidatePath('/dashboard/tables')
+  redirect('/dashboard/tables')
 }
