@@ -98,7 +98,10 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
               <div className="flex-1 overflow-y-auto p-4 space-y-2">
                 <MenuLink href="/dashboard" icon={Home} label="Dashboard Home" active={pathname === '/dashboard'} />
                 {isAdmin && (
-                  <MenuLink href="/dashboard/staff" icon={Users} label="Staff Management" active={pathname.startsWith('/dashboard/staff')} />
+                  <>
+                    <MenuLink href="/dashboard/staff" icon={Users} label="Staff Management" active={pathname.startsWith('/dashboard/staff')} />
+                    <MenuLink href="/dashboard/tables" icon={unitIcon} label={`${terms.units} Settings`} active={false} />
+                  </>
                 )}
                 <MenuLink href="/dashboard/account" icon={UserCircle} label="System Settings" active={pathname.startsWith('/dashboard/account')} />
                 

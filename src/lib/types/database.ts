@@ -290,6 +290,7 @@ export type Database = {
       reservation_status:
         | "pending"
         | "confirmed"
+        | "arrived"
         | "cancelled"
         | "completed"
         | "no_show"

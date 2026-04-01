@@ -58,7 +58,8 @@ export async function updatePhysicalTable(_: ActionState, formData: FormData): P
     .eq('user_id', user.id)
     .single()
 
-  if (membership?.role !== 'admin') return { error: 'Unauthorized' }
+  const canEdit = membership?.role === 'admin' || membership?.role === 'staff'
+  if (!canEdit) return { error: 'Unauthorized — admin or staff only' }
 
   const tableId = formData.get('tableId') as string
   const parsed = TableSchema.safeParse({

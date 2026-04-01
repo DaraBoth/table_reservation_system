@@ -16,13 +16,14 @@ interface Props {
 const statusColors: Record<string, string> = {
   pending:   'bg-amber-500/20 text-amber-400 border-amber-500/30',
   confirmed: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  arrived:   'bg-blue-500/20 text-blue-400 border-blue-500/30',
   cancelled: 'bg-red-500/20 text-red-400 border-red-500/30',
   completed: 'bg-slate-600/40 text-slate-300 border-slate-700',
   no_show:   'bg-orange-500/20 text-orange-400 border-orange-500/30',
 }
 
 const statusLabels: Record<string, string> = {
-  pending: 'Waiting', confirmed: 'Confirmed', cancelled: 'Cancelled',
+  pending: 'Waiting', confirmed: 'Confirmed', arrived: 'Arrived', cancelled: 'Cancelled',
   completed: 'Done', no_show: 'No Show',
 }
 
@@ -80,7 +81,7 @@ export default async function ReportsPage({ searchParams }: Props) {
   // ── Compute stats ──────────────────────────────────────────────────────────
   const total = reservations.length
   const totalPeople = reservations.reduce((s, r) => s + (r.party_size || 0), 0)
-  const confirmed = reservations.filter(r => r.status === 'confirmed').length
+  const confirmed = reservations.filter(r => r.status === 'confirmed' || r.status === 'arrived').length
   const cancelled = reservations.filter(r => r.status === 'cancelled').length
   const completed = reservations.filter(r => r.status === 'completed').length
 

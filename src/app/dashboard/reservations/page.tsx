@@ -14,6 +14,7 @@ export const metadata = { title: 'Bookings — TableBook' }
 const statusColors: Record<string, string> = {
   pending:   'bg-amber-500/20 text-amber-400 border-amber-500/30',
   confirmed: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  arrived:   'bg-blue-500/20 text-blue-400 border-blue-500/30',
   cancelled: 'bg-red-500/20 text-red-400 border-red-500/30',
   completed: 'bg-slate-600/40 text-slate-300 border-slate-700',
   no_show:   'bg-orange-500/20 text-orange-400 border-orange-500/30',
@@ -22,6 +23,7 @@ const statusColors: Record<string, string> = {
 const statusLabels: Record<string, string> = {
   pending:   'Waiting',
   confirmed: 'Confirmed',
+  arrived:   'Arrived',
   cancelled: 'Cancelled',
   completed: 'Done',
   no_show:   'No Show',
@@ -31,6 +33,7 @@ const statusLabels: Record<string, string> = {
 const statusDots: Record<string, string> = {
   pending:   'bg-amber-400',
   confirmed: 'bg-emerald-400',
+  arrived:   'bg-blue-400',
   cancelled: 'bg-red-400',
   completed: 'bg-slate-400',
   no_show:   'bg-orange-400',
@@ -40,6 +43,7 @@ const statusDots: Record<string, string> = {
 const statusAvatarBg: Record<string, string> = {
   pending:   'from-amber-600/30 to-orange-600/30 border-amber-500/20',
   confirmed: 'from-emerald-600/30 to-teal-600/30 border-emerald-500/20',
+  arrived:   'from-blue-600/30 to-indigo-600/30 border-blue-500/20',
   cancelled: 'from-red-600/20 to-rose-600/20 border-red-500/20',
   completed: 'from-slate-600/30 to-slate-700/30 border-slate-600/20',
   no_show:   'from-orange-600/30 to-amber-600/30 border-orange-500/20',

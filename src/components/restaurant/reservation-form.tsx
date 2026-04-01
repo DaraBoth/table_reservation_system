@@ -34,6 +34,7 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
   const [state, action, pending] = useActionState(isEdit ? updateReservation : createReservation, null)
   const [isOccLoading, startOccupancyTransition] = useTransition()
   const terms = getTerms(businessType)
+  const isHotel = businessType === 'hotel' || businessType === 'guesthouse'
 
   // If a table was pre-selected (tapped from Tables page), jump straight to step 2
   const [step, setStep] = useState(preSelectedTableId ? 2 : 1)
@@ -233,8 +234,8 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">🪑</span>
                   <div className="flex-1">
-                    <p className="text-xs text-emerald-400 font-black uppercase tracking-widest">Table selected</p>
-                    <p className="text-sm font-bold text-white">{selectedTable.table_name} · Up to {selectedTable.capacity} people</p>
+                    <p className="text-xs text-emerald-400 font-black uppercase tracking-widest">{terms.unit} selected</p>
+                    <p className="text-sm font-bold text-white">{selectedTable.table_name} · {isHotel ? `${selectedTable.capacity} ${selectedTable.capacity === 1 ? 'Bed' : 'Beds'}` : `Up to ${selectedTable.capacity} people`}</p>
                   </div>
                   <button type="button" onClick={() => goTo(1)} className="text-xs text-slate-400 font-semibold hover:text-white transition-colors">
                     Change table
@@ -267,7 +268,7 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
                     {isEdit ? 'Tap to change date, time or table' : 'Table selected'}
                   </span>
                   <span className="text-sm font-bold text-white">
-                    {selectedTable.table_name} · {selectedTable.capacity} seats
+                    {selectedTable.table_name} · {isHotel ? `${selectedTable.capacity} Beds` : `${selectedTable.capacity} seats`}
                     <span className="text-violet-400 ml-2">·</span>
                     <span className="text-violet-300 text-xs ml-1">
                       {startTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
@@ -297,7 +298,7 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
                       onClick={() => {
                         setGuestName(c.name)
                         setGuestPhone(c.phone || '')
-                        setPartySize(String(c.default_party_size || '2'))
+                        if (!isHotel) setPartySize(String(c.default_party_size || '2'))
                         setNotes(c.notes || '')
                       }}
                       className="px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-sm font-semibold text-slate-300 hover:border-violet-500/50 hover:text-white transition-all active:scale-95"
@@ -324,7 +325,7 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className={cn("grid gap-3", isHotel ? "grid-cols-1" : "grid-cols-2")}>
                 <div>
                   <Label className="text-sm font-bold text-slate-300 mb-2 block">Phone</Label>
                   <Input
@@ -334,17 +335,19 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
                     className="bg-slate-950 border-slate-700 text-white h-14 text-base font-semibold rounded-2xl focus:border-violet-500 px-4"
                   />
                 </div>
-                <div>
-                  <Label className="text-sm font-bold text-slate-300 mb-2 block">How Many People *</Label>
-                  <Input
-                    value={partySize}
-                    onChange={e => setPartySize(e.target.value)}
-                    type="number"
-                    required
-                    min={1}
-                    className="bg-slate-950 border-slate-700 text-white h-14 text-2xl font-black rounded-2xl focus:border-violet-500 px-4 text-center"
-                  />
-                </div>
+                {!isHotel && (
+                  <div>
+                    <Label className="text-sm font-bold text-slate-300 mb-2 block">How Many People *</Label>
+                    <Input
+                      value={partySize}
+                      onChange={e => setPartySize(e.target.value)}
+                      type="number"
+                      required
+                      min={1}
+                      className="bg-slate-950 border-slate-700 text-white h-14 text-2xl font-black rounded-2xl focus:border-violet-500 px-4 text-center"
+                    />
+                  </div>
+                )}
               </div>
 
               <div>

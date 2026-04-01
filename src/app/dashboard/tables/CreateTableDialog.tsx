@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { createPhysicalTable } from '@/app/actions/tables'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,10 +8,13 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { getTerms } from '@/lib/business-type'
+import { cn } from '@/lib/utils'
 
 export function CreateTableDialog({ businessType = 'restaurant' }: { businessType?: string }) {
   const [state, action, pending] = useActionState(createPhysicalTable, null)
   const terms = getTerms(businessType)
+  const isHotel = businessType === 'hotel' || businessType === 'guesthouse'
+  const [beds, setBeds] = useState(1)
 
   return (
     <Sheet>
@@ -32,11 +35,35 @@ export function CreateTableDialog({ businessType = 'restaurant' }: { businessTyp
             <Input name="tableName" required placeholder={businessType === 'restaurant' ? "Table 1, Window Booth..." : "Room 101, Suite A..."}
               className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-violet-500" />
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-slate-300 text-sm">Capacity *</Label>
-            <Input name="capacity" type="number" required min={1} defaultValue={4}
-              className="bg-slate-800/50 border-slate-700 text-white focus:border-violet-500" />
-          </div>
+          {isHotel ? (
+            <div className="space-y-1.5">
+              <Label className="text-slate-300 text-sm">Number of Beds *</Label>
+              <div className="flex gap-2">
+                {[1, 2, 3].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => setBeds(num)}
+                    className={cn(
+                      "flex-1 h-12 rounded-xl border-2 font-bold transition-all",
+                      beds === num 
+                        ? "border-violet-500 bg-violet-500/10 text-violet-400" 
+                        : "border-slate-800 bg-slate-950 text-slate-500 hover:border-slate-700"
+                    )}
+                  >
+                    {num} {num === 1 ? 'Bed' : 'Beds'}
+                  </button>
+                ))}
+              </div>
+              <input type="hidden" name="capacity" value={beds} />
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <Label className="text-slate-300 text-sm">Capacity *</Label>
+              <Input name="capacity" type="number" required min={1} defaultValue={4}
+                className="bg-slate-800/50 border-slate-700 text-white focus:border-violet-500" />
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label className="text-slate-300 text-sm">Description</Label>
             <Textarea name="description" placeholder="Near window, outdoor..."

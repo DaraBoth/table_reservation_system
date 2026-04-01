@@ -1,0 +1,180 @@
+'use client'
+
+import * as React from 'react'
+import { useState } from 'react'
+import { cn } from '@/lib/utils'
+import { LayoutGrid, Settings2, Plus, Users, ShieldCheck } from 'lucide-react'
+import { CreateTableDialog } from './CreateTableDialog'
+import { EditTableSheet } from './EditTableSheet'
+import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
+import type { Tables } from '@/lib/types/database'
+import type { BusinessTerms } from '@/lib/business-type'
+
+interface TableTabsProps {
+  tables: Tables<'physical_tables'>[]
+  busyMap: Map<string, { guestName: string; status: string }>
+  terms: BusinessTerms
+  isAdmin: boolean
+  businessType: string
+}
+
+export function TableTabs({ tables, busyMap, terms, isAdmin, businessType }: TableTabsProps) {
+  const [activeTab, setActiveTab] = useState<'status' | 'settings'>('status')
+
+  const freeTables = tables.filter(t => !busyMap.has(t.id) && t.is_active).length
+  const busyTables = tables.filter(t => busyMap.has(t.id)).length
+
+  return (
+    <div className="space-y-6">
+      {/* Premium Tab Toggle */}
+      <div className="flex p-1 bg-slate-900 border border-slate-800 rounded-2xl w-full">
+        <button
+          onClick={() => setActiveTab('status')}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-black text-sm transition-all",
+            activeTab === 'status' 
+              ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/20" 
+              : "text-slate-500 hover:text-slate-300"
+          )}
+        >
+          <LayoutGrid className="w-4 h-4" />
+          Status
+        </button>
+        <button
+          onClick={() => setActiveTab('settings')}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-black text-sm transition-all relative",
+            activeTab === 'settings' 
+              ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/20" 
+              : "text-slate-500 hover:text-slate-300"
+          )}
+        >
+          <Settings2 className="w-4 h-4" />
+          Settings
+          {!isAdmin && <span title="Staff Edit Access"><ShieldCheck className="w-3 h-3 absolute top-2 right-2 text-violet-400" /></span>}
+        </button>
+      </div>
+
+      {activeTab === 'status' ? (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          {/* Summary strip */}
+          <div className="flex gap-3">
+            <div className="flex-1 bg-slate-900 border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center text-lg">✅</div>
+              <div>
+                <p className="text-2xl font-black text-white">{freeTables}</p>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Free Today</p>
+              </div>
+            </div>
+            <div className="flex-1 bg-slate-900 border border-rose-500/20 rounded-2xl p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center text-lg">🔴</div>
+              <div>
+                <p className="text-2xl font-black text-white">{busyTables}</p>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Busy Today</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Table Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {tables.map(t => {
+              const busyInfo = busyMap.get(t.id)
+              const isBusy = !!busyInfo
+              const isOffline = !t.is_active
+              const isTappable = !isBusy && !isOffline
+
+              const card = (
+                <div className={cn(
+                  'relative p-4 rounded-2xl border-2 h-full flex flex-col gap-2 transition-all',
+                  isOffline
+                    ? 'bg-slate-950 border-slate-800 opacity-50'
+                    : isBusy
+                      ? 'bg-rose-500/5 border-rose-500/30'
+                      : 'bg-slate-900 border-emerald-500/20 hover:border-emerald-400/60 hover:bg-slate-800/80 active:scale-[0.97]'
+                )}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={cn(
+                      'w-2.5 h-2.5 rounded-full flex-shrink-0',
+                      isOffline ? 'bg-slate-600'
+                        : isBusy ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)] animate-pulse'
+                        : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
+                    )} />
+                    {isOffline && <span className="text-[10px] text-slate-500 font-black uppercase">Offline</span>}
+                  </div>
+
+                  <p className={cn('text-2xl font-black leading-none mb-1', isOffline ? 'text-slate-600' : isBusy ? 'text-rose-100' : 'text-white')}>
+                    {t.table_name}
+                  </p>
+
+                  <p className={cn('text-[11px] font-bold', isOffline ? 'text-slate-600' : 'text-slate-400')}>
+                    {businessType === 'restaurant' ? `Up to ${t.capacity} people` : `${t.capacity} ${t.capacity === 1 ? 'Bed' : 'Beds'}`}
+                  </p>
+
+                  <div className="mt-auto pt-2">
+                    <Badge className={cn(
+                      'text-[10px] font-black w-fit px-2 py-0.5 rounded-lg border uppercase tracking-wider',
+                      isOffline ? 'bg-slate-800 text-slate-500 border-slate-700'
+                        : isBusy ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                        : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                    )}>
+                      {isOffline ? 'Offline' : isBusy ? 'Busy' : 'Free'}
+                    </Badge>
+                  </div>
+
+                  {isBusy && busyInfo?.guestName && (
+                    <p className="text-[10px] text-rose-400/80 font-bold truncate mt-2">
+                      👤 {busyInfo.guestName}
+                    </p>
+                  )}
+                </div>
+              )
+
+              return isTappable ? (
+                <Link key={t.id} href={`/dashboard/reservations/new?tableId=${t.id}`} className="h-full">
+                  {card}
+                </Link>
+              ) : (
+                <div key={t.id} className="h-full">{card}</div>
+              )
+            })}
+          </div>
+        </div>
+      ) : (
+        /* Management View */
+        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+           <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-black text-white italic tracking-tight">{terms.units} Management</h3>
+            <CreateTableDialog businessType={businessType} />
+          </div>
+
+          <div className="space-y-3">
+            {tables.map(t => (
+              <div key={t.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between group">
+                <div className="flex items-center gap-4">
+                  <div className={cn(
+                    "w-12 h-12 rounded-xl flex items-center justify-center text-xl font-black",
+                    t.is_active ? "bg-violet-500/15 text-violet-400" : "bg-slate-800 text-slate-600"
+                  )}>
+                    {t.table_name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className={cn("text-base font-black italic tracking-tight", t.is_active ? "text-white" : "text-slate-500")}>
+                      {t.table_name}
+                    </p>
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">
+                       {businessType === 'restaurant' ? `${t.capacity} Seats` : `${t.capacity} ${t.capacity === 1 ? 'Bed' : 'Beds'}`}
+                       {!t.is_active && " · Offline"}
+                    </p>
+                  </div>
+                </div>
+                
+                <EditTableSheet table={t} businessType={businessType} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

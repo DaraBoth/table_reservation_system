@@ -24,6 +24,7 @@ export function CancelReservationButton({ reservationId }: { reservationId: stri
 const STATUS_OPTIONS = [
   { value: 'pending',   label: 'Waiting',    emoji: '⏳', color: 'border-amber-500/40   bg-amber-500/10   text-amber-300'  },
   { value: 'confirmed', label: 'Confirmed',   emoji: '✅', color: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'},
+  { value: 'arrived',   label: 'Arrived',     emoji: '🛋️', color: 'border-blue-500/40    bg-blue-500/10    text-blue-300'   },
   { value: 'completed', label: 'Done',        emoji: '🎉', color: 'border-slate-500/40   bg-slate-500/10   text-slate-300'  },
   { value: 'no_show',   label: 'No Show',     emoji: '👻', color: 'border-orange-500/40  bg-orange-500/10  text-orange-300' },
 ] as const
