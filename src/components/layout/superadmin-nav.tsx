@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { logout } from '@/app/actions/auth'
 import {
@@ -67,8 +68,8 @@ export function SuperadminNav({ userName, userEmail }: SuperadminNavProps) {
       <aside className="hidden lg:flex flex-col w-64 min-h-screen bg-slate-900/60 backdrop-blur-xl border-r border-slate-800/60 flex-shrink-0">
         {/* Brand */}
         <div className="flex items-center gap-3 p-6 border-b border-slate-800/60">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30 flex-shrink-0">
-            <span className="text-white font-black text-xs">TB</span>
+          <div className="relative w-10 h-10 overflow-hidden flex-shrink-0">
+            <Image src="/logo.png" alt="TableBook Logo" fill className="object-cover" />
           </div>
           <div>
             <p className="text-white font-bold text-sm">TableBook</p>
@@ -107,8 +108,8 @@ export function SuperadminNav({ userName, userEmail }: SuperadminNavProps) {
       {/* ── Mobile Top Bar ───────────────────────────────────── */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/60">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
-            <span className="text-white font-black text-[10px]">TB</span>
+          <div className="relative w-8 h-8 overflow-hidden">
+            <Image src="/logo.png" alt="TableBook Logo" fill className="object-cover" />
           </div>
           <span className="text-white font-bold text-sm">Superadmin</span>
         </div>
@@ -131,8 +132,8 @@ export function SuperadminNav({ userName, userEmail }: SuperadminNavProps) {
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
-                  <span className="text-white font-black text-[10px]">TB</span>
+                <div className="relative w-8 h-8 overflow-hidden">
+                  <Image src="/logo.png" alt="TableBook Logo" fill className="object-cover" />
                 </div>
                 <span className="text-white font-bold text-sm">TableBook</span>
               </div>

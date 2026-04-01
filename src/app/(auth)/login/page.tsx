@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Suspense } from 'react'
+import Image from 'next/image'
 
 function LoginErrorBanner() {
   const searchParams = useSearchParams()
@@ -31,10 +32,8 @@ function LoginForm() {
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-6 py-12">
       {/* App Icon + Name */}
       <div className="flex flex-col items-center gap-4 mb-10">
-        <div className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center shadow-2xl shadow-violet-500/40">
-          <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18M10 3v18M14 3v18" />
-          </svg>
+        <div className="relative w-24 h-24 rounded-[32px] overflow-hidden shadow-[0_0_40px_-10px_rgba(139,92,246,0.5)] border border-white/10">
+          <Image src="/logo.png" alt="TableBook Logo" fill className="object-cover" />
         </div>
         <div className="text-center">
           <h1 className="text-3xl font-black text-white tracking-tight">TableBook</h1>
