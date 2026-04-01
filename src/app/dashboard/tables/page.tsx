@@ -61,7 +61,7 @@ export default async function TablesPage() {
   const busyTables = activeTables.filter(t => busyMap.has(t.id)).length
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto pb-24">
+    <div className="space-y-6 max-w-2xl mx-auto pb-8">
 
       {/* Header with Reports + Add */}
       <div className="flex items-center justify-between pt-2">

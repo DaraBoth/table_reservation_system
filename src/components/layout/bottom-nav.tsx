@@ -37,10 +37,9 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
   ]
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/60 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+    <nav className="fixed bottom-6 left-6 right-6 z-50 bg-slate-900/80 backdrop-blur-2xl border border-slate-800/50 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div 
-        className="flex items-stretch justify-around px-1" 
-        style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))', paddingTop: '0.75rem' }}
+        className="flex items-stretch justify-around px-2 py-3" 
       >
         {primaryItems.map((item) => {
           const isActive = item.exact
