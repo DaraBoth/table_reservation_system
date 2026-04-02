@@ -6,7 +6,7 @@ import type { Tables } from '@/lib/types/database'
 import { CreateTableDialog } from './CreateTableDialog'
 import { TableCard } from './TableCard'
 import Link from 'next/link'
-import { BarChart3 } from 'lucide-react'
+import { BarChart3, CircleCheck, CircleX } from 'lucide-react'
 
 export const metadata = { title: 'Tables — TableBook' }
 
@@ -87,14 +87,18 @@ export default async function TablesPage() {
       {/* Summary strip - RESTORED */}
       <div className="flex gap-3">
         <div className="flex-1 bg-slate-900/50 border border-emerald-500/20 rounded-3xl p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-lg">✅</div>
+          <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+            <CircleCheck className="w-5 h-5 text-emerald-400" />
+          </div>
           <div>
             <p className="text-2xl font-black text-white">{freeTables}</p>
             <p className="text-[10px] text-slate-500 font-black uppercase tracking-wider">Free Today</p>
           </div>
         </div>
         <div className="flex-1 bg-slate-900/50 border border-rose-500/20 rounded-3xl p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-rose-500/10 flex items-center justify-center text-lg">🔴</div>
+          <div className="w-10 h-10 rounded-2xl bg-rose-500/10 flex items-center justify-center">
+            <CircleX className="w-5 h-5 text-rose-400" />
+          </div>
           <div>
             <p className="text-2xl font-black text-white">{busyTables}</p>
             <p className="text-[10px] text-slate-500 font-black uppercase tracking-wider">Busy Today</p>
@@ -119,7 +123,6 @@ export default async function TablesPage() {
                 isBusy={isBusy}
                 isOffline={isOffline}
                 isTappable={isTappable}
-                terms={terms}
                 businessType={businessType}
                 isAdmin={isAdmin}
               />
@@ -128,7 +131,9 @@ export default async function TablesPage() {
         </div>
       ) : (
         <div className="text-center py-20 bg-slate-900/50 rounded-[2.5rem] border border-slate-800 border-dashed">
-          <div className="text-5xl mb-4 grayscale opacity-50">{terms.emoji}</div>
+          <div className="mb-4 grayscale opacity-50 flex justify-center">
+            {(() => { const TermIcon = terms.Icon; return <TermIcon className="w-14 h-14 text-slate-400" /> })()}
+          </div>
           <p className="text-slate-300 font-black text-lg italic tracking-tight">No {terms.unitsLower} yet</p>
           <p className="text-slate-500 text-xs mt-1 mb-8 font-bold uppercase tracking-widest">Get started by adding your first unit</p>
           {canManage && <CreateTableDialog businessType={businessType} />}

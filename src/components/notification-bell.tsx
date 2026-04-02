@@ -81,9 +81,10 @@ export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
       const { error } = await supabase.from('push_subscriptions').upsert({
         user_id: user.id,
         restaurant_id: restaurantId || null,
+        endpoint: subscription.endpoint,
         subscription: subscription as any,
         device_info: deviceInfo,
-      }, { onConflict: 'user_id, subscription' })
+      }, { onConflict: 'user_id,endpoint' })
 
       if (error) {
         toast.error('Failed to sync notification settings.')

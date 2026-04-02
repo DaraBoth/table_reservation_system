@@ -13,14 +13,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: membershipRaw } = await supabase
     .from('account_memberships')
-    .select('role, restaurant_id, restaurants(name, business_type)')
+    .select('role, restaurant_id, restaurants(name, business_type, is_new)')
     .eq('user_id', user.id)
     .single()
 
   const membership = membershipRaw as {
     role: string
     restaurant_id: string | null
-    restaurants: { name: string; business_type: string } | null
+    restaurants: { name: string; business_type: string; is_new: boolean } | null
   } | null
 
   if (!membership) redirect('/login')
@@ -30,6 +30,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const profile = profileRaw as { full_name: string | null } | null
 
   const isAdmin = membership.role === 'admin'
+  const isNewRestaurant = membership.restaurants?.is_new === true
   const restaurantName = membership.restaurants?.name ?? 'Dashboard'
   const businessType = (membership.restaurants?.business_type ?? 'restaurant') as BusinessType
   const displayName = profile?.full_name || user.email?.split('@')[0] || 'User'
@@ -42,7 +43,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <main className="flex-1 px-4 pt-4 pb-32 overflow-y-auto">
         {children}
       </main>
-      <BottomNav isAdmin={isAdmin} businessType={businessType} />
+      {!isNewRestaurant && <BottomNav isAdmin={isAdmin} businessType={businessType} />}
     </div>
   )
 }

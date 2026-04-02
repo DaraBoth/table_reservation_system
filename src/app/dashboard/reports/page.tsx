@@ -5,7 +5,7 @@ import { parseTsRange } from '@/lib/utils' // Removed
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Table2, User, BarChart2 } from 'lucide-react'
 
 export const metadata = { title: 'Reports — TableBook' }
 
@@ -185,7 +185,7 @@ export default async function ReportsPage({ searchParams }: Props) {
       {topTables.length > 0 && (
         <section className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4">
           <div className="flex items-center gap-2">
-            <span className="text-lg">🪑</span>
+            <Table2 className="w-4 h-4 text-violet-400" />
             <h2 className="text-sm font-black text-white">Most Booked Tables</h2>
           </div>
           <div className="space-y-3">
@@ -218,7 +218,7 @@ export default async function ReportsPage({ searchParams }: Props) {
       {topCustomers.length > 0 && (
         <section className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4">
           <div className="flex items-center gap-2">
-            <span className="text-lg">👤</span>
+            <User className="w-4 h-4 text-emerald-400" />
             <h2 className="text-sm font-black text-white">Most Frequent Customers</h2>
           </div>
           <div className="space-y-3">
@@ -288,7 +288,9 @@ export default async function ReportsPage({ searchParams }: Props) {
 
       {total === 0 && (
         <div className="text-center py-16 bg-slate-900 rounded-3xl border border-slate-800">
-          <div className="text-5xl mb-4">📊</div>
+          <div className="mb-4 flex justify-center">
+            <BarChart2 className="w-12 h-12 text-slate-600" />
+          </div>
           <p className="text-slate-300 font-bold">No bookings in this period</p>
           <p className="text-slate-500 text-sm mt-1">Try selecting a different time range</p>
         </div>

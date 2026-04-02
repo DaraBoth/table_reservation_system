@@ -1,3 +1,6 @@
+import { UtensilsCrossed, Building2, Home } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+
 /**
  * Returns terminology labels based on business type.
  * All dashboard pages use these so the UI auto-adapts per tenant.
@@ -26,8 +29,8 @@ export interface BusinessTerms {
   // Customer
   guest: string       // "Guest" | "Guest"
   guests: string      // "Guests" | "Guests"
-  // Emoji
-  emoji: string
+  // Icon
+  Icon: LucideIcon
   // Status for completion
   doneLabel: string   // "Done" | "Checked Out"
 }
@@ -46,7 +49,7 @@ export function getTerms(type: string | null | undefined): BusinessTerms {
       endLabel: 'Check-out',
       hasCheckout: true,
       guest: 'Guest',     guests: 'Guests',
-      emoji: type === 'guesthouse' ? '🏡' : '🏨',
+      Icon: type === 'guesthouse' ? Home : Building2,
       doneLabel: 'Checked Out',
     }
   }
@@ -61,7 +64,7 @@ export function getTerms(type: string | null | undefined): BusinessTerms {
     endLabel: '',
     hasCheckout: false,
     guest: 'Guest',     guests: 'Guests',
-    emoji: '🍽️',
+    Icon: UtensilsCrossed,
     doneLabel: 'Done',
   }
 }

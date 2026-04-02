@@ -78,11 +78,11 @@ export default async function CustomersPage() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-16 bg-slate-900 rounded-3xl border border-slate-800">
-          <div className="text-5xl mb-4">👥</div>
+        <div className="text-center py-16 px-8 bg-slate-900 rounded-3xl border border-slate-800">
+          <Users2 className="w-14 h-14 text-violet-800 mx-auto mb-4" />
           <p className="text-slate-300 font-bold text-base">No saved customers yet</p>
-          <p className="text-slate-500 text-sm mt-1 mb-6">
-            Add customers above, or tick "Save to customer list" when creating a booking.
+          <p className="text-slate-500 text-sm mt-2 leading-relaxed">
+            Add customers above, or tick &ldquo;Save to customer list&rdquo; when creating a booking.
           </p>
         </div>
       )}

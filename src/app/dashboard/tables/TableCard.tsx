@@ -5,8 +5,8 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { EditTableSheet } from './EditTableSheet'
+import { User } from 'lucide-react'
 import type { Tables } from '@/lib/types/database'
-import type { BusinessTerms } from '@/lib/business-type'
 
 interface TableCardProps {
   table: Tables<'physical_tables'>
@@ -14,7 +14,6 @@ interface TableCardProps {
   isBusy: boolean
   isOffline: boolean
   isTappable: boolean
-  terms: BusinessTerms
   businessType: string
   isAdmin: boolean
 }
@@ -25,7 +24,6 @@ export function TableCard({
   isBusy, 
   isOffline, 
   isTappable, 
-  terms, 
   businessType,
   isAdmin
 }: TableCardProps) {
@@ -93,8 +91,8 @@ export function TableCard({
           </Badge>
 
           {isBusy && busyInfo?.guestName && (
-            <p className="text-[10px] text-rose-300/80 font-black truncate drop-shadow-sm">
-              👤 {busyInfo.guestName}
+            <p className="text-[10px] text-rose-300/80 font-black truncate drop-shadow-sm flex items-center gap-1">
+              <User className="w-3 h-3 flex-shrink-0" /> {busyInfo.guestName}
             </p>
           )}
         </div>

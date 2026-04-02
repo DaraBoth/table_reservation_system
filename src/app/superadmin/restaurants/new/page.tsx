@@ -8,14 +8,24 @@ import { cn } from '@/lib/utils'
 import {
   ArrowLeft, Store, ShieldCheck, Sparkles,
   MapPin, Calendar as CalendarIcon, Check, AlertCircle,
+  UtensilsCrossed, Building2, Home,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 type BusinessType = 'restaurant' | 'hotel' | 'guesthouse'
 
-const TYPES = [
+const TYPES: Array<{
+  value: BusinessType
+  icon: LucideIcon
+  label: string
+  desc: string
+  color: string
+  border: string
+  dot: string
+}> = [
   {
-    value: 'restaurant' as BusinessType,
-    emoji: '🍽️',
+    value: 'restaurant',
+    icon: UtensilsCrossed,
     label: 'Restaurant / Café',
     desc: 'Table booking, meal reservations, dine-in management',
     color: 'from-orange-500/20 to-amber-500/20',
@@ -23,8 +33,8 @@ const TYPES = [
     dot: 'bg-orange-400',
   },
   {
-    value: 'hotel' as BusinessType,
-    emoji: '🏨',
+    value: 'hotel',
+    icon: Building2,
     label: 'Hotel / Resort',
     desc: 'Room booking with check-in and check-out dates',
     color: 'from-blue-500/20 to-indigo-500/20',
@@ -32,8 +42,8 @@ const TYPES = [
     dot: 'bg-blue-400',
   },
   {
-    value: 'guesthouse' as BusinessType,
-    emoji: '🏡',
+    value: 'guesthouse',
+    icon: Home,
     label: 'Guest House / B&B',
     desc: 'Small lodging with room reservations and guest tracking',
     color: 'from-emerald-500/20 to-teal-500/20',
@@ -109,7 +119,9 @@ export default function NewRestaurantPage() {
                     <Check className="w-3 h-3 text-white" />
                   </span>
                 )}
-                <div className="text-2xl mb-2">{t.emoji}</div>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2 bg-white/10">
+                  {(() => { const TIcon = t.icon; return <TIcon className="w-5 h-5 text-white" /> })()}
+                </div>
                 <p className={cn('text-sm font-black', businessType === t.value ? 'text-white' : 'text-slate-300')}>
                   {t.label}
                 </p>
@@ -128,7 +140,7 @@ export default function NewRestaurantPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">
-                {selectedType.emoji} Name *
+                Name *
               </label>
               <input
                 name="name"

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { logout } from '@/app/actions/auth'
 import Link from 'next/link'
-import { Lock, LogOut, ShieldCheck, ChevronRight, Store, UserCircle } from 'lucide-react'
+import { Lock, LogOut, ShieldCheck, ChevronRight, Store, UserCircle, AlertTriangle, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface AccountClientProps {
@@ -25,7 +25,7 @@ export function AccountClient({ user, membership, profile }: AccountClientProps)
       {/* Profile Hero */}
       <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-6 flex flex-col items-center gap-3 pt-8 pb-7 shadow-xl">
         <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center shadow-xl shadow-violet-500/30">
-          <span className="text-3xl font-black text-white">👤</span>
+          <UserCircle className="w-10 h-10 text-white" />
         </div>
         <div className="text-center">
           <h1 className="text-xl font-black text-white italic tracking-tight uppercase tracking-tighter">
@@ -110,13 +110,13 @@ export function AccountClient({ user, membership, profile }: AccountClientProps)
 
             {state?.error && (
               <div className="bg-red-500/10 border border-red-500/30 rounded-2xl px-4 py-3">
-                <p className="text-sm text-red-400 font-bold">⚠️ {state.error}</p>
+                <p className="text-sm text-red-400 font-bold flex items-center gap-2"><AlertTriangle className="w-4 h-4 flex-shrink-0" /> {state.error}</p>
               </div>
             )}
             {state?.success && (
               <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl px-4 py-3">
                 <p className="text-sm text-emerald-400 font-bold flex items-center gap-2">
-                  <span>✓</span> {state.success}
+                  <Check className="w-4 h-4 flex-shrink-0" /> {state.success}
                 </p>
               </div>
             )}

@@ -34,6 +34,7 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
   const [state, action, pending] = useActionState(isEdit ? updateReservation : createReservation, null)
   const [isOccLoading, startOccupancyTransition] = useTransition()
   const terms = getTerms(businessType)
+  const TermIcon = terms.Icon
   const isHotel = businessType === 'hotel' || businessType === 'guesthouse'
 
   // If a table was pre-selected (tapped from Tables page), jump straight to step 2
@@ -147,8 +148,8 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
             {/* Section: Pick Table / Room */}
             <section className="bg-slate-900 rounded-3xl p-5 border border-slate-800">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest">
-                  {terms.emoji} Pick a {terms.unit}
+                <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                  <TermIcon className="w-3.5 h-3.5" /> Pick a {terms.unit}
                 </h2>
                 {isOccLoading && (
                   <span className="text-xs text-blue-400 flex items-center gap-1.5">

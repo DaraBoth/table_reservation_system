@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react'
 import { addCommonCustomer } from '@/app/actions/customers'
-import { UserPlus, ChevronDown, ChevronUp, Plus } from 'lucide-react'
+import { UserPlus, ChevronDown, ChevronUp, Plus, AlertTriangle, CircleCheck } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 
@@ -56,13 +56,13 @@ export function AddCustomerForm() {
 
           {/* Error / success */}
           {(state as any)?.error && (
-            <p className="text-xs text-red-400 font-bold bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
-              ⚠️ {(state as any).error}
+            <p className="text-xs text-red-400 font-bold bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2 flex items-center gap-1.5">
+              <AlertTriangle className="w-3 h-3 flex-shrink-0" /> {(state as any).error}
             </p>
           )}
           {(state as any)?.success && (
-            <p className="text-xs text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2">
-              ✅ Customer saved!
+            <p className="text-xs text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2 flex items-center gap-1.5">
+              <CircleCheck className="w-3 h-3 flex-shrink-0" /> Customer saved!
             </p>
           )}
 

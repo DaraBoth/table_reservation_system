@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import type { ActionState } from './auth'
 
@@ -190,19 +191,25 @@ export async function completeRestaurantSetup(_: ActionState, formData: FormData
     return { error: 'Unauthorized' }
   }
 
-  const { error } = await supabase
+  // Use service-role client to bypass RLS — the role check above already authorises this.
+  const adminClient = createAdminClient()
+  const { error } = await adminClient
     .from('restaurants')
     .update({
       is_new: false,
       name: formData.get('name') as string,
       business_type: formData.get('businessType') as any || 'restaurant',
+      contact_email: (formData.get('contactEmail') as string) || null,
+      contact_phone: (formData.get('contactPhone') as string) || null,
+      address: (formData.get('address') as string) || null,
+      logo_url: (formData.get('logoUrl') as string) || null,
     })
     .eq('id', membership.restaurant_id)
 
   if (error) return { error: error.message }
 
   revalidatePath('/dashboard')
-  return { success: 'Setup complete.' }
+  redirect('/dashboard')
 }
 
 // ─── Update subscription ──────────────────────────────────────────────────────
