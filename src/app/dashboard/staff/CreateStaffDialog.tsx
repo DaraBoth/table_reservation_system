@@ -13,7 +13,7 @@ export function CreateStaffDialog() {
     <Sheet>
       <SheetTrigger
         render={
-          <Button className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 shadow-lg shadow-violet-500/25">
+          <Button className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 shadow-lg shadow-violet-500/25 text-white font-black">
             + Add Staff
           </Button>
         }
@@ -21,7 +21,7 @@ export function CreateStaffDialog() {
       <SheetContent side="bottom" className="bg-slate-900 border-slate-800 text-white p-6 rounded-t-3xl">
         <SheetHeader className="p-0 mb-4">
           <SheetTitle className="text-white text-lg font-black italic tracking-tight">Expand Your Crew</SheetTitle>
-          <p className="text-xs text-slate-500">Create a secure login for a new team member</p>
+          <p className="text-xs text-slate-500 font-bold">Create a secure login for a new team member</p>
         </SheetHeader>
         <form action={action} className="space-y-4 mt-2">
           <div className="space-y-1.5">
@@ -42,7 +42,7 @@ export function CreateStaffDialog() {
           {state?.error && <p className="text-red-400 text-sm">{state.error}</p>}
           {state?.success && <p className="text-emerald-400 text-sm">{state.success}</p>}
           <Button type="submit" disabled={pending}
-            className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 border-0">
+            className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 border-0 text-white font-black">
             {pending ? 'Creating...' : 'Create Staff Account'}
           </Button>
         </form>

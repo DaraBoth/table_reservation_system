@@ -20,11 +20,11 @@ const MuiCalendarIcon = (props: any) => {
 export function PastBookingsFilter({ selectedDate }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  
+
   const today = new Date()
   const yesterday = subDays(today, 1)
   const yesterdayIso = format(yesterday, 'yyyy-MM-dd')
-  
+
   const handleDateChange = (newDate: Date | null) => {
     if (!newDate) return
     const iso = format(newDate, 'yyyy-MM-dd')
@@ -37,9 +37,9 @@ export function PastBookingsFilter({ selectedDate }: Props) {
     const current = parseISO(selectedDate)
     const next = subDays(current, -amount)
     const nextIso = format(next, 'yyyy-MM-dd')
-    
+
     if (nextIso > yesterdayIso) return
-    
+
     const params = new URLSearchParams(searchParams.toString())
     params.set('date', nextIso)
     router.replace(`/dashboard/reservations?${params.toString()}`, { scroll: false })
@@ -62,13 +62,13 @@ export function PastBookingsFilter({ selectedDate }: Props) {
       <div className="flex items-center gap-2 pr-1">
         <button
           onClick={() => shiftDate(-1)}
-          className="w-10 h-10 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-all border border-slate-700 active:scale-95"
+          className="w-10 h-10 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-all border-0 active:scale-95"
           title="Previous Day"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
 
-        <div className="relative group">
+        <div className="relative group flex items-center">
           <DatePicker
             value={parseISO(selectedDate)}
             maxDate={yesterday}
@@ -79,19 +79,33 @@ export function PastBookingsFilter({ selectedDate }: Props) {
             slotProps={{
               textField: {
                 size: 'small',
-                sx: { 
+                variant: 'standard', // Use standard to avoid fieldset issues
+                sx: {
                   width: '40px',
                   '& .MuiInputBase-root': {
                     padding: 0,
                     height: '40px',
-                    borderRadius: '0.75rem',
-                    backgroundColor: '#7c3aed',
-                    border: 'none',
-                    '& fieldset': { border: 'none' },
-                    '&:hover': { backgroundColor: '#6d28d9' },
+                    width: '40px',
+                    borderRadius: '9999px',
+                    backgroundColor: '#1e293b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    '&:before, &:after': { display: 'none' }, // Remove standard underlines
+                    '&:hover': { backgroundColor: '#334155' },
+                    '&.Mui-focused': { backgroundColor: '#334155' }
                   },
+                  '& .MuiInput-underline': { '&:before, &:after': { display: 'none' } },
                   '& .MuiInputBase-input': { display: 'none' },
-                  '& .MuiInputAdornment-root': { margin: 0, width: '100%', justifyContent: 'center' },
+                  '& .MuiInputAdornment-root': { margin: 0, width: '100%', justifyContent: 'center', display: 'flex' },
+                  '& .MuiButtonBase-root': {
+                    padding: 0,
+                    margin: 0,
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '9999px',
+                    '&:hover': { backgroundColor: 'transparent' }
+                  },
                   '& .MuiSvgIcon-root': { color: 'white', width: '20px', height: '20px' }
                 }
               },
@@ -112,7 +126,7 @@ export function PastBookingsFilter({ selectedDate }: Props) {
           onClick={() => shiftDate(1)}
           disabled={selectedDate >= yesterdayIso}
           className={cn(
-            "w-10 h-10 rounded-xl flex items-center justify-center transition-all border border-slate-700 active:scale-95",
+            "w-10 h-10 rounded-full flex items-center justify-center transition-all border-0 active:scale-95",
             selectedDate >= yesterdayIso
               ? "bg-slate-900/50 text-slate-700 cursor-not-allowed"
               : "bg-slate-800/80 hover:bg-slate-700 text-slate-300"

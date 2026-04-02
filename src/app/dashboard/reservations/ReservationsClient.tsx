@@ -14,6 +14,7 @@ import { getTerms } from '@/lib/business-type'
 
 interface Reservation extends Tables<'reservations'> {
   physical_tables: Pick<Tables<'physical_tables'>, 'table_name' | 'capacity'> | null
+  unit_name: string | null
 }
 
 interface Props {
@@ -127,7 +128,7 @@ export function ReservationsClient({ initialActive, initialArchive, restaurantId
           href="/dashboard/reservations/new"
           className={cn(
             buttonVariants({ size: 'sm' }),
-            'bg-gradient-to-r from-violet-600 to-indigo-600 border-0 rounded-xl gap-1.5 font-bold shadow-lg shadow-violet-500/20 h-10 px-4 transition-all duration-300 active:scale-95'
+            'bg-gradient-to-r from-violet-600 to-indigo-600 border-0 rounded-xl gap-1.5 font-black text-white shadow-lg shadow-violet-500/20 h-10 px-4 transition-all duration-300 active:scale-95'
           )}
         >
           <Plus className="w-4 h-4" /> New {terms.booking}
@@ -214,7 +215,7 @@ function BookingCard({ res }: { res: Reservation }) {
       </div>
       <div className="flex items-center gap-2 text-xs text-slate-400">
         <span className="bg-slate-800 px-2 py-0.5 rounded-lg font-semibold text-slate-300 truncate max-w-[60px]">
-          {res.physical_tables?.table_name ?? '—'}
+          {res.unit_name || res.physical_tables?.table_name || '—'}
         </span>
         {res.party_size && res.party_size > 0 && (
           <><span className="text-slate-600">·</span><span>{res.party_size}p</span></>

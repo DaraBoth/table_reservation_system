@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { CreateStaffDialog } from './CreateStaffDialog'
 import { StaffPasswordResetButton } from './StaffPasswordReset'
+import { StaffActions } from './StaffActions'
 import type { Tables } from '@/lib/types/database'
 import { UserCheck, UserX, Plus, Users } from 'lucide-react'
 
@@ -108,8 +109,15 @@ export default async function StaffPage() {
                   </p>
                 </div>
 
-                {/* Reset password */}
-                <div className="flex-shrink-0">
+                {/* Actions */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <StaffActions 
+                    userId={s.user_id} 
+                    membershipId={s.id} 
+                    isActive={s.is_active} 
+                    name={name} 
+                  />
+                  <div className="w-px h-6 bg-slate-800" />
                   <StaffPasswordResetButton userId={s.user_id} name={name} />
                 </div>
               </div>

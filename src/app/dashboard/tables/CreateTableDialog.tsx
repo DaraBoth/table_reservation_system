@@ -9,18 +9,34 @@ import { Textarea } from '@/components/ui/textarea'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { getTerms } from '@/lib/business-type'
 import { cn } from '@/lib/utils'
+import { useEffect } from 'react'
+import { Confetti } from '@/components/magicui/confetti'
 
 export function CreateTableDialog({ businessType = 'restaurant' }: { businessType?: string }) {
   const [state, action, pending] = useActionState(createPhysicalTable, null)
+  const [open, setOpen] = useState(false)
+  const [showConfetti, setShowConfetti] = useState(false)
   const terms = getTerms(businessType)
   const isHotel = businessType === 'hotel' || businessType === 'guesthouse'
   const [beds, setBeds] = useState(1)
 
+  // 🎉 Success Surprise!
+  useEffect(() => {
+    if (state && 'success' in state && state.success) {
+      setShowConfetti(true)
+      setTimeout(() => {
+        setOpen(false)
+        setShowConfetti(false)
+      }, 2000)
+    }
+  }, [state])
+
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <Confetti active={showConfetti} />
       <SheetTrigger
         render={
-          <Button className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 shadow-lg shadow-violet-500/25">
+          <Button className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 shadow-lg shadow-violet-500/25 text-white">
             + Add {terms.unit}
           </Button>
         }
@@ -72,7 +88,7 @@ export function CreateTableDialog({ businessType = 'restaurant' }: { businessTyp
           {state?.error && <p className="text-red-400 text-sm">{state.error}</p>}
           {state?.success && <p className="text-emerald-400 text-sm">{state.success}</p>}
           <Button type="submit" disabled={pending}
-            className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 border-0">
+            className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 border-0 text-white font-black">
             {pending ? 'Creating...' : `Create ${terms.unit}`}
           </Button>
         </form>

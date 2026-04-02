@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { AddCustomerForm } from './AddCustomerForm'
 import { DeleteCustomerButton } from './DeleteCustomerButton'
-import { Users, Phone, Users2, StickyNote } from 'lucide-react'
+import { Users, Phone, Users2, StickyNote, Plus } from 'lucide-react'
 import { EditCustomerDialog } from './EditCustomerDialog'
+import { Button } from '@/components/ui/button'
 
 export const metadata = { title: 'Saved Customers — TableBook' }
 
@@ -37,6 +38,14 @@ export default async function CustomersPage() {
             {customers.length} saved {customers.length === 1 ? 'customer' : 'customers'}
           </p>
         </div>
+        <AddCustomerForm 
+          trigger={
+            <Button className="h-11 px-6 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 text-white font-bold shadow-lg shadow-violet-500/20 active:scale-95 transition-all flex items-center gap-2 group">
+              <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+              <span className="text-sm">Add Customer</span>
+            </Button>
+          } 
+        />
       </div>
 
       {/* Customer List */}
@@ -87,8 +96,6 @@ export default async function CustomersPage() {
         </div>
       )}
 
-      {/* FAB with Bottom Sheet */}
-      <AddCustomerForm />
     </div>
   )
 }

@@ -1,25 +1,45 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useState, useEffect } from 'react'
 import { addCommonCustomer } from '@/app/actions/customers'
+import { Confetti } from '@/components/magicui/confetti'
 import { UserPlus, ChevronDown, ChevronUp, Plus, AlertTriangle, CircleCheck } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 
 type ActionState = { error: string } | { success: true } | null
 
-export function AddCustomerForm() {
+interface AddCustomerFormProps {
+  trigger?: React.ReactNode
+}
+
+export function AddCustomerForm({ trigger }: AddCustomerFormProps) {
   const [state, action, pending] = useActionState<ActionState, FormData>(addCommonCustomer as any, null)
   const [open, setOpen] = useState(false)
+  const [showConfetti, setShowConfetti] = useState(false)
+
+  // 🎉 Success Surprise!
+  useEffect(() => {
+    if (state && 'success' in state && state.success) {
+      setShowConfetti(true)
+      setTimeout(() => {
+        setShowConfetti(false)
+        setOpen(false)
+      }, 2000)
+    }
+  }, [state])
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
+      <Confetti active={showConfetti} />
       <SheetTrigger
         render={
-          <Button className="fixed bottom-24 right-5 w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 border-0 shadow-2xl shadow-violet-500/40 z-30 group active:scale-90 transition-all duration-300">
-            <Plus className="w-7 h-7 text-white group-hover:rotate-90 transition-transform duration-300" />
-            <span className="sr-only">Add Customer</span>
-          </Button>
+          (trigger as React.ReactElement) || (
+            <Button className="fixed bottom-24 right-5 w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 border-0 shadow-2xl shadow-violet-500/40 z-30 group active:scale-90 transition-all duration-300">
+              <Plus className="w-7 h-7 text-white group-hover:rotate-90 transition-transform duration-300" />
+              <span className="sr-only">Add Customer</span>
+            </Button>
+          )
         }
       />
       <SheetContent side="bottom" className="bg-slate-900 border-slate-800 text-white p-6 rounded-t-3xl">

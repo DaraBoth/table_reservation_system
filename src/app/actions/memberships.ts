@@ -194,3 +194,43 @@ export async function deleteUserAccount(_: ActionState, formData: FormData): Pro
   revalidatePath('/superadmin/users')
   return { success: 'Account deleted successfully.' }
 }
+
+// ─── Admin: Delete Staff Member (Hard Delete) ──────────────────────────────────
+
+export async function deleteStaffMember(_: ActionState, formData: FormData): Promise<ActionState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { data: membership } = await supabase
+    .from('account_memberships')
+    .select('role, restaurant_id')
+    .eq('user_id', user.id)
+    .single()
+
+  if (membership?.role !== 'admin' || !membership.restaurant_id) {
+    return { error: 'Unauthorized — admin only' }
+  }
+
+  const targetUserId = formData.get('userId') as string
+  if (targetUserId === user.id) return { error: 'Cannot delete your own account' }
+
+  // Verify the target is actually staff in THIS restaurant
+  const { data: targetMembership } = await supabase
+    .from('account_memberships')
+    .select('role, restaurant_id')
+    .eq('user_id', targetUserId)
+    .eq('restaurant_id', membership.restaurant_id)
+    .eq('role', 'staff')
+    .single()
+
+  if (!targetMembership) return { error: 'Staff member not found in your restaurant' }
+
+  const adminClient = createAdminClient()
+  const { error } = await adminClient.auth.admin.deleteUser(targetUserId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/dashboard/staff')
+  return { success: 'Staff member account fully removed from database.' }
+}

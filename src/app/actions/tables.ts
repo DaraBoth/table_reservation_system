@@ -105,15 +105,8 @@ export async function deletePhysicalTable(_: ActionState, formData: FormData): P
   const tableId = formData.get('tableId') as string
   if (!tableId) return { error: 'Table ID missing' }
 
-  // Check for reservations first to give a better error message than DB constraint
-  const { count } = await supabase
-    .from('reservations')
-    .select('*', { count: 'exact', head: true })
-    .eq('table_id', tableId)
-
-  if (count && count > 0) {
-    return { error: 'Cannot delete unit with booking history. Please use "Active Status" to hide it instead.' }
-  }
+  // We no longer block deletion if history exists, 
+  // because reservations now store a static snapshot in 'unit_name'.
 
   const { error } = await supabase
     .from('physical_tables')

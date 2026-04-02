@@ -81,9 +81,17 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
     }
   }
 
+  // Fetch table name for snapshot
+  const { data: tableData } = await supabase
+    .from('physical_tables')
+    .select('table_name')
+    .eq('id', tableId)
+    .single()
+
   const { data, error } = await supabase.from('reservations').insert({
     restaurant_id: membership.restaurant_id,
     table_id: tableId,
+    unit_name: tableData?.table_name || 'Unknown Unit',
     guest_name: guestName,
     guest_phone: guestPhone || null,
     guest_email: null, // explicitly null per user request
@@ -240,10 +248,18 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
   const startTimeStr = String(startObj.getHours()).padStart(2,'0') + ':' + String(startObj.getMinutes()).padStart(2,'0') + ':00'
   const endTimeStr = String(endObj.getHours()).padStart(2,'0') + ':' + String(endObj.getMinutes()).padStart(2,'0') + ':00'
 
+  // Fetch table name for snapshot (in case table was changed)
+  const { data: tableData } = await supabase
+    .from('physical_tables')
+    .select('table_name')
+    .eq('id', tableId)
+    .single()
+
   const { error } = await supabase
     .from('reservations')
     .update({
       table_id: tableId,
+      unit_name: tableData?.table_name || 'Unknown Unit',
       guest_name: guestName,
       guest_phone: guestPhone || null,
       party_size: partySize,
