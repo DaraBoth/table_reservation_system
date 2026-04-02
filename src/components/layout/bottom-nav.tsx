@@ -30,10 +30,11 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
   const unitIcon = terms.hasCheckout ? BedDouble : LayoutGrid
 
   const primaryItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: Home, exact: true },
     { href: '/dashboard/tables',       label: terms.units,     icon: unitIcon,        exact: false },
     { href: '/dashboard/reservations', label: terms.bookings,  icon: CalendarDays,    exact: false },
     { href: '/dashboard/customers',    label: 'Customers',     icon: BookUser,        exact: false },
-    { href: '/dashboard/reports', label: 'Reports', icon: BarChart3, exact: false },
+    { href: '/dashboard/reports',      label: 'Reports',       icon: BarChart3,       exact: false },
   ]
 
   return (
@@ -75,14 +76,14 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
               <button
                 className={cn(
                   'flex flex-col items-center justify-start flex-1 gap-1.5 transition-all duration-200 relative min-w-[4rem]',
-                   pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname === '/dashboard' ? 'text-violet-400' : 'text-slate-500'
+                   pathname === '/dashboard/account' || pathname === '/dashboard/staff' ? 'text-violet-400' : 'text-slate-500'
                 )}
               >
                 <div className={cn(
                   "w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-300 overflow-hidden border border-transparent",
-                  (pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname === '/dashboard') && "border-violet-500/50 scale-110"
+                  (pathname === '/dashboard/account' || pathname === '/dashboard/staff') && "border-violet-500/50 scale-110"
                 )}>
-                  <Menu className="w-5 h-5" fill={pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname === '/dashboard' ? 'currentColor' : 'none'} />
+                  <Menu className="w-5 h-5" fill={pathname === '/dashboard/account' || pathname === '/dashboard/staff' ? 'currentColor' : 'none'} />
                 </div>
                 <span className="text-[10px] font-bold tracking-wide">More</span>
               </button>
@@ -95,7 +96,6 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
               </SheetHeader>
 
               <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                <MenuLink href="/dashboard" icon={Home} label="Dashboard Home" active={pathname === '/dashboard'} />
                 {isAdmin && (
                   <>
                     <MenuLink href="/dashboard/staff" icon={Users} label="Staff Management" active={pathname.startsWith('/dashboard/staff')} />
