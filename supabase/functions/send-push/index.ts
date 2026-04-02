@@ -36,10 +36,18 @@ serve(async (req) => {
     }
 
     // 2. Set VAPID keys
+    const publicKey = Deno.env.get('VAPID_PUBLIC_KEY')
+    const privateKey = Deno.env.get('VAPID_PRIVATE_KEY')
+
+    if (!publicKey || !privateKey) {
+      console.error('CRITICAL: VAPID keys are not set in Edge Function secrets.')
+      throw new Error('Push service misconfigured on server (Missing VAPID keys)')
+    }
+
     webpush.setVapidDetails(
       'mailto:admin@example.com',
-      Deno.env.get('VAPID_PUBLIC_KEY') ?? '',
-      Deno.env.get('VAPID_PRIVATE_KEY') ?? ''
+      publicKey,
+      privateKey
     )
 
     // 3. Send notifications in parallel

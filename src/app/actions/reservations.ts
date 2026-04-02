@@ -115,7 +115,7 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
 
   // 🔔 Trigger Push Notification
   const { notifyNewBooking } = await import('@/lib/notifications')
-  notifyNewBooking(data.id)
+  await notifyNewBooking(data.id)
 
   // Handle Common Customer saving
   if (saveToCommon) {
@@ -161,7 +161,7 @@ export async function cancelReservation(_: ActionState, formData: FormData): Pro
 
   // 🔔 Trigger Push Notification
   const { notifyCancellation } = await import('@/lib/notifications')
-  notifyCancellation(reservationId)
+  await notifyCancellation(reservationId)
 
   revalidatePath('/dashboard/reservations')
   revalidatePath('/dashboard')
@@ -197,9 +197,9 @@ export async function updateReservationStatus(_: ActionState, formData: FormData
   // 🔔 Trigger Push Notification
   const { notifyArrival, notifyBookingUpdate } = await import('@/lib/notifications')
   if (status === 'arrived') {
-    notifyArrival(reservationId)
+    await notifyArrival(reservationId)
   } else {
-    notifyBookingUpdate(reservationId)
+    await notifyBookingUpdate(reservationId)
   }
 
   revalidatePath('/dashboard/reservations')
@@ -281,7 +281,7 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
 
   // 🔔 Trigger Push Notification
   const { notifyBookingUpdate } = await import('@/lib/notifications')
-  notifyBookingUpdate(reservationId)
+  await notifyBookingUpdate(reservationId)
 
   revalidatePath('/dashboard/reservations')
   revalidatePath(`/dashboard/reservations/${reservationId}`)

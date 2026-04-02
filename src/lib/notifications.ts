@@ -42,7 +42,8 @@ export async function dispatchPushNotification({
       const err = await response.text()
       console.error('Failed to trigger send-push Edge Function:', err)
     } else {
-      console.log('Push notification dispatched successfully.')
+      const data = await response.json()
+      console.log(`Push notification dispatched successfully. Sent to ${data.sentCount} devices.`)
     }
   } catch (err) {
     console.error('Error dispatching push notification:', err)
