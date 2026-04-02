@@ -15,6 +15,7 @@ import { Tables } from '@/lib/types/database'
 interface Reservation extends Tables<'reservations'> {
   physical_tables: Pick<Tables<'physical_tables'>, 'table_name' | 'capacity'> | null
   unit_name?: string | null
+  checkout_date?: string | null
 }
 
 interface Props {
