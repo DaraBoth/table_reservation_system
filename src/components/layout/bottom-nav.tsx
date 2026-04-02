@@ -31,16 +31,15 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
 
   const primaryItems = [
     { href: '/dashboard', label: 'Dashboard', icon: Home, exact: true },
-    { href: '/dashboard/tables',       label: terms.units,     icon: unitIcon,        exact: false },
-    { href: '/dashboard/reservations', label: terms.bookings,  icon: CalendarDays,    exact: false },
-    { href: '/dashboard/customers',    label: 'Customers',     icon: BookUser,        exact: false },
-    { href: '/dashboard/reports',      label: 'Reports',       icon: BarChart3,       exact: false },
+    { href: '/dashboard/tables', label: terms.units, icon: unitIcon, exact: false },
+    { href: '/dashboard/reservations', label: terms.bookings, icon: CalendarDays, exact: false },
+    { href: '/dashboard/customers', label: 'Customers', icon: BookUser, exact: false },
   ]
 
   return (
     <nav className="fixed bottom-6 left-6 right-6 z-50 bg-slate-900/80 backdrop-blur-2xl border border-slate-800/50 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div 
-        className="flex items-stretch justify-around px-2 py-3" 
+      <div
+        className="flex items-stretch justify-around px-2 py-3"
       >
         {primaryItems.map((item) => {
           const isActive = item.exact
@@ -58,8 +57,8 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
                 isActive ? 'text-violet-400' : 'text-slate-500'
               )}
             >
-              <Icon 
-                className={cn('w-6 h-6 transition-all duration-300', isActive && 'scale-110 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]')} 
+              <Icon
+                className={cn('w-6 h-6 transition-all duration-300', isActive && 'scale-110 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]')}
                 fill={isActive ? 'currentColor' : 'none'}
               />
               <span className={cn('text-[10px] font-bold tracking-wide transition-colors', isActive ? 'text-violet-400' : 'text-slate-500')}>
@@ -76,14 +75,14 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
               <button
                 className={cn(
                   'flex flex-col items-center justify-start flex-1 gap-1.5 transition-all duration-200 relative min-w-[4rem]',
-                   pathname === '/dashboard/account' || pathname === '/dashboard/staff' ? 'text-violet-400' : 'text-slate-500'
+                  pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname.startsWith('/dashboard/reports') ? 'text-violet-400' : 'text-slate-500'
                 )}
               >
                 <div className={cn(
                   "w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-300 overflow-hidden border border-transparent",
-                  (pathname === '/dashboard/account' || pathname === '/dashboard/staff') && "border-violet-500/50 scale-110"
+                  (pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname.startsWith('/dashboard/reports')) && "border-violet-500/50 scale-110"
                 )}>
-                  <Menu className="w-5 h-5" fill={pathname === '/dashboard/account' || pathname === '/dashboard/staff' ? 'currentColor' : 'none'} />
+                  <Menu className="w-5 h-5" fill={pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname.startsWith('/dashboard/reports') ? 'currentColor' : 'none'} />
                 </div>
                 <span className="text-[10px] font-bold tracking-wide">More</span>
               </button>
@@ -96,16 +95,16 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
               </SheetHeader>
 
               <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                <MenuLink href="/dashboard/reports" icon={BarChart3} label="Reports" active={pathname.startsWith('/dashboard/reports')} />
                 {isAdmin && (
                   <>
                     <MenuLink href="/dashboard/staff" icon={Users} label="Staff Management" active={pathname.startsWith('/dashboard/staff')} />
-                    <MenuLink href="/dashboard/tables" icon={unitIcon} label={`${terms.units} Settings`} active={false} />
                   </>
                 )}
                 <MenuLink href="/dashboard/account" icon={UserCircle} label="System Settings" active={pathname.startsWith('/dashboard/account')} />
-                
+
                 <div className="pt-4 mt-4 border-t border-slate-800">
-                   <form action={logout}>
+                  <form action={logout}>
                     <button
                       type="submit"
                       className="w-full flex items-center gap-3 p-4 rounded-2xl text-red-400 hover:bg-red-500/10 transition-colors font-bold text-sm"
@@ -119,7 +118,7 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
 
               <div className="p-6 bg-slate-900/50 border-t border-slate-800">
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest text-center">
-                  TableBook © 2026
+                  BookJM © 2026
                 </p>
               </div>
             </div>
@@ -136,8 +135,8 @@ function MenuLink({ href, icon: Icon, label, active }: { href: string; icon: any
       href={href}
       className={cn(
         "flex items-center gap-3 p-4 rounded-2xl transition-all font-bold text-sm",
-        active 
-          ? "bg-violet-500/10 text-violet-400 border border-violet-500/20" 
+        active
+          ? "bg-violet-500/10 text-violet-400 border border-violet-500/20"
           : "text-slate-400 hover:bg-slate-800/50 hover:text-white"
       )}
     >
