@@ -179,7 +179,7 @@ export function DashboardClient({ initialData }: DashboardClientProps) {
               upcomingReservations.map((res, i) => {
                 const start = new Date(`${res.reservation_date}T${res.start_time}`)
                 const dateDisplay = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                const timeDisplay = start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                const timeDisplay = start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
                 
                 return (
                   <motion.div

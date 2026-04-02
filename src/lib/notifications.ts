@@ -23,12 +23,16 @@ export async function dispatchPushNotification({
       return
     }
 
+    const controller = new AbortController()
+    const id = setTimeout(() => controller.abort(), 1000) // 1s timeout for safety
+
     const response = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${serviceRoleKey}`,
       },
+      signal: controller.signal,
       body: JSON.stringify({
         restaurant_id: restaurantId,
         title,
@@ -37,6 +41,7 @@ export async function dispatchPushNotification({
         icon,
       }),
     })
+    clearTimeout(id)
 
     if (!response.ok) {
       const err = await response.text()

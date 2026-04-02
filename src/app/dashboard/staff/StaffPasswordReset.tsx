@@ -1,20 +1,21 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { resetUserPassword } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { KeyRound } from 'lucide-react'
+import { KeyRound, Eye, EyeOff } from 'lucide-react'
 
 export function StaffPasswordResetButton({ userId, name }: { userId: string; name: string }) {
   const [state, action, pending] = useActionState(resetUserPassword, null)
+  const [showPassword, setShowPassword] = useState(false)
 
   return (
     <Sheet>
       <SheetTrigger
         render={
-          <button className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 hover:text-violet-400 hover:border-violet-500/50 transition-all active:scale-95">
+          <button className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 hover:text-violet-400 hover:border-violet-500/50 hover:bg-violet-500/10 transition-all active:scale-95 shadow-inner">
             <KeyRound className="w-4 h-4" />
           </button>
         }
@@ -32,16 +33,25 @@ export function StaffPasswordResetButton({ userId, name }: { userId: string; nam
           <input type="hidden" name="userId" value={userId} />
 
           <div>
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2 px-1">
               New Password
             </label>
-            <Input
-              name="newPassword"
-              type="password"
-              required
-              placeholder="At least 6 characters"
-              className="bg-slate-900 border-slate-700 text-white placeholder:text-slate-600 focus:border-violet-500 h-14 rounded-2xl text-base px-4"
-            />
+            <div className="relative group">
+              <Input
+                name="newPassword"
+                type={showPassword ? "text" : "password"}
+                required
+                placeholder="At least 6 characters"
+                className="bg-slate-900 border-slate-700 text-white placeholder:text-slate-600 focus:border-violet-500 h-14 rounded-2xl text-base px-4 font-medium pr-12"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-500 hover:text-white transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           {state?.error && (

@@ -33,13 +33,13 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
       <SheetTrigger
         render={
           (trigger as React.ReactElement) || (
-            <button className="w-7 h-7 flex items-center justify-center bg-slate-800/50 border border-slate-700 rounded-lg text-slate-400 hover:border-violet-500/50 hover:text-violet-400 transition-all active:scale-90">
-              <Settings2 className="w-3.5 h-3.5" />
+            <button className="w-9 h-9 flex items-center justify-center bg-slate-800/50 border border-slate-700 rounded-xl text-slate-400 hover:border-violet-500/50 hover:text-violet-400 transition-all active:scale-90">
+              <Settings2 className="w-4 h-4" />
             </button>
           )
         }
       />
-      <SheetContent side="bottom" className="bg-slate-900 border-slate-800 text-white p-6 rounded-t-3xl h-[85vh] overflow-y-auto">
+      <SheetContent side="bottom" className="bg-slate-950 border-slate-800 text-white p-6 rounded-t-3xl h-[85vh] overflow-y-auto">
         <SheetHeader className="p-0 mb-4">
           <SheetTitle className="text-white text-lg font-black italic tracking-tight">Edit {terms.unit}: {table.table_name}</SheetTitle>
         </SheetHeader>
@@ -51,9 +51,9 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
             <input type="hidden" name="isActive" value={String(isActive)} />
 
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">{terms.unit} Name *</Label>
+              <Label className="text-slate-400 text-[10px] font-black uppercase tracking-widest px-1">{terms.unit} Name *</Label>
               <Input name="tableName" required defaultValue={table.table_name}
-                className="bg-slate-800/50 border-slate-700 text-white focus:border-violet-500 rounded-xl h-11" />
+                className="bg-slate-900 border-slate-700 text-white focus:border-violet-500 rounded-2xl h-14 text-base px-4" />
             </div>
 
             {isHotel ? (
@@ -80,16 +80,16 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
               </div>
             ) : (
               <div className="space-y-1.5">
-                <Label className="text-slate-300 text-sm">Capacity (people) *</Label>
-                <Input name="capacity" type="number" required min={1} defaultValue={table.capacity}
-                  className="bg-slate-800/50 border-slate-700 text-white focus:border-violet-500 rounded-xl h-11" />
-              </div>
+              <Label className="text-slate-400 text-[10px] font-black uppercase tracking-widest px-1">Capacity (people) *</Label>
+              <Input name="capacity" type="number" required min={1} defaultValue={table.capacity}
+                className="bg-slate-900 border-slate-700 text-white focus:border-violet-500 rounded-2xl h-14 text-base px-4" />
+            </div>
             )}
 
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">Description</Label>
+              <Label className="text-slate-400 text-[10px] font-black uppercase tracking-widest px-1">Description</Label>
               <Textarea name="description" defaultValue={table.description || ''}
-                className="bg-slate-800/50 border-slate-700 text-white focus:border-violet-500 resize-none rounded-xl" rows={2} />
+                className="bg-slate-900 border-slate-700 text-white focus:border-violet-500 resize-none rounded-2xl text-base p-4 min-h-[100px]" rows={3} />
             </div>
 
             {/* Active Status Toggle */}
@@ -117,7 +117,7 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
             {state?.success && <p className="text-emerald-400 text-sm text-center font-bold">{state.success}</p>}
 
             <Button type="submit" disabled={pending || deletePending}
-              className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 border-0 h-12 rounded-2xl font-black text-base shadow-lg shadow-violet-500/20">
+              className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 border-0 h-14 rounded-2xl font-black text-base shadow-lg shadow-violet-500/20">
               {pending ? 'Saving Changes...' : `Update ${terms.unit}`}
             </Button>
           </form>

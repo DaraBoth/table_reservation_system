@@ -24,18 +24,18 @@ export function StaffActions({ userId, membershipId, isActive, name }: { userId:
           size="sm"
           disabled={togglePending}
           className={cn(
-            "h-9 px-3 rounded-xl border transition-all duration-300 gap-1.5 font-bold tracking-tight",
+            "h-9 px-3 sm:px-3 w-9 sm:w-auto rounded-xl border transition-all duration-300 gap-1.5 font-bold tracking-tight",
             isActive 
-              ? "bg-slate-900 border-slate-800 text-slate-400 hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/30" 
-              : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+              ? "bg-slate-900 border-slate-800 text-slate-500 hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/30" 
+              : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
           )}
         >
           {togglePending ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : isActive ? (
-            <><UserX className="w-4 h-4" /> Disable</>
+            <><UserX className="w-4 h-4" /><span className="hidden sm:inline ml-0.5"> Disable</span></>
           ) : (
-            <><UserCheck className="w-4 h-4" /> Enable</>
+            <><UserCheck className="w-4 h-4" /><span className="hidden sm:inline ml-0.5"> Enable</span></>
           )}
         </Button>
       </form>

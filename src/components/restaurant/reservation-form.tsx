@@ -316,7 +316,7 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
                     <span className="text-violet-400 ml-2">·</span>
                     <span className="text-violet-300 text-xs ml-1">
                       {startTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                      {' '}{startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {' '}{startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </span>
                 </div>
@@ -471,7 +471,7 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
                       {startTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                     </p>
                     <p className="text-violet-300 text-sm font-semibold">
-                      {startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 </div>

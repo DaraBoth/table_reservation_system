@@ -41,7 +41,7 @@ export default async function RestaurantSettingsPage() {
         <div className="space-y-1">
           <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Subscription Plan</p>
           <p className="text-sm font-black text-white italic">
-            Valid until {membership.restaurants.subscription_expires_at ? new Date(membership.restaurants.subscription_expires_at).toLocaleDateString() : 'Unending'}
+            Valid until {membership.restaurants.subscription_expires_at ? new Date(membership.restaurants.subscription_expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unending'}
           </p>
         </div>
         <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center">

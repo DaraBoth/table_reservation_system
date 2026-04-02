@@ -81,7 +81,7 @@ export default async function StaffPage() {
             return (
               <div
                 key={s.id}
-                className="bg-slate-900 border border-slate-800 rounded-3xl p-5 flex items-center gap-4"
+                className="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-5 flex items-center gap-3 sm:gap-4 transition-all duration-300"
               >
                 {/* Avatar */}
                 <div className="relative flex-shrink-0">
@@ -94,17 +94,17 @@ export default async function StaffPage() {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-base font-black text-white truncate">{name}</p>
-                    <Badge className={`text-[10px] font-black border px-2 py-0.5 rounded-xl ${
+                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                    <p className="text-sm sm:text-base font-black text-white truncate max-w-[80px] sm:max-w-none">{name}</p>
+                    <Badge className={`text-[10px] font-black border px-2 py-0.5 rounded-xl flex-shrink-0 ${
                       s.is_active
-                        ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                        ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.1)]'
                         : 'bg-slate-700/50 text-slate-400 border-slate-600'
                     }`}>
                       {s.is_active ? 'Active' : 'Disabled'}
                     </Badge>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-[10px] sm:text-xs text-slate-500 mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
                     Staff · Joined {joinedDate}
                   </p>
                 </div>
