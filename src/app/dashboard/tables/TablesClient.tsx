@@ -5,18 +5,21 @@ import { format } from 'date-fns'
 import { createClient } from '@/lib/supabase/client'
 import { TableCard } from './TableCard'
 import { CreateTableDialog } from './CreateTableDialog'
-import { BarChart3, CircleCheck, CircleX, Clock } from 'lucide-react'
+import { BarChart3, CircleCheck, CircleX, Clock, Activity } from 'lucide-react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getTerms } from '@/lib/business-type'
 import type { Tables } from '@/lib/types/database'
 import { NumberTicker } from '@/components/magicui/number-ticker'
-import { Confetti } from '@/components/magicui/confetti'
+import { DateNavigator } from '@/components/dashboard/DateNavigator'
 
 interface BusyInfo {
   guestName: string
   status: string
   partySize: number
+  reservationDate?: string
+  checkoutDate?: string
+  endTime?: string
 }
 
 interface TablesClientProps {
@@ -27,25 +30,20 @@ interface TablesClientProps {
   isAdmin: boolean
 }
 
-export function TablesClient({ 
-  initialTables, 
-  initialBusyRows, 
-  restaurantId, 
+export function TablesClient({
+  initialTables,
+  initialBusyRows,
+  restaurantId,
   businessType,
-  isAdmin 
+  isAdmin
 }: TablesClientProps) {
   const [tables, setTables] = useState(initialTables)
   const [busyRows, setBusyRows] = useState(initialBusyRows)
   const [now, setNow] = useState(new Date())
-  const [showConfetti, setShowConfetti] = useState(false)
-  const [lastEvent, setLastEvent] = useState<{ type: 'free' | 'booked'; tableId: string } | null>(null)
-  
-  const prevBusyMapRef = useRef<Map<string, BusyInfo>>(new Map())
-  const isFirstLoadRef = useRef(true)
-  
+
   const supabase = createClient()
   const terms = getTerms(businessType)
-  const todayIso = format(new Date(), 'yyyy-MM-dd')
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
 
   // Keep clock running
   useEffect(() => {
@@ -54,15 +52,17 @@ export function TablesClient({
   }, [])
 
   const fetchLatestBusyRows = useCallback(async () => {
+    const fmt = selectedDate
     const { data } = await supabase
       .from('reservations')
-      .select('table_id, guest_name, status, party_size')
+      .select('table_id, guest_name, status, party_size, reservation_date, checkout_date, end_time')
       .eq('restaurant_id', restaurantId)
       .in('status', ['pending', 'confirmed', 'arrived'])
-      .eq('reservation_date', todayIso)
+      .lte('reservation_date', fmt)
+      .gte('checkout_date', fmt)
 
     if (data) setBusyRows(data)
-  }, [supabase, restaurantId, todayIso])
+  }, [supabase, restaurantId, selectedDate])
 
   const fetchLatestTables = useCallback(async () => {
     const { data } = await supabase
@@ -91,56 +91,46 @@ export function TablesClient({
     }
   }, [supabase, restaurantId, fetchLatestBusyRows, fetchLatestTables])
 
+  // Reset busy rows when date changes to prevent "ghost" data
+  useEffect(() => {
+    setBusyRows([])
+    fetchLatestBusyRows()
+  }, [selectedDate, fetchLatestBusyRows])
+
+  const isHotel = businessType === 'hotel' || businessType === 'guesthouse'
+  const todayStr = format(now, 'yyyy-MM-dd')
+
   const busyMap = useMemo(() => {
     const map = new Map<string, BusyInfo>()
-    for (const row of busyRows) {
-      if (row.table_id) {
-        map.set(row.table_id, { 
-          guestName: row.guest_name, 
-          status: row.status, 
-          partySize: row.party_size || 0 
-        })
+    busyRows.forEach(row => {
+      if (!row.table_id) return
+
+      // 🕵️ Check-out Logic: If it's the checkout day, check if time passed
+      if (isHotel && row.checkout_date === todayStr && row.end_time) {
+        const [h, m] = row.end_time.split(':').map(Number)
+        const checkOut = new Date(now)
+        checkOut.setHours(h, m, 0, 0)
+        if (now >= checkOut) return // Room is now free!
       }
-    }
+
+      map.set(row.table_id, {
+        guestName: row.guest_name,
+        status: row.status,
+        partySize: row.party_size || 0,
+        reservationDate: row.reservation_date,
+        checkoutDate: row.checkout_date,
+        endTime: row.end_time
+      })
+    })
     return map
-  }, [busyRows])
+  }, [busyRows, todayStr, now, isHotel])
 
   const activeTables = tables.filter(t => t.is_active)
   const freeCount = activeTables.filter(t => !busyMap.has(t.id)).length
   const busyCount = activeTables.filter(t => busyMap.has(t.id)).length
 
-  // 🕵️‍♂️ Detection of Real-time changes for animations
-  useEffect(() => {
-    if (isFirstLoadRef.current) {
-      prevBusyMapRef.current = new Map(busyMap)
-      isFirstLoadRef.current = false
-      return
-    }
-
-    // Check for NEW bookings
-    for (const [id, info] of busyMap.entries()) {
-      if (!prevBusyMapRef.current.has(id)) {
-        setLastEvent({ type: 'booked', tableId: id })
-        if (info.status === 'confirmed') {
-          setShowConfetti(true)
-          setTimeout(() => setShowConfetti(false), 2000)
-        }
-      }
-    }
-
-    // Check for FREE units
-    for (const id of prevBusyMapRef.current.keys()) {
-      if (!busyMap.has(id)) {
-        setLastEvent({ type: 'free', tableId: id })
-      }
-    }
-
-    prevBusyMapRef.current = new Map(busyMap)
-  }, [busyMap])
-
   return (
     <div className="relative space-y-6">
-      <Confetti active={showConfetti} onComplete={() => setShowConfetti(false)} />
       {/* 🔮 Magic UI Style Grid Background */}
       <div className="absolute inset-0 -top-20 -z-10 h-[1000px] w-full bg-slate-950 [background:radial-gradient(125%_125%_at_50%_10%,#020617_40%,#1e1b4b_100%)]">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-20" />
@@ -177,9 +167,16 @@ export function TablesClient({
         </div>
       </div>
 
+      {/* 🗓️ Universal Date Navigator */}
+      <DateNavigator
+        selectedDate={selectedDate}
+        onChange={setSelectedDate}
+        className="w-full"
+      />
+
       {/* Modern Summary Stats */}
       <div className="grid grid-cols-2 gap-3">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="relative overflow-hidden group bg-slate-900/40 border border-emerald-500/20 rounded-3xl p-5 flex items-center gap-4 transition-all hover:bg-slate-900/60"
@@ -196,7 +193,7 @@ export function TablesClient({
           <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full -mr-12 -mt-12 blur-2xl group-hover:bg-emerald-500/10 transition-all" />
         </motion.div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
@@ -239,7 +236,6 @@ export function TablesClient({
                   isTappable={isTappable}
                   businessType={businessType}
                   isAdmin={isAdmin}
-                  event={lastEvent?.tableId === t.id ? lastEvent.type : null}
                 />
               </motion.div>
             )
@@ -252,10 +248,10 @@ export function TablesClient({
         </div>
       )}
 
-      {/* Automated Status Note */}
-      <div className="text-center space-y-2 pt-8 pb-4 opacity-50">
+      <div className="text-center space-y-2 pt-8 pb-4 opacity-50 flex flex-col items-center">
+        <Activity className="w-4 h-4 text-emerald-500 animate-pulse mb-1" />
         <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.2em] leading-relaxed px-8">
-          Everything updates live as it happens. 📡
+          Everything updates live as it happens.
         </p>
       </div>
     </div>

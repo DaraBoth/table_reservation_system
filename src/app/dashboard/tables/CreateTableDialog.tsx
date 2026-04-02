@@ -53,7 +53,7 @@ export function CreateTableDialog({ businessType = 'restaurant' }: { businessTyp
           </div>
           {isHotel ? (
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">Number of Beds *</Label>
+              <Label className="text-slate-300 text-sm font-bold uppercase tracking-widest px-1">Number of {terms.capacityUnit} *</Label>
               <div className="flex gap-2">
                 {[1, 2, 3].map((num) => (
                   <button
@@ -67,7 +67,7 @@ export function CreateTableDialog({ businessType = 'restaurant' }: { businessTyp
                         : "border-slate-800 bg-slate-950 text-slate-500 hover:border-slate-700"
                     )}
                   >
-                    {num} {num === 1 ? 'Bed' : 'Beds'}
+                    {num} {num === 1 ? terms.capacityUnit.replace(/s$/i, '') : terms.capacityUnit}
                   </button>
                 ))}
               </div>
@@ -75,7 +75,7 @@ export function CreateTableDialog({ businessType = 'restaurant' }: { businessTyp
             </div>
           ) : (
             <div className="space-y-1.5">
-            <Label className="text-slate-300 text-sm font-bold uppercase tracking-widest">Capacity *</Label>
+            <Label className="text-slate-300 text-sm font-bold uppercase tracking-widest px-1">{terms.capacityUnit} *</Label>
             <Input name="capacity" type="number" required min={1} defaultValue={4}
               className="bg-slate-900 border-slate-700 text-white focus:border-violet-500 h-14 rounded-2xl text-base px-4 font-medium" />
           </div>

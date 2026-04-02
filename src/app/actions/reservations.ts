@@ -20,6 +20,7 @@ const ReservationSchema = z.object({
   endTime: z.string().optional(), // hotel checkout
   status: z.string().optional(),
   saveToCommon: z.boolean().optional(),
+  extraSlots: z.string().optional(),
 })
 
 export async function createReservation(_: ActionState, formData: FormData): Promise<ActionState> {
@@ -27,10 +28,10 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  // Resolve tenant
+  // Resolve tenant and business type
   const { data: membership } = await supabase
     .from('account_memberships')
-    .select('role, restaurant_id')
+    .select('role, restaurant_id, restaurants(business_type)')
     .eq('user_id', user.id)
     .single()
 
@@ -47,21 +48,29 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
     endTime: formData.get('endTime') as string | null || undefined,
     status: formData.get('status') as string || 'confirmed',
     saveToCommon: formData.get('saveToCommon') === 'true',
+    extraSlots: formData.get('extraSlots') as string || undefined,
   })
 
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-  const { tableId, guestName, guestPhone, party_size: partySize, notes, startTime, endTime: providedEnd, status: userStatus, saveToCommon } = parsed.data
+  const { 
+    tableId, guestName, guestPhone, party_size: partySize, 
+    notes, startTime, endTime: providedEnd, status: userStatus, 
+    saveToCommon, extraSlots: extraSlotsRaw 
+  } = parsed.data
 
   // Use provided checkout time (hotel) or default to +2 hours (restaurant)
   const startObj = new Date(startTime)
   const endObj   = providedEnd ? new Date(providedEnd) : new Date(startObj.getTime() + 2 * 60 * 60 * 1000)
   
-  // Format as pure, predictable strings to store natively in Postgres
-  // This bypasses any timezone coercion that previously corrupted dates!
   const reservationDate = startObj.getFullYear() + '-' + String(startObj.getMonth() + 1).padStart(2,'0') + '-' + String(startObj.getDate()).padStart(2,'0')
+  const checkoutDate = endObj.getFullYear() + '-' + String(endObj.getMonth() + 1).padStart(2,'0') + '-' + String(endObj.getDate()).padStart(2,'0')
   const startTimeStr = String(startObj.getHours()).padStart(2,'0') + ':' + String(startObj.getMinutes()).padStart(2,'0') + ':00'
   const endTimeStr = String(endObj.getHours()).padStart(2,'0') + ':' + String(endObj.getMinutes()).padStart(2,'0') + ':00'
+
+  const businessType = (membership as any).restaurants?.business_type || 'restaurant'
+  const isHotel = businessType === 'hotel' || businessType === 'guesthouse'
+  const isMultiDay = reservationDate !== checkoutDate
 
   // AUTO-CONFIRM LOGIC: If they select 'Waiting' (pending) but the table is actually free, make it 'confirmed'
   let finalStatus = userStatus || 'confirmed'
@@ -88,34 +97,112 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
     .eq('id', tableId)
     .single()
 
-  const { data, error } = await supabase.from('reservations').insert({
-    restaurant_id: membership.restaurant_id,
-    table_id: tableId,
-    unit_name: tableData?.table_name || 'Unknown Unit',
-    guest_name: guestName,
-    guest_phone: guestPhone || null,
-    guest_email: null, // explicitly null per user request
-    party_size: partySize,
-    notes: notes || null,
-    status: finalStatus as any, 
-    reservation_date: reservationDate,
-    start_time: startTimeStr,
-    end_time: endTimeStr,
-    created_by: user.id,
-  })
-    .select()
-    .single()
+  // ─── BRANCH: HOTEL (Range) or RESTAURANT (Split/Extra) ───────────────────────
+  
+  const hasExtraSlots = extraSlotsRaw && JSON.parse(extraSlotsRaw).length > 0
+  const extraSlots = hasExtraSlots ? JSON.parse(extraSlotsRaw) : []
 
-  if (error) {
-    if (error.code === '23P01') {
-      return { error: 'Table is busy at this slot. Please choose another table/time.' }
+  if (isHotel) {
+    // 🏨 HOTEL: Standard sequence (Check-in to Check-out)
+    const { data, error } = await supabase.from('reservations').insert({
+      restaurant_id: membership.restaurant_id,
+      table_id: tableId,
+      unit_name: tableData?.table_name || 'Unknown Unit',
+      guest_name: guestName,
+      guest_phone: guestPhone || null,
+      party_size: partySize,
+      notes: notes || null,
+      status: finalStatus as any, 
+      reservation_date: reservationDate,
+      checkout_date: checkoutDate,
+      start_time: startTimeStr,
+      end_time: endTimeStr,
+      created_by: user.id,
+    }).select().single()
+
+    if (error) return { error: error.message }
+    const { notifyNewBooking } = await import('@/lib/notifications')
+    notifyNewBooking(data.id)
+  } else {
+    // 🍽️ RESTAURANT: Multi-slot or Split range
+    const groupId = (hasExtraSlots || isMultiDay) ? crypto.randomUUID() : null
+    const records = []
+
+    // 1. Add primary slot
+    records.push({
+      restaurant_id: membership.restaurant_id,
+      table_id: tableId,
+      group_id: groupId,
+      unit_name: tableData?.table_name || 'Unknown Unit',
+      guest_name: guestName,
+      guest_phone: guestPhone || null,
+      party_size: partySize,
+      notes: notes || null,
+      status: finalStatus as any, 
+      reservation_date: reservationDate,
+      checkout_date: reservationDate,
+      start_time: startTimeStr,
+      end_time: endTimeStr,
+      created_by: user.id,
+    })
+
+    // 2. Add extra slots from '+' button
+    if (hasExtraSlots) {
+      extraSlots.forEach((slot: { date: string; partySize: number; status?: string }) => {
+        const d = new Date(slot.date)
+        const dStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0')
+        const tStr = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':00'
+        // Extra slots default to 2hr duration unless specified otherwise
+        const tEnd = new Date(d.getTime() + 2 * 60 * 60 * 1000)
+        const tEndStr = String(tEnd.getHours()).padStart(2,'0') + ':' + String(tEnd.getMinutes()).padStart(2,'0') + ':00'
+
+        records.push({
+          restaurant_id: membership.restaurant_id,
+          table_id: tableId,
+          group_id: groupId,
+          unit_name: tableData?.table_name || 'Unknown Unit',
+          guest_name: guestName,
+          guest_phone: guestPhone || null,
+          party_size: slot.partySize || partySize,
+          notes: notes || null,
+          status: (slot.status || finalStatus) as any, 
+          reservation_date: dStr,
+          checkout_date: dStr,
+          start_time: tStr,
+          end_time: tEndStr,
+          created_by: user.id,
+        })
+      })
+    } 
+    // 3. Fallback: Old range-based split logic (if no extraSlots but isMultiDay)
+    else if (isMultiDay) {
+      let current = new Date(startObj)
+      current.setDate(current.getDate() + 1) // skip primary already added
+      while (current <= endObj) {
+        const dateStr = current.getFullYear() + '-' + String(current.getMonth() + 1).padStart(2,'0') + '-' + String(current.getDate()).padStart(2,'0')
+        records.push({
+          restaurant_id: membership.restaurant_id,
+          table_id: tableId,
+          group_id: groupId,
+          unit_name: tableData?.table_name || 'Unknown Unit',
+          guest_name: guestName,
+          guest_phone: guestPhone || null,
+          party_size: partySize,
+          notes: notes || null,
+          status: finalStatus as any, 
+          reservation_date: dateStr,
+          checkout_date: dateStr,
+          start_time: startTimeStr,
+          end_time: endTimeStr,
+          created_by: user.id,
+        })
+        current.setDate(current.getDate() + 1)
+      }
     }
-    return { error: error.message }
-  }
 
-  // 🔔 Trigger Push Notification
-  const { notifyNewBooking } = await import('@/lib/notifications')
-  notifyNewBooking(data.id)
+    const { error } = await supabase.from('reservations').insert(records)
+    if (error) return { error: error.message }
+  }
 
   // Handle Common Customer saving
   if (saveToCommon) {
@@ -245,6 +332,7 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
   const endObj   = providedEnd ? new Date(providedEnd) : new Date(startObj.getTime() + 2 * 60 * 60 * 1000)
   
   const reservationDate = startObj.getFullYear() + '-' + String(startObj.getMonth() + 1).padStart(2,'0') + '-' + String(startObj.getDate()).padStart(2,'0')
+  const checkoutDate = endObj.getFullYear() + '-' + String(endObj.getMonth() + 1).padStart(2,'0') + '-' + String(endObj.getDate()).padStart(2,'0')
   const startTimeStr = String(startObj.getHours()).padStart(2,'0') + ':' + String(startObj.getMinutes()).padStart(2,'0') + ':00'
   const endTimeStr = String(endObj.getHours()).padStart(2,'0') + ':' + String(endObj.getMinutes()).padStart(2,'0') + ':00'
 
@@ -266,6 +354,7 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
       notes: notes || null,
       status: status as any,
       reservation_date: reservationDate,
+      checkout_date: checkoutDate, // Added column
       start_time: startTimeStr,
       end_time: endTimeStr,
     })

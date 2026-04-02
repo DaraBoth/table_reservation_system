@@ -29,7 +29,12 @@ export interface BusinessTerms {
   // Customer
   guest: string       // "Guest" | "Guest"
   guests: string      // "Guests" | "Guests"
-  // Icon
+  partyUnit: string   // "People" | "Guests"
+  partyUnitLower: string
+  // Capacity
+  capacityUnit: string // "Seats" | "Beds"
+  capacityUnitLower: string
+  // Icon / Emoji
   Icon: LucideIcon
   // Status for completion
   doneLabel: string   // "Done" | "Checked Out"
@@ -49,6 +54,8 @@ export function getTerms(type: string | null | undefined): BusinessTerms {
       endLabel: 'Check-out',
       hasCheckout: true,
       guest: 'Guest',     guests: 'Guests',
+      partyUnit: 'Guests', partyUnitLower: 'guests',
+      capacityUnit: 'Beds', capacityUnitLower: 'beds',
       Icon: type === 'guesthouse' ? Home : Building2,
       doneLabel: 'Checked Out',
     }
@@ -64,6 +71,8 @@ export function getTerms(type: string | null | undefined): BusinessTerms {
     endLabel: '',
     hasCheckout: false,
     guest: 'Guest',     guests: 'Guests',
+    partyUnit: 'People', partyUnitLower: 'people',
+    capacityUnit: 'Seats', capacityUnitLower: 'seats',
     Icon: UtensilsCrossed,
     doneLabel: 'Done',
   }

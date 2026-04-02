@@ -5,19 +5,26 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { EditTableSheet } from './EditTableSheet'
-import { User, Settings2 } from 'lucide-react'
+import { User, Settings2, Activity } from 'lucide-react'
 import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from 'framer-motion'
 import type { Tables } from '@/lib/types/database'
+import { getTerms } from '@/lib/business-type'
 
 interface TableCardProps {
   table: Tables<'physical_tables'>
-  busyInfo?: { guestName: string; status: string; partySize: number }
+  busyInfo?: { 
+    guestName: string; 
+    status: string; 
+    partySize: number;
+    reservationDate?: string;
+    checkoutDate?: string;
+    endTime?: string;
+  }
   isBusy: boolean
   isOffline: boolean
   isTappable: boolean
   businessType: string
   isAdmin: boolean
-  event?: 'free' | 'booked' | null
 }
 
 export function TableCard({ 
@@ -27,10 +34,10 @@ export function TableCard({
   isOffline, 
   isTappable, 
   businessType,
-  isAdmin,
-  event
+  isAdmin
 }: TableCardProps) {
   const isHotel = businessType === 'hotel' || businessType === 'guesthouse'
+  const terms = getTerms(businessType)
 
   // ✨ Magic UI: Mouse position for follow-glow
   const mouseX = useMotionValue(0)
@@ -52,30 +59,6 @@ export function TableCard({
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         />
       )}
-
-      {/* 📡 Detection Pulses for Real-time Events */}
-      <AnimatePresence>
-        {event === 'free' && (
-          <motion.div 
-            key="free-event"
-            initial={{ scale: 0.8, opacity: 1 }}
-            animate={{ scale: 3, opacity: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.2, ease: "easeOut" }}
-            className="absolute inset-0 z-40 bg-emerald-400/40 rounded-3xl pointer-events-none"
-          />
-        )}
-        {event === 'booked' && (
-          <motion.div 
-            key="booked-event"
-            initial={{ scale: 0.8, opacity: 1 }}
-            animate={{ scale: 3, opacity: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.2, ease: "easeOut" }}
-            className="absolute inset-0 z-40 bg-violet-400/40 rounded-3xl pointer-events-none"
-          />
-        )}
-      </AnimatePresence>
 
       {/* Background card style with Interactive Glow */}
       <div 
@@ -144,20 +127,32 @@ export function TableCard({
             {table.table_name}
           </p>
           <p className={cn('text-[11px] font-bold mt-0.5', isOffline ? 'text-slate-700' : 'text-slate-500 uppercase tracking-tighter')}>
-            {isHotel ? `${table.capacity} Beds` : `Seats ${table.capacity}`}
+            {table.capacity} {terms.capacityUnit}
           </p>
         </div>
 
         {/* Status Badge */}
         <div className="mt-auto pt-3 flex flex-col gap-1.5">
-          <Badge className={cn(
-            'text-[10px] font-black w-fit px-2.5 py-0.5 rounded-lg border uppercase tracking-widest transition-all duration-500',
-            isOffline ? 'bg-slate-800 text-slate-600 border-slate-700'
-              : isBusy ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
-                : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-          )}>
-            {isOffline ? 'Offline' : isBusy ? 'Booked' : 'Available'}
-          </Badge>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Badge className={cn(
+              'text-[10px] font-black w-fit px-2.5 py-0.5 rounded-lg border uppercase tracking-widest transition-all duration-500',
+              isOffline ? 'bg-slate-800 text-slate-600 border-slate-700'
+                : isBusy ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                  : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+            )}>
+              {isOffline ? 'Offline' : isBusy ? 'Booked' : 'Available'}
+            </Badge>
+
+            {/* Premium Range Badge for Multi-day stays */}
+            {isBusy && busyInfo?.reservationDate && busyInfo?.checkoutDate && busyInfo.reservationDate !== busyInfo.checkoutDate && (
+              <Badge className="bg-violet-500/10 text-violet-400 border-violet-500/30 text-[9px] font-black uppercase px-2 py-0.5 rounded-lg flex items-center gap-1 whitespace-nowrap">
+                <Activity className="w-3 h-3" />
+                {new Date(busyInfo.reservationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                <span className="opacity-50">→</span>
+                {new Date(busyInfo.checkoutDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </Badge>
+            )}
+          </div>
 
           {isBusy && busyInfo?.guestName && (
             <p className="text-[10px] text-rose-300/80 font-black truncate drop-shadow-sm flex items-center gap-1 uppercase tracking-tighter">

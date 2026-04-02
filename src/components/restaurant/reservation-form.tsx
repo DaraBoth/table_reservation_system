@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import type { Tables } from '@/lib/types/database'
 import { DateTimePickerV2 } from '@/components/restaurant/date-time-picker-v2'
 import { cn } from '@/lib/utils'
-import { CheckCircle2, ChevronLeft, ChevronRight, Star, ArrowRight } from 'lucide-react'
+import { CheckCircle2, ChevronLeft, ChevronRight, Star, ArrowRight, Calendar, User, LogOut, BarChart3, CircleCheck, CircleX, Clock, Activity, PlusCircle, CalendarDays } from 'lucide-react'
 import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
 
@@ -73,6 +73,39 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
   const [partySize, setPartySize] = useState(String(initialData?.party_size || '2'))
   const [notes, setNotes] = useState(initialData?.notes || '')
   const [saveToCommon, setSaveToCommon] = useState(false)
+  const [isMultiDay, setIsMultiDay] = useState(
+    isEdit 
+      ? (initialData as any)?.reservation_date !== (initialData as any)?.checkout_date
+      : isHotel // Default to true-logic for hotels to ensure range is used
+  )
+  const [extraSlots, setExtraSlots] = useState<{ id: string; date: Date; partySize: number; status: string }[]>([])
+
+  const addExtraSlot = () => {
+    // Default to +1 day from the last slot (or start time) at same time
+    const baseDate = extraSlots.length > 0 ? extraSlots[extraSlots.length - 1].date : startTime
+    const nextDate = new Date(baseDate)
+    nextDate.setDate(nextDate.getDate() + 1)
+    
+    setExtraSlots([...extraSlots, { 
+      id: Math.random().toString(36).substring(7), 
+      date: nextDate,
+      partySize: parseInt(partySize) || 2,
+      status: bookingStatus
+    }])
+  }
+
+  const removeExtraSlot = (id: string) => {
+    setExtraSlots(extraSlots.filter(s => s.id !== id))
+  }
+
+  const updateExtraSlot = (id: string, date: Date, slotPartySize?: number, slotStatus?: string) => {
+    setExtraSlots(extraSlots.map(s => s.id === id ? { 
+      ...s, 
+      date, 
+      partySize: slotPartySize !== undefined ? slotPartySize : s.partySize,
+      status: slotStatus !== undefined ? slotStatus : s.status
+    } : s))
+  }
 
   React.useEffect(() => {
     getCommonCustomers(restaurantId).then(setCommonCustomers).catch(console.error)
@@ -95,6 +128,14 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
 
   const selectedTable = tables.find(t => t.id === selectedTableId)
   const slideClass = slideDir === 'right' ? slideInRight : slideInLeft
+  
+  const handleTableSelect = (table: Tables<'physical_tables'>) => {
+    setSelectedTableId(table.id)
+    // For hotels/guesthouses: 1 bed = 2 people (unless editing)
+    if (isHotel && !isEdit) {
+      setPartySize(String(table.capacity * 2))
+    }
+  }
 
   return (
     <div className="max-w-2xl mx-auto overflow-hidden">
@@ -114,8 +155,9 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
         {/* Hidden fields */}
         {isEdit && <input type="hidden" name="id" value={initialData.id} />}
         <input type="hidden" name="startTime" value={startTime.toISOString()} />
-        {/* Hotel: use endTime; Restaurant: action computes +2h */}
-        {terms.hasCheckout && <input type="hidden" name="endTime" value={endTime.toISOString()} />}
+        {/* Hotel: use endTime; Restaurant: action computes +2h unless multi-day */}
+        {(terms.hasCheckout || isMultiDay) && <input type="hidden" name="endTime" value={endTime.toISOString()} />}
+        <input type="hidden" name="extraSlots" value={JSON.stringify(extraSlots.map(s => ({ date: s.date.toISOString(), partySize: s.partySize, status: s.status })))} />
         <input type="hidden" name="tableId" value={selectedTableId} />
         <input type="hidden" name="saveToCommon" value="false" />
         <input type="hidden" name="guestName" value={guestName} />
@@ -131,49 +173,175 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
             {/* Section: Date & Time */}
             <section className="bg-slate-900 rounded-3xl p-5 border border-slate-800 space-y-5">
               <div className="flex items-center justify-between">
-                <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest">
-                  📅 {terms.hasCheckout ? 'Check-in & Check-out' : 'When is the booking?'}
+                <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" /> {terms.hasCheckout ? 'Check-in & Check-out' : 'When is the booking?'}
                 </h2>
+              </div>
                 
-                {/* Status Toggle */}
-                {!isEdit && (
-                  <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+              <div className={(terms.hasCheckout || isMultiDay || extraSlots.length > 0) ? 'space-y-6' : ''}>
+                {/* ── CARD: Primary Slot ── */}
+                <div className="relative group/card animate-in fade-in zoom-in-95 duration-500">
+                  <div className="bg-slate-950/40 border border-slate-800/60 rounded-[2.5rem] p-6 shadow-2xl overflow-hidden relative">
+                     <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                           <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                              <Star className={cn("w-4 h-4", bookingStatus === 'confirmed' ? "text-emerald-400 fill-emerald-400" : "text-slate-600")} />
+                           </div>
+                           <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">{terms.hasCheckout ? terms.startLabel : 'Primary Booking'}</p>
+                        </div>
+                        
+                         {!isHotel && (
+                          <div className="flex bg-slate-900/80 p-0.5 rounded-xl border border-slate-800">
+                            <button
+                              type="button"
+                              onClick={() => setBookingStatus('confirmed')}
+                              className={cn(
+                                "px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all",
+                                bookingStatus === 'confirmed' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-slate-500"
+                              )}
+                            >
+                              Conf
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setBookingStatus('pending')}
+                              className={cn(
+                                "px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all",
+                                bookingStatus === 'pending' ? "bg-amber-500 text-white shadow-lg shadow-amber-500/20" : "text-slate-500"
+                              )}
+                            >
+                              Wait
+                            </button>
+                          </div>
+                        )}
+                     </div>
+
+                     <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
+                        <div className="flex-1">
+                          <DateTimePickerV2 value={startTime} onChange={setStartTime} />
+                        </div>
+                        {!isHotel && (
+                          <div className="w-full sm:w-24">
+                             <Label className="text-[10px] font-black text-slate-500 uppercase mb-2 px-1 block tracking-widest">Guests</Label>
+                             <div className="relative">
+                               <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400 pointer-events-none" />
+                               <Input
+                                 type="number"
+                                 min={1}
+                                 value={partySize}
+                                 onChange={(e) => setPartySize(e.target.value)}
+                                 className="h-14 bg-slate-900 border-2 border-slate-700/50 text-white pl-9 font-black text-lg rounded-2xl focus:border-emerald-500"
+                               />
+                             </div>
+                          </div>
+                        )}
+                     </div>
+                  </div>
+                </div>
+
+                {/* Additional Slots for Restaurant */}
+                {!isHotel && extraSlots.map((slot, index) => (
+                  <div key={slot.id} className="relative group/card animate-in slide-in-from-bottom-2 fade-in duration-400">
+                    <div className="bg-slate-950/40 border border-slate-800/60 rounded-[2.5rem] p-6 shadow-xl relative overflow-hidden">
+                       <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2">
+                             <div className="w-8 h-8 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                                <CalendarDays className="w-4 h-4 text-violet-400" />
+                             </div>
+                             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Extra Slot #{index + 1}</p>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <div className="flex bg-slate-900/80 p-0.5 rounded-xl border border-slate-800">
+                               <button
+                                 type="button"
+                                 onClick={() => updateExtraSlot(slot.id, slot.date, slot.partySize, 'confirmed')}
+                                 className={cn(
+                                   "px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all",
+                                   slot.status === 'confirmed' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-slate-500"
+                                 )}
+                               >
+                                 Conf
+                               </button>
+                               <button
+                                 type="button"
+                                 onClick={() => updateExtraSlot(slot.id, slot.date, slot.partySize, 'pending')}
+                                 className={cn(
+                                   "px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all",
+                                   slot.status === 'pending' ? "bg-amber-500 text-white shadow-lg shadow-amber-500/20" : "text-slate-500"
+                                 )}
+                               >
+                                 Wait
+                               </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeExtraSlot(slot.id)}
+                              className="w-10 h-10 flex items-center justify-center bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 hover:bg-rose-500 transition-all hover:text-white"
+                            >
+                              <CircleX className="w-4 h-4" />
+                            </button>
+                          </div>
+                       </div>
+
+                       <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
+                          <div className="flex-1">
+                            <DateTimePickerV2 value={slot.date} onChange={(date) => updateExtraSlot(slot.id, date)} />
+                          </div>
+                          <div className="w-full sm:w-24">
+                             <Label className="text-[10px] font-black text-slate-500 uppercase mb-2 px-1 block tracking-widest">Guests</Label>
+                             <div className="relative">
+                               <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-400 pointer-events-none" />
+                               <Input
+                                 type="number"
+                                 min={1}
+                                 value={slot.partySize}
+                                 onChange={(e) => updateExtraSlot(slot.id, slot.date, parseInt(e.target.value) || 1)}
+                                 className="h-14 bg-slate-900 border-2 border-slate-700/50 text-white pl-9 font-black text-lg rounded-2xl focus:border-violet-500"
+                               />
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {!isHotel && (
+                  <button
+                    type="button"
+                    onClick={addExtraSlot}
+                    className="w-full h-16 flex items-center justify-center gap-3 bg-slate-950/20 border-2 border-dashed border-slate-800 rounded-[2rem] text-slate-500 hover:border-violet-500/50 hover:text-violet-400 transition-all hover:bg-violet-500/5"
+                  >
+                    <PlusCircle className="w-6 h-6" />
+                    <span className="text-sm font-black uppercase tracking-[0.2em]">Add Another Date</span>
+                  </button>
+                )}
+
+                {/* Multi-day toggle for hotels only (for explicit ranges if needed, but usually just use checkout) */}
+                {isHotel && (
+                  <div className="flex items-center justify-between p-3 bg-slate-950/50 rounded-2xl border border-slate-800/50">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                       <Activity className="w-3.5 h-3.5 text-violet-400" /> Extended Stay?
+                    </label>
                     <button
                       type="button"
-                      onClick={() => setBookingStatus('confirmed')}
+                      onClick={() => setIsMultiDay(!isMultiDay)}
                       className={cn(
-                        "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all",
-                        bookingStatus === 'confirmed' 
-                          ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" 
-                          : "text-slate-500 hover:text-slate-300"
+                        "w-10 h-5 rounded-full transition-colors relative",
+                        isMultiDay ? "bg-violet-500" : "bg-slate-800"
                       )}
                     >
-                      Confirm
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setBookingStatus('pending')}
-                      className={cn(
-                        "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all",
-                        bookingStatus === 'pending' 
-                          ? "bg-amber-500 text-white shadow-lg shadow-amber-500/20" 
-                          : "text-slate-500 hover:text-slate-300"
-                      )}
-                    >
-                      Waiting
+                      <div className={cn(
+                        "absolute top-1 left-1 w-3 h-3 rounded-full bg-white transition-transform",
+                        isMultiDay && "translate-x-5"
+                      )} />
                     </button>
                   </div>
                 )}
-              </div>
 
-              <div className={terms.hasCheckout ? 'space-y-4' : ''}>
-                <div>
-                  {terms.hasCheckout && <p className="text-xs font-bold text-emerald-400 mb-2">✅ {terms.startLabel}</p>}
-                  <DateTimePickerV2 value={startTime} onChange={setStartTime} />
-                </div>
-                {terms.hasCheckout && (
+                {isHotel && (isMultiDay || terms.hasCheckout) && (
                   <div>
-                    <p className="text-xs font-bold text-rose-400 mb-2">🚪 {terms.endLabel}</p>
+                    <p className="text-xs font-bold text-rose-400 mb-2 flex items-center gap-1.5"><LogOut className="w-3.5 h-3.5" /> {terms.endLabel}</p>
                     <DateTimePickerV2 value={endTime} onChange={setEndTime} />
                   </div>
                 )}
@@ -213,7 +381,7 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
                       key={table.id}
                       type="button"
                       disabled={isOccupied && bookingStatus === 'confirmed'}
-                      onClick={() => setSelectedTableId(table.id)}
+                      onClick={() => handleTableSelect(table)}
                       className={cn(
                         'relative flex flex-col items-center justify-center gap-1 p-3 rounded-2xl border-2 transition-all duration-200 min-h-[84px] active:scale-95',
                         isOccupied && bookingStatus === 'confirmed'
@@ -232,7 +400,7 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
                         {table.table_name}
                       </span>
                       <span className={cn('text-[10px] font-semibold', isSelected ? 'text-violet-300' : 'text-slate-600')}>
-                        {table.capacity} seats
+                        {table.capacity} {terms.capacityUnit}
                       </span>
                       {isOccupied && (
                         <span className={cn(
@@ -262,7 +430,7 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
             >
               {selectedTableId ? (
                 <>Next: Customer Info <ChevronRight className="w-5 h-5" /></>
-              ) : 'Select a table to continue'}
+              ) : `Select a ${terms.unitLower} to continue`}
             </button>
           </div>
         )}
@@ -276,10 +444,12 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
               <section className="bg-slate-900 rounded-3xl p-5 border border-slate-800 space-y-4">
                 {/* Table banner */}
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">🪑</span>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                    <TermIcon className="w-5 h-5 text-emerald-400" />
+                  </div>
                   <div className="flex-1">
                     <p className="text-xs text-emerald-400 font-black uppercase tracking-widest">{terms.unit} selected</p>
-                    <p className="text-sm font-bold text-white">{selectedTable.table_name} · {isHotel ? `${selectedTable.capacity} ${selectedTable.capacity === 1 ? 'Bed' : 'Beds'}` : `Up to ${selectedTable.capacity} people`}</p>
+                    <p className="text-sm font-bold text-white">{selectedTable.table_name} · {selectedTable.capacity} {terms.capacityUnit}</p>
                   </div>
                   <button type="button" onClick={() => goTo(1)} className="text-xs text-slate-400 font-semibold hover:text-white transition-colors">
                     Change table
@@ -291,8 +461,8 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
 
                 {/* Date & Time — pick for this booking */}
                 <div>
-                  <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3">
-                    📅 When is the booking?
+                  <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5" /> When is the booking?
                   </h2>
                   <DateTimePickerV2 value={startTime} onChange={setStartTime} />
                 </div>
@@ -312,7 +482,7 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
                     {isEdit ? 'Tap to change date, time or table' : 'Table selected'}
                   </span>
                   <span className="text-sm font-bold text-white">
-                    {selectedTable.table_name} · {isHotel ? `${selectedTable.capacity} Beds` : `${selectedTable.capacity} seats`}
+                    {selectedTable.table_name} · {selectedTable.capacity} {terms.capacityUnitLower}
                     <span className="text-violet-400 ml-2">·</span>
                     <span className="text-violet-300 text-xs ml-1">
                       {startTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
@@ -356,7 +526,9 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
 
             {/* Form fields */}
             <div className="bg-slate-900 rounded-3xl p-5 border border-slate-800 space-y-4">
-              <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest">👤 Customer Info</h2>
+              <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5" /> Customer Info
+              </h2>
 
               <div>
                 <Label className="text-sm font-bold text-slate-300 mb-2 block">Customer Name *</Label>
@@ -369,8 +541,8 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
                 />
               </div>
 
-              <div className={cn("grid gap-3", isHotel ? "grid-cols-1" : "grid-cols-2")}>
-                <div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className={cn(isHotel ? "col-span-1" : "col-span-2")}>
                   <Label className="text-sm font-bold text-slate-300 mb-2 block">Phone</Label>
                   <Input
                     value={guestPhone}
@@ -379,16 +551,16 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
                     className="bg-slate-950 border-slate-700 text-white h-14 text-base font-semibold rounded-2xl focus:border-violet-500 px-4"
                   />
                 </div>
-                {!isHotel && (
+                {isHotel && (
                   <div>
-                    <Label className="text-sm font-bold text-slate-300 mb-2 block">How Many People *</Label>
+                    <Label className="text-sm font-bold text-slate-300 mb-2 block">{terms.partyUnit} *</Label>
                     <Input
                       value={partySize}
                       onChange={e => setPartySize(e.target.value)}
                       type="number"
                       required
                       min={1}
-                      className="bg-slate-950 border-slate-700 text-white h-14 text-2xl font-black rounded-2xl focus:border-violet-500 px-4 text-center"
+                      className="bg-slate-950 border-slate-700 text-white h-14 text-xl font-black rounded-2xl focus:border-violet-500 px-4 text-center"
                     />
                   </div>
                 )}
@@ -464,38 +636,72 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
 
                 {/* Date */}
                 <div className="flex items-center gap-4 p-4 bg-slate-950 rounded-2xl">
-                  <span className="text-2xl">📅</span>
+                  <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-violet-400" />
+                  </div>
                   <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Date & Time</p>
-                    <p className="text-white font-bold">
-                      {startTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      {extraSlots.length > 0 ? 'Full Schedule' : 'Date & Time'}
                     </p>
-                    <p className="text-violet-300 text-sm font-semibold">
-                      {startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+                    <div className="space-y-1.5 mt-1">
+                      <div className="flex items-baseline justify-between gap-4">
+                        <p className="text-white font-bold text-sm">
+                           {startTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                        </p>
+                        <p className="text-violet-300 text-xs font-bold">
+                          {startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                      
+                      {extraSlots.map((slot, i) => (
+                        <div key={slot.id} className="flex items-baseline justify-between gap-4 pt-1 border-t border-slate-900">
+                          <div className="flex-1 min-w-0 flex items-center gap-2">
+                            <div className={cn(
+                              "w-1.5 h-1.5 rounded-full shrink-0",
+                              slot.status === 'confirmed' ? "bg-emerald-500" : "bg-amber-500"
+                            )} />
+                            <p className="text-white/80 font-bold text-xs truncate">
+                              {slot.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                             <p className="text-violet-300/80 text-[10px] font-bold">
+                               {slot.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                             </p>
+                             <p className="text-emerald-400/70 text-[9px] font-black uppercase">
+                               {slot.partySize} {terms.partyUnitLower}
+                             </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
                 {/* Table */}
                 {selectedTable && (
                   <div className="flex items-center gap-4 p-4 bg-slate-950 rounded-2xl">
-                    <span className="text-2xl">🪑</span>
+                    <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                      <TermIcon className="w-5 h-5 text-violet-400" />
+                    </div>
                     <div>
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Table</p>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{terms.unit}</p>
                       <p className="text-white font-bold">{selectedTable.table_name}</p>
-                      <p className="text-slate-400 text-sm">Up to {selectedTable.capacity} people</p>
+                      <p className="text-slate-400 text-sm">{selectedTable.capacity} {terms.capacityUnitLower}</p>
                     </div>
                   </div>
                 )}
 
                 {/* Customer */}
                 <div className="flex items-center gap-4 p-4 bg-slate-950 rounded-2xl">
-                  <span className="text-2xl">👤</span>
+                  <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                    <User className="w-5 h-5 text-violet-400" />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Customer</p>
                     <p className="text-white font-bold">{guestName}</p>
                     <p className="text-slate-400 text-sm">
-                      {partySize} {Number(partySize) === 1 ? 'person' : 'people'}
+                      {partySize} {Number(partySize) === 1 ? terms.partyUnit.replace(/s$/i, '').toLowerCase() : terms.partyUnitLower}
                       {guestPhone ? ` · ${guestPhone}` : ''}
                     </p>
                     {notes && <p className="text-slate-500 text-xs mt-1 italic truncate">{notes}</p>}

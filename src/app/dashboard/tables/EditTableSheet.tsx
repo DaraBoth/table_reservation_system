@@ -58,7 +58,7 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
 
             {isHotel ? (
               <div className="space-y-1.5">
-                <Label className="text-slate-300 text-sm">Number of Beds *</Label>
+                <Label className="text-slate-300 text-sm font-bold uppercase tracking-widest px-1">Number of {terms.capacityUnit} *</Label>
                 <div className="flex gap-2">
                   {[1, 2, 3].map((num) => (
                     <button
@@ -72,7 +72,7 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
                           : "border-slate-800 bg-slate-950 text-slate-500 hover:border-slate-700"
                       )}
                     >
-                      {num} {num === 1 ? 'Bed' : 'Beds'}
+                      {num} {num === 1 ? terms.capacityUnit.replace(/s$/i, '') : terms.capacityUnit}
                     </button>
                   ))}
                 </div>
@@ -80,7 +80,7 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
               </div>
             ) : (
               <div className="space-y-1.5">
-              <Label className="text-slate-400 text-[10px] font-black uppercase tracking-widest px-1">Capacity (people) *</Label>
+              <Label className="text-slate-400 text-[10px] font-black uppercase tracking-widest px-1">{terms.capacityUnit} ({terms.partyUnitLower}) *</Label>
               <Input name="capacity" type="number" required min={1} defaultValue={table.capacity}
                 className="bg-slate-900 border-slate-700 text-white focus:border-violet-500 rounded-2xl h-14 text-base px-4" />
             </div>
@@ -96,7 +96,7 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
             <div className="flex items-center justify-between p-4 bg-slate-950/50 border border-slate-800 rounded-2xl">
               <div>
                 <p className="text-sm font-bold text-white">Active Status</p>
-                <p className="text-xs text-slate-500">Enable or disable this room for bookings</p>
+                <p className="text-xs text-slate-500">Enable or disable this {terms.unitLower} for {terms.bookingsLower}</p>
               </div>
               <button
                 type="button"

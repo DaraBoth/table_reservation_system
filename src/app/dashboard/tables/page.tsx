@@ -35,13 +35,14 @@ export default async function TablesPage() {
   const today = new Date()
   const todayDate = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0')
 
-  // Initial Fetch for Busy Status
+  // Initial Fetch for Busy Status: Anyone whose range covers TODAY
   const { data: busyRows } = await supabase
     .from('reservations')
-    .select('table_id, guest_name, status, party_size')
+    .select('table_id, guest_name, status, party_size, reservation_date, checkout_date, end_time')
     .eq('restaurant_id', membership.restaurant_id!)
-    .in('status', ['pending', 'confirmed', 'arrived'])
-    .eq('reservation_date', todayDate)
+    .in('status', ['pending', 'confirmed', 'arrived', 'confirmed'])
+    .lte('reservation_date', todayDate)
+    .gte('checkout_date', todayDate)
 
   return (
     <div className="max-w-2xl mx-auto pb-8">

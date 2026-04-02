@@ -29,35 +29,25 @@ export default async function ReservationsPage({ searchParams }: Props) {
   const terms = getTerms(businessType)
 
   const { date } = await searchParams
-  const today = new Date()
-  const todayIso = format(today, 'yyyy-MM-dd')
-  const yesterdayIso = format(subDays(today, 1), 'yyyy-MM-dd')
-  const archiveDate = date || yesterdayIso
+  const todayIso = format(new Date(), 'yyyy-MM-dd')
+  const initialDate = date || todayIso
+  const todayStr = todayIso
 
-  // Initial Fetch: Today's Active
-  const { data: initialActive } = await supabase
+  // Initial Fetch: Anyone who is IN-HOUSE on the selected date
+  const { data: allBookings } = await supabase
     .from('reservations')
     .select('*, physical_tables(table_name, capacity)')
-    .eq('restaurant_id', membership.restaurant_id)
-    .eq('reservation_date', todayIso)
-    .in('status', ['pending', 'confirmed', 'arrived'])
-    .order('start_time', { ascending: true })
-
-  // Initial Fetch: Archive Day
-  const { data: initialArchive } = await supabase
-    .from('reservations')
-    .select('*, physical_tables(table_name, capacity)')
-    .eq('restaurant_id', membership.restaurant_id)
-    .eq('reservation_date', archiveDate)
+    .eq('restaurant_id', membership.restaurant_id!)
+    .lte('reservation_date', initialDate)
+    .gte('checkout_date', initialDate)
     .order('start_time', { ascending: true })
 
   return (
     <div className="max-w-2xl mx-auto pb-24">
       <ReservationsClient
-        initialActive={(initialActive ?? []) as any}
-        initialArchive={(initialArchive ?? []) as any}
+        initialBookings={(allBookings ?? []) as any}
         restaurantId={membership.restaurant_id}
-        archiveDate={archiveDate}
+        initialDate={initialDate}
         businessType={businessType}
       />
     </div>
