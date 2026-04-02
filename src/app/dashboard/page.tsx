@@ -100,27 +100,36 @@ export default async function DashboardPage() {
 
       {/* Stats Row */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2">
-          <div className="w-9 h-9 rounded-xl bg-violet-500/15 flex items-center justify-center">
+        <Link 
+          href="/dashboard/reservations"
+          className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2 hover:border-slate-600 hover:bg-slate-800/40 transition-all active:scale-[0.97] group"
+        >
+          <div className="w-9 h-9 rounded-xl bg-violet-500/15 flex items-center justify-center group-hover:scale-110 transition-transform">
             <CalendarDays className="w-5 h-5 text-violet-400" />
           </div>
           <div className="text-3xl font-black text-white tabular-nums">{totalToday ?? 0}</div>
           <div className="text-xs text-slate-400 font-medium leading-tight">Total {terms.bookings}</div>
-        </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2">
-          <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center">
+        </Link>
+        <Link 
+          href="/dashboard/reservations"
+          className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2 hover:border-slate-600 hover:bg-slate-800/40 transition-all active:scale-[0.97] group"
+        >
+          <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center group-hover:scale-110 transition-transform">
             <Clock className="w-5 h-5 text-amber-400" />
           </div>
           <div className="text-3xl font-black text-white tabular-nums">{pendingCount ?? 0}</div>
           <div className="text-xs text-slate-400 font-medium leading-tight">Waiting</div>
-        </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+        </Link>
+        <Link 
+          href="/dashboard/tables"
+          className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2 hover:border-slate-600 hover:bg-slate-800/40 transition-all active:scale-[0.97] group"
+        >
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center group-hover:scale-110 transition-transform">
             <UnitIcon className="w-5 h-5 text-emerald-400" />
           </div>
           <div className="text-3xl font-black text-white tabular-nums">{totalTables ?? 0}</div>
           <div className="text-xs text-slate-400 font-medium leading-tight">{terms.units}</div>
-        </div>
+        </Link>
       </div>
 
       {/* Quick Action: New Booking */}
