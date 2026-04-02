@@ -18,6 +18,7 @@ const ReservationSchema = z.object({
   notes: z.string().optional(),
   startTime: z.string().min(1, 'Start time is required'),
   endTime: z.string().optional(), // hotel checkout
+  status: z.string().optional(),
   saveToCommon: z.boolean().optional(),
 })
 
@@ -44,12 +45,13 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
     notes: formData.get('notes'),
     startTime: formData.get('startTime'),
     endTime: formData.get('endTime') as string | null || undefined,
+    status: formData.get('status') as string || 'confirmed',
     saveToCommon: formData.get('saveToCommon') === 'true',
   })
 
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-  const { tableId, guestName, guestPhone, party_size: partySize, notes, startTime, endTime: providedEnd, saveToCommon } = parsed.data
+  const { tableId, guestName, guestPhone, party_size: partySize, notes, startTime, endTime: providedEnd, status: userStatus, saveToCommon } = parsed.data
 
   // Use provided checkout time (hotel) or default to +2 hours (restaurant)
   const startObj = new Date(startTime)
@@ -61,6 +63,24 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
   const startTimeStr = String(startObj.getHours()).padStart(2,'0') + ':' + String(startObj.getMinutes()).padStart(2,'0') + ':00'
   const endTimeStr = String(endObj.getHours()).padStart(2,'0') + ':' + String(endObj.getMinutes()).padStart(2,'0') + ':00'
 
+  // AUTO-CONFIRM LOGIC: If they select 'Waiting' (pending) but the table is actually free, make it 'confirmed'
+  let finalStatus = userStatus || 'confirmed'
+  if (finalStatus === 'pending') {
+    const { data: overlaps } = await supabase
+      .from('reservations')
+      .select('id')
+      .eq('table_id', tableId)
+      .eq('reservation_date', reservationDate)
+      .neq('status', 'cancelled')
+      .lt('start_time', endTimeStr)
+      .gt('end_time', startTimeStr)
+      .limit(1)
+
+    if (!overlaps || overlaps.length === 0) {
+      finalStatus = 'confirmed'
+    }
+  }
+
   const { data, error } = await supabase.from('reservations').insert({
     restaurant_id: membership.restaurant_id,
     table_id: tableId,
@@ -69,7 +89,7 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
     guest_email: null, // explicitly null per user request
     party_size: partySize,
     notes: notes || null,
-    status: 'pending', // Usually defaults to pending for UI updates unless directly confirmed
+    status: finalStatus as any, 
     reservation_date: reservationDate,
     start_time: startTimeStr,
     end_time: endTimeStr,
@@ -206,11 +226,12 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
     notes: formData.get('notes'),
     startTime: formData.get('startTime'),
     endTime: formData.get('endTime') as string | null || undefined,
+    status: formData.get('status') as string || undefined,
   })
 
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
-  const { tableId, guestName, guestPhone, party_size: partySize, notes, startTime, endTime: providedEnd } = parsed.data
+  const { tableId, guestName, guestPhone, party_size: partySize, notes, startTime, endTime: providedEnd, status } = parsed.data
 
   const startObj = new Date(startTime)
   const endObj   = providedEnd ? new Date(providedEnd) : new Date(startObj.getTime() + 2 * 60 * 60 * 1000)
@@ -227,6 +248,7 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
       guest_phone: guestPhone || null,
       party_size: partySize,
       notes: notes || null,
+      status: status as any,
       reservation_date: reservationDate,
       start_time: startTimeStr,
       end_time: endTimeStr,

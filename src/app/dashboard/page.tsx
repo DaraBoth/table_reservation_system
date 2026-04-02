@@ -53,17 +53,27 @@ export default async function DashboardPage() {
   const terms = getTerms(businessType)
   const UnitIcon = terms.hasCheckout ? BedDouble : Table2
 
+  // Get Today's Date in ISO format (YYYY-MM-DD)
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  const todayIso = `${year}-${month}-${day}`
+
   const { data: reservationsRaw } = await supabase
     .from('reservations')
     .select('*, physical_tables(table_name, capacity)')
     .eq('restaurant_id', rid)
+    .eq('reservation_date', todayIso) // Filter for Today only
     .in('status', ['pending', 'confirmed', 'arrived'])
-    .order('created_at', { ascending: false })
+    .order('start_time', { ascending: true }) // Order by time (next up first)
     .limit(10)
 
   const { count: totalToday } = await supabase
     .from('reservations').select('*', { count: 'exact', head: true })
-    .eq('restaurant_id', rid).neq('status', 'cancelled')
+    .eq('restaurant_id', rid)
+    .eq('reservation_date', todayIso) // Filter for Today only
+    .neq('status', 'cancelled')
 
   const { count: totalTables } = await supabase
     .from('physical_tables').select('*', { count: 'exact', head: true })
@@ -71,7 +81,9 @@ export default async function DashboardPage() {
 
   const { count: pendingCount } = await supabase
     .from('reservations').select('*', { count: 'exact', head: true })
-    .eq('restaurant_id', rid).eq('status', 'pending')
+    .eq('restaurant_id', rid)
+    .eq('reservation_date', todayIso) // Filter for Today only
+    .eq('status', 'pending')
 
   const upcomingReservations = (reservationsRaw ?? []) as unknown as Array<Tables<'reservations'> & { physical_tables: { table_name: string; capacity: number } | null }>
 

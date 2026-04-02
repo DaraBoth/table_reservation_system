@@ -78,13 +78,19 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
                   pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname.startsWith('/dashboard/reports') ? 'text-violet-400' : 'text-slate-500'
                 )}
               >
-                <div className={cn(
-                  "w-6 h-6 rounded-lg flex items-center justify-center transition-all duration-300 overflow-hidden border border-transparent",
-                  (pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname.startsWith('/dashboard/reports')) && "border-violet-500/50 scale-110"
+                <Menu
+                  className={cn(
+                    'w-6 h-6 transition-all duration-300',
+                    (pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname.startsWith('/dashboard/reports')) && 'scale-110 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]'
+                  )}
+                  fill={pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname.startsWith('/dashboard/reports') ? 'currentColor' : 'none'} 
+                />
+                <span className={cn(
+                  "text-[10px] font-bold tracking-wide transition-colors",
+                  (pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname.startsWith('/dashboard/reports')) ? 'text-violet-400' : 'text-slate-500'
                 )}>
-                  <Menu className="w-5 h-5" fill={pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname.startsWith('/dashboard/reports') ? 'currentColor' : 'none'} />
-                </div>
-                <span className="text-[10px] font-bold tracking-wide">More</span>
+                  More
+                </span>
               </button>
             }
           />

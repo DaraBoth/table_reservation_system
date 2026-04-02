@@ -67,6 +67,7 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
   const [occupiedIds, setOccupiedIds] = useState<string[]>([])
   const [commonCustomers, setCommonCustomers] = useState<any[]>([])
 
+  const [bookingStatus, setBookingStatus] = useState<string>(initialData?.status || 'confirmed')
   const [guestName, setGuestName] = useState(initialData?.guest_name || '')
   const [guestPhone, setGuestPhone] = useState(initialData?.guest_phone || '')
   const [partySize, setPartySize] = useState(String(initialData?.party_size || '2'))
@@ -121,16 +122,50 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
         <input type="hidden" name="guestPhone" value={guestPhone} />
         <input type="hidden" name="partySize" value={partySize} />
         <input type="hidden" name="notes" value={notes} />
+        <input type="hidden" name="status" value={bookingStatus} />
 
         {/* ── STEP 1: Date & Table ── */}
         {step === 1 && (
           <div key={`step1-${renderKey}`} className={cn('space-y-6', slideClass)}>
             
             {/* Section: Date & Time */}
-            <section className="bg-slate-900 rounded-3xl p-5 border border-slate-800 space-y-4">
-              <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest">
-                📅 {terms.hasCheckout ? 'Check-in & Check-out' : 'When is the booking?'}
-              </h2>
+            <section className="bg-slate-900 rounded-3xl p-5 border border-slate-800 space-y-5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest">
+                  📅 {terms.hasCheckout ? 'Check-in & Check-out' : 'When is the booking?'}
+                </h2>
+                
+                {/* Status Toggle */}
+                {!isEdit && (
+                  <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setBookingStatus('confirmed')}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all",
+                        bookingStatus === 'confirmed' 
+                          ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" 
+                          : "text-slate-500 hover:text-slate-300"
+                      )}
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBookingStatus('pending')}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all",
+                        bookingStatus === 'pending' 
+                          ? "bg-amber-500 text-white shadow-lg shadow-amber-500/20" 
+                          : "text-slate-500 hover:text-slate-300"
+                      )}
+                    >
+                      Waiting
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <div className={terms.hasCheckout ? 'space-y-4' : ''}>
                 <div>
                   {terms.hasCheckout && <p className="text-xs font-bold text-emerald-400 mb-2">✅ {terms.startLabel}</p>}
@@ -164,7 +199,8 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
                   <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> Free
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" /> Already booked
+                  <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" /> 
+                  {bookingStatus === 'pending' ? 'Busy (Can Waitlist)' : 'Already booked'}
                 </span>
               </div>
 
@@ -176,15 +212,17 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
                     <button
                       key={table.id}
                       type="button"
-                      disabled={isOccupied}
+                      disabled={isOccupied && bookingStatus === 'confirmed'}
                       onClick={() => setSelectedTableId(table.id)}
                       className={cn(
                         'relative flex flex-col items-center justify-center gap-1 p-3 rounded-2xl border-2 transition-all duration-200 min-h-[84px] active:scale-95',
-                        isOccupied
+                        isOccupied && bookingStatus === 'confirmed'
                           ? 'bg-slate-950 border-slate-800 opacity-35 cursor-not-allowed'
                           : isSelected
                             ? 'bg-violet-500/15 border-violet-500 shadow-[0_0_16px_rgba(139,92,246,0.25)]'
-                            : 'bg-slate-950/60 border-slate-800 hover:border-slate-600'
+                            : isOccupied 
+                              ? 'bg-amber-500/10 border-amber-500/30' 
+                              : 'bg-slate-950/60 border-slate-800 hover:border-slate-600'
                       )}
                     >
                       {isSelected && (
@@ -197,7 +235,12 @@ export function ReservationForm({ tables, restaurantId, initialData, preSelected
                         {table.capacity} seats
                       </span>
                       {isOccupied && (
-                        <span className="text-[9px] font-black text-rose-500 uppercase tracking-wide">Booked</span>
+                        <span className={cn(
+                          "text-[9px] font-black uppercase tracking-wide",
+                          bookingStatus === 'pending' ? "text-amber-500" : "text-rose-500"
+                        )}>
+                          {bookingStatus === 'pending' ? "Join Waitlist" : "Booked"}
+                        </span>
                       )}
                     </button>
                   )
