@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { BarChart } from '@mui/x-charts/BarChart'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
@@ -12,7 +13,9 @@ import {
   Star,
   Phone,
   User,
-  TrendingUp
+  TrendingUp,
+  ShieldCheck,
+  Users
 } from 'lucide-react'
 
 interface Props {
@@ -25,6 +28,8 @@ interface Props {
   businessType?: string
   statusColors: Record<string, string>
   statusLabels: Record<string, string>
+  isAdmin: boolean
+  staffPerformance?: any[]
 }
 
 export default function ReportsDashboardClient({
@@ -32,7 +37,11 @@ export default function ReportsDashboardClient({
   statusTrend,
   tablePerformance,
   topCustomers,
-  businessType = 'restaurant'
+  businessType = 'restaurant',
+  statusColors,
+  statusLabels,
+  isAdmin,
+  staffPerformance = []
 }: Props) {
   const [isUpdating, setIsUpdating] = React.useState(false)
 
@@ -226,6 +235,121 @@ export default function ReportsDashboardClient({
             </div>
           </div>
         </section>
+
+        {/* --- SECRET ADMIN SECTION: STAFF PERFORMANCE --- */}
+        {isAdmin && staffPerformance.length > 0 && (
+          <section className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
+              <div className="flex items-center gap-2 bg-slate-900 border border-slate-700 p-3 rounded-2xl px-4 w-fit shadow-lg shadow-violet-500/5">
+                <ShieldCheck className="w-4 h-4 text-violet-400" />
+                <h2 className="text-sm font-black text-white uppercase tracking-[0.2em]">Team Efficiency Hub</h2>
+              </div>
+              <Badge className="bg-red-500/10 text-red-500 border-red-500/20 text-[9px] font-black py-1 px-3 w-fit rounded-full flex items-center gap-1.5 ring-1 ring-red-500/20 leading-none">
+                <div className="w-1 h-1 rounded-full bg-red-500 animate-pulse" />
+                ADMIN ONLY
+              </Badge>
+            </div>
+
+            <div className="bg-slate-900/80 border border-slate-800 rounded-[32px] p-2 sm:p-8 pt-6 backdrop-blur-md relative overflow-hidden group/admin">
+              {/* Background Decoration */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-violet-600/5 blur-[100px] -translate-y-1/2 translate-x-1/2 rounded-full pointer-events-none" />
+
+              <div className="flex items-center gap-2 px-4 text-[9px] text-slate-500 font-black uppercase tracking-[0.2em] mb-10 relative z-10">
+                <Users className="w-3.5 h-3.5 text-violet-500" />
+                <span>Real-time Team Performance Analytics</span>
+              </div>
+
+              {/* Legend for Staff Stats */}
+              <div className="flex flex-wrap gap-4 px-4 mb-10 relative z-10">
+                {[
+                  { label: 'Done', color: 'bg-emerald-500' },
+                  { label: 'Confirmed', color: 'bg-emerald-500/40' },
+                  { label: 'No Show', color: 'bg-orange-500' },
+                  { label: 'Cancelled', color: 'bg-red-500' }
+                ].map(item => (
+                  <div key={item.label} className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${item.color}`} />
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Elite Leaderboard Container */}
+              <div className="space-y-6 relative z-10 px-2 min-h-[300px]">
+                <AnimatePresence>
+                  {staffPerformance.map((staff, idx) => {
+                    const successCount = (staff.completed || 0) + (staff.confirmed || 0)
+                    const lossCount = (staff.no_show || 0) + (staff.cancelled || 0)
+                    const successRate = staff.total > 0 ? Math.round((successCount / staff.total) * 100) : 0
+                    
+                    // Simple segment widths based on percentage of total
+                    const getWidth = (count: number) => staff.total > 0 ? `${(count / staff.total) * 100}%` : '0%'
+
+                    return (
+                      <motion.div 
+                        key={staff.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.1, duration: 0.5, ease: "easeOut" }}
+                        className="group/item"
+                      >
+                        {/* Name & Rate Header */}
+                        <div className="flex items-end justify-between mb-2.5 px-1">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-violet-600/10 border border-violet-500/20 flex items-center justify-center text-[10px] font-black text-violet-400 group-hover/item:bg-violet-600 group-hover/item:text-white transition-all duration-300">
+                              {idx + 1}
+                            </div>
+                            <div>
+                               <p className="text-xs font-black text-white uppercase tracking-wider leading-none mb-1 group-hover/item:text-violet-400 transition-colors">{staff.name}</p>
+                               <div className="flex items-center gap-1.5 text-[8px] font-black text-slate-600 uppercase tracking-widest">
+                                  <span>Total {staff.total}</span>
+                                  <span className="w-1 h-1 rounded-full bg-slate-800" />
+                                  <span className={successRate > 70 ? 'text-emerald-500' : 'text-orange-500'}>{successRate}% Success</span>
+                               </div>
+                            </div>
+                          </div>
+                          <p className="text-[10px] font-black italic text-slate-500 group-hover/item:text-white transition-colors">{successCount} / {staff.total}</p>
+                        </div>
+
+                        {/* Custom Segmented Bar Chart */}
+                        <div className="h-4 w-full bg-slate-950/60 rounded-full border border-slate-800 overflow-hidden flex ring-4 ring-transparent group-hover/item:ring-violet-600/5 transition-all duration-500">
+                           {/* Done */}
+                           <motion.div 
+                             initial={{ width: 0 }}
+                             animate={{ width: getWidth(staff.completed) }}
+                             transition={{ delay: (idx * 0.1) + 0.3, duration: 1 }}
+                             className="h-full bg-emerald-500 relative group/seg"
+                           />
+                           {/* Confirmed */}
+                           <motion.div 
+                             initial={{ width: 0 }}
+                             animate={{ width: getWidth(staff.confirmed) }}
+                             transition={{ delay: (idx * 0.1) + 0.4, duration: 1 }}
+                             className="h-full bg-emerald-500/40 relative"
+                           />
+                           {/* No Show */}
+                           <motion.div 
+                             initial={{ width: 0 }}
+                             animate={{ width: getWidth(staff.no_show) }}
+                             transition={{ delay: (idx * 0.1) + 0.5, duration: 1 }}
+                             className="h-full bg-orange-500 relative"
+                           />
+                           {/* Cancelled */}
+                           <motion.div 
+                             initial={{ width: 0 }}
+                             animate={{ width: getWidth(staff.cancelled) }}
+                             transition={{ delay: (idx * 0.1) + 0.6, duration: 1 }}
+                             className="h-full bg-red-500 relative"
+                           />
+                        </div>
+                      </motion.div>
+                    )
+                  })}
+                </AnimatePresence>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Loyalty Section */}
         <section className="space-y-6">

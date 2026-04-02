@@ -56,27 +56,31 @@ export function TopBar({ brandName, userName, restaurantId }: TopBarProps) {
           )}
         </div>
 
-        {/* Center: Page Title */}
-        <h1 className="text-white font-bold text-base absolute left-1/2 -translate-x-1/2">
-          {title}
-        </h1>
+        {isEditing ? (
+          < h1 className="text-white font-bold text-base absolute left-1/2 -translate-x-1/2">
+            {title}
+          </h1>
+        ) : (
+          <></>
+        )}
+
 
         {/* Right: Actions */}
         <div className="flex items-center gap-1.5 translate-x-1.5">
           <NotificationBell restaurantId={restaurantId} />
           <form action={logout}>
             <Button
-            variant="ghost"
-            size="icon"
-            type="submit"
-            className="w-9 h-9 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl"
-            title="Sign out"
-          >
-            <LogOut className="w-4 h-4" />
-          </Button>
-        </form>
+              variant="ghost"
+              size="icon"
+              type="submit"
+              className="w-9 h-9 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl"
+              title="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </form>
         </div>
       </div>
-    </header>
+    </header >
   )
 }

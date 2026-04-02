@@ -40,7 +40,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <RealtimeListener restaurantId={membership.restaurant_id ?? undefined} />
       <NotificationManager restaurantId={membership.restaurant_id ?? undefined} />
       <TopBar brandName={restaurantName} userName={displayName} userEmail={user.email} restaurantId={membership.restaurant_id ?? undefined} />
-      <main className="flex-1 px-4 pt-4 pb-32 overflow-y-auto">
+      <main className="flex-1 px-2.5 pt-4 pb-32 overflow-y-auto">
         {children}
       </main>
       {!isNewRestaurant && <BottomNav isAdmin={isAdmin} businessType={businessType} />}

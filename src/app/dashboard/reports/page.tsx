@@ -135,6 +135,60 @@ export default async function ReportsPage({ searchParams }: Props) {
 
   const businessType = restaurant?.business_type || 'restaurant'
 
+  // ── 5. Staff Performance Tracking (Admin Only) ──────────────────────────────
+  const isAdmin = membership.role === 'admin'
+  let staffPerformance: any[] | undefined = undefined
+
+  if (isAdmin) {
+     // 1. Get official members (Admins + Staff) of this business only
+     const { data: memberList } = await supabase
+       .from('account_memberships')
+       .select('user_id')
+       .eq('restaurant_id', rid)
+     
+     const validMemberIds = new Set(memberList?.map(m => m.user_id) || [])
+
+     // 2. Get unique creators from this week's data who are ALSO valid members
+     const creatorIds = Array.from(new Set(
+       weekData
+         .map(r => r.created_by)
+         .filter((id): id is string => !!id && validMemberIds.has(id))
+     ))
+
+     // 3. Fetch profiles for these specific members
+     const { data: profiles } = await supabase
+       .from('profiles')
+       .select('id, full_name')
+       .in('id', creatorIds)
+
+     const staffNames: Record<string, string> = {}
+     profiles?.forEach(p => {
+       staffNames[p.id] = p.full_name || 'Unnamed Member'
+     })
+
+     const performanceMap = new Map<string, { id: string, name: string, completed: number, confirmed: number, cancelled: number, no_show: number, total: number }>()
+
+     weekData.forEach(r => {
+       const uid = r.created_by
+       // ONLY track if user is a valid member and we found their ID
+       if (!uid || !validMemberIds.has(uid)) return 
+       
+       const name = staffNames[uid] || 'Unknown Member'
+       const prev = performanceMap.get(uid) || { id: uid, name, completed: 0, confirmed: 0, cancelled: 0, no_show: 0, total: 0 }
+       
+       if (r.status === 'completed') prev.completed++
+       else if (r.status === 'confirmed') prev.confirmed++
+       else if (r.status === 'cancelled') prev.cancelled++
+       else if (r.status === 'no_show') prev.no_show++
+       
+       prev.total++
+       performanceMap.set(uid, prev)
+     })
+
+     staffPerformance = Array.from(performanceMap.values())
+       .sort((a, b) => b.total - a.total)
+  }
+
   // ── Overall Stats ───────────────────────────────────────────────────────────
   const totalCompleted = weekData.filter(r => r.status === 'completed').length
   const totalGuests = weekData.filter(r => r.status === 'completed').reduce((s, r) => s + (r.party_size || 0), 0)
@@ -152,6 +206,8 @@ export default async function ReportsPage({ searchParams }: Props) {
       businessType={businessType}
       statusColors={statusColors}
       statusLabels={statusLabels}
+      isAdmin={isAdmin}
+      staffPerformance={staffPerformance}
     />
   )
 }
