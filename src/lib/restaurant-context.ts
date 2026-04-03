@@ -17,10 +17,13 @@ export async function getActiveRestaurant(routeId?: string) {
 
   if (!memberships || memberships.length === 0) return null
 
-  // 2. Determine active ID (Prioritize route parameter over cookie)
+  // 2. Determine active ID (Prioritize route parameter over cookie, but only if route ID is valid)
   const cookieStore = await cookies()
   const cookieId = cookieStore.get(ACTIVE_RESTAURANT_COOKIE)?.value
-  const activeId = routeId || cookieId || memberships[0].restaurant_id
+  
+  // Ensure the routeId provided is actually one of the user's memberships
+  const isRouteIdValid = memberships.some((m: any) => m.restaurant_id === routeId)
+  const activeId = (isRouteIdValid ? routeId : null) || cookieId || memberships[0].restaurant_id
 
   // 3. Find the membership matching the active ID, or fallback to the first one
   const activeMembership = memberships.find((m: any) => m.restaurant_id === activeId) || memberships[0]

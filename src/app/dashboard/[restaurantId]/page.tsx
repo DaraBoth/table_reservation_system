@@ -7,6 +7,8 @@ import type { BusinessType } from '@/lib/business-type'
 import { DashboardClient } from './DashboardClient'
 import type { Tables } from '@/lib/types/database'
 
+import { getActiveRestaurant } from '@/lib/restaurant-context'
+
 export const metadata = { title: 'Home — TableBook' }
 
 const statusColors: Record<string, string> = {
@@ -27,25 +29,21 @@ const statusLabels: Record<string, string> = {
   no_show: 'No Show',
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ params }: { params: Promise<{ restaurantId: string }> }) {
+  const { restaurantId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: membershipRaw } = await supabase
-    .from('account_memberships')
-    .select('role, restaurant_id, restaurants(business_type, is_new)')
-    .eq('user_id', user.id)
-    .single()
-
-  const membership = membershipRaw as any
-  if (!membership?.restaurant_id) return null
+  const res = await getActiveRestaurant(restaurantId)
+  if (!res) return null
+  
+  const membership = res.membership as any
+  const rid = membership.restaurant_id
 
   if (membership.restaurants?.is_new) {
-    redirect('/dashboard/setup')
+    redirect(`/dashboard/${rid}/setup`)
   }
-
-  const rid = membership.restaurant_id
   const businessType = (membership.restaurants?.business_type ?? 'restaurant') as BusinessType
   const terms = getTerms(businessType)
   const UnitIcon = terms.hasCheckout ? BedDouble : Table2
@@ -84,6 +82,7 @@ export default async function DashboardPage() {
 
   return (
     <DashboardClient 
+      restaurantId={rid}
       initialData={{
         totalToday,
         pendingCount,

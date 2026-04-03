@@ -1,3 +1,4 @@
+import { getActiveRestaurant } from '@/lib/restaurant-context'
 import { createClient } from '@/lib/supabase/server'
 import { format, subDays } from 'date-fns'
 import { getTerms } from '@/lib/business-type'
@@ -7,20 +8,15 @@ import type { Tables } from '@/lib/types/database'
 
 export const metadata = { title: 'Bookings — TableBook' }
 
-interface Props {
-  searchParams: Promise<{ date?: string }>
-}
-
-export default async function ReservationsPage({ searchParams }: Props) {
+export default async function ReservationsPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>, searchParams: Promise<{ date?: string }> }) {
+  const { restaurantId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: membershipRaw } = await supabase
-    .from('account_memberships')
-    .select('role, restaurant_id, restaurants(business_type)')
-    .eq('user_id', user.id)
-    .single()
+  const res = await getActiveRestaurant(restaurantId)
+  if (!res) return null
+  const membershipRaw = res.membership
 
   const membership = membershipRaw as any
   if (!membership?.restaurant_id) return null

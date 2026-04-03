@@ -7,5 +7,4 @@ import { redirect } from 'next/navigation'
 export async function switchRestaurant(restaurantId: string) {
   await setActiveRestaurantId(restaurantId)
   revalidatePath('/dashboard')
-  redirect('/dashboard')
 }

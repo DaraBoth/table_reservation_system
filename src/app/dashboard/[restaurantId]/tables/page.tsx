@@ -3,20 +3,20 @@ import { createClient } from '@/lib/supabase/server'
 import type { BusinessType } from '@/lib/business-type'
 import { TablesClient } from './TablesClient'
 
+import { getActiveRestaurant } from '@/lib/restaurant-context'
+
 export const metadata = { title: 'Live Tables — TableBook' }
 
-export default async function TablesPage() {
+export default async function TablesPage({ params }: { params: Promise<{ restaurantId: string }> }) {
+  const { restaurantId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: membershipRaw } = await supabase
-    .from('account_memberships')
-    .select('role, restaurant_id, restaurants(business_type)')
-    .eq('user_id', user.id)
-    .single()
-
-  const membership = membershipRaw as any
+  const res = await getActiveRestaurant(restaurantId)
+  if (!res) return null
+  
+  const membership = res.membership as any
   const role = membership?.role
   const isAdmin = role === 'admin' || role === 'superadmin'
   const isStaff = role === 'staff'

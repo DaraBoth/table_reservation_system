@@ -1,3 +1,4 @@
+import { getActiveRestaurant } from '@/lib/restaurant-context'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { Tables } from '@/lib/types/database'
@@ -27,16 +28,15 @@ const statusLabels: Record<string, string> = {
   completed: 'Done', no_show: 'No Show',
 }
 
-export default async function ReportsPage({ searchParams }: Props) {
+export default async function ReportsPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>, searchParams: Promise<{ week?: string, status?: string }> }) {
+  const { restaurantId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: membershipRaw } = await supabase
-    .from('account_memberships')
-    .select('role, restaurant_id')
-    .eq('user_id', user.id)
-    .single()
+  const res = await getActiveRestaurant(restaurantId)
+  if (!res) return null
+  const membershipRaw = res.membership
 
   const membership = membershipRaw as Tables<'account_memberships'> | null
   const canView = membership?.role === 'admin' || membership?.role === 'staff'

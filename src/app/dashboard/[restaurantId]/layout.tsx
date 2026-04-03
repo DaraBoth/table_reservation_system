@@ -24,6 +24,12 @@ export default async function DashboardLayout({
   const res = await getActiveRestaurant(restaurantId)
   if (!res) redirect('/login')
 
+  // URL-to-State Parity Check: If the URL ID (e.g., 'setup') is invalid, redirect to the real ID
+  if (restaurantId !== res.activeId) {
+    // Preserve the sub-path if possible (optional, but safer to just hit root)
+    redirect(`/dashboard/${res.activeId}`)
+  }
+
   const { membership: membershipRaw, allMemberships: allMembershipsRaw } = res as any
   const membership = membershipRaw
   const allMemberships = allMembershipsRaw

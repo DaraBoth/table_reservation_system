@@ -83,11 +83,18 @@ export async function createRestaurant(_: ActionState, formData: FormData): Prom
       address: parsed.data.address || null,
       subscription_expires_at: parsed.data.subscriptionExpiresAt || null,
       business_type: parsed.data.businessType,
+      is_new: !isSpecialAdmin, 
     })
     .select()
     .single()
 
-  if (restaurantError) return { error: restaurantError.message }
+  if (restaurantError) {
+    // Handle unique constraint violation on slug
+    if (restaurantError.code === '23505' || restaurantError.message.includes('restaurants_slug_key')) {
+      return { error: 'Brand identifier (slug) is already taken. Please choose another.' }
+    }
+    return { error: restaurantError.message }
+  }
 
   if (isSuperadmin) {
     // 2. Create the admin user via admin API (no email verification)

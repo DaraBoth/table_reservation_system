@@ -1,18 +1,18 @@
+import { getActiveRestaurant } from '@/lib/restaurant-context'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { SetupForm } from './SetupForm'
 import { Sparkles } from 'lucide-react'
 
-export default async function SetupPage() {
+export default async function ({ params }: { params: Promise<{ restaurantId: string }> }) {
+  const { restaurantId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: membershipRaw } = await supabase
-    .from('account_memberships')
-    .select('role, restaurant_id, restaurants(*)')
-    .eq('user_id', user.id)
-    .single()
+  const res = await getActiveRestaurant(restaurantId)
+  if (!res) return null
+  const membershipRaw = res.membership
 
   const membership = membershipRaw as any
   if (!membership?.restaurant_id || !membership.restaurants) redirect('/dashboard')

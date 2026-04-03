@@ -119,13 +119,13 @@ export function BottomNav({
                 <Menu
                   className={cn(
                     'w-6 h-6 transition-all duration-300',
-                    (isPortfolioOpen || pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname.startsWith('/dashboard/reports')) && 'scale-110 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]'
+                    (isPortfolioOpen || pathname === `/dashboard/${restaurantId}/account` || pathname === `/dashboard/${restaurantId}/staff` || pathname.startsWith(`/dashboard/${restaurantId}/reports`)) && 'scale-110 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]'
                   )}
-                  fill={isPortfolioOpen || pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname.startsWith('/dashboard/reports') ? 'currentColor' : 'none'} 
+                  fill={isPortfolioOpen || pathname === `/dashboard/${restaurantId}/account` || pathname === `/dashboard/${restaurantId}/staff` || pathname.startsWith(`/dashboard/${restaurantId}/reports`) ? 'currentColor' : 'none'} 
                 />
                 <span className={cn(
                   "text-[10px] font-bold tracking-wide transition-colors",
-                  (isPortfolioOpen || pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname.startsWith('/dashboard/reports')) ? 'text-violet-400' : 'text-slate-500'
+                  (isPortfolioOpen || pathname === `/dashboard/${restaurantId}/account` || pathname === `/dashboard/${restaurantId}/staff` || pathname.startsWith(`/dashboard/${restaurantId}/reports`)) ? 'text-violet-400' : 'text-slate-500'
                 )}>
                   More
                 </span>
@@ -219,7 +219,7 @@ export function BottomNav({
                     {isSpecialAdmin && canEstablishMore && (
                       <div className="pt-4 mt-4 border-t border-slate-900">
                         <Link 
-                          href="/setup/new"
+                          href={`/dashboard/${restaurantId}/setup/new`}
                           onClick={() => setOpen(false)}
                           className="w-full flex items-center justify-center gap-3 p-5 rounded-[2rem] bg-violet-600/10 text-violet-400 border border-violet-500/20 hover:bg-violet-600/20 hover:border-violet-500/40 transition-all font-black text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-violet-600/5 group/new"
                         >

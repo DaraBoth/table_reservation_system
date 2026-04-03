@@ -1,3 +1,4 @@
+import { getActiveRestaurant } from '@/lib/restaurant-context'
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { ReservationForm } from '@/components/restaurant/reservation-form'
@@ -10,7 +11,7 @@ import { cn } from '@/lib/utils'
 export const metadata = { title: 'Edit Booking — TableBook' }
 
 interface Props {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string, restaurantId: string }>
 }
 
 const statusColors: Record<string, string> = {
@@ -30,20 +31,17 @@ const statusLabels: Record<string, string> = {
 }
 
 export default async function EditReservationPage({ params }: Props) {
-  const { id } = await params
+  const { id, restaurantId: routeId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: membership } = await supabase
-    .from('account_memberships')
-    .select('restaurant_id, role, restaurants(business_type)')
-    .eq('user_id', user.id)
-    .single()
+  const res = await getActiveRestaurant(routeId)
+  if (!res) redirect('/dashboard')
 
-  const businessType = ((membership as any)?.restaurants?.business_type ?? 'restaurant') as BusinessType
+  const membership = res.membership as any
+  const businessType = (membership?.restaurants?.business_type ?? 'restaurant') as BusinessType
 
-  if (!membership?.restaurant_id) redirect('/dashboard')
 
   const { data: reservation } = await supabase
     .from('reservations')

@@ -1,3 +1,4 @@
+import { getActiveRestaurant } from '@/lib/restaurant-context'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
@@ -9,16 +10,15 @@ import { UserCheck, UserX, Plus, Users } from 'lucide-react'
 
 export const metadata = { title: 'Staff — TableBook' }
 
-export default async function StaffPage() {
+export default async function ({ params }: { params: Promise<{ restaurantId: string }> }) {
+  const { restaurantId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: membershipRaw } = await supabase
-    .from('account_memberships')
-    .select('role, restaurant_id')
-    .eq('user_id', user.id)
-    .single()
+  const res = await getActiveRestaurant(restaurantId)
+  if (!res) return null
+  const membershipRaw = res.membership
 
   const membership = membershipRaw as Tables<'account_memberships'> | null
   if (membership?.role !== 'admin') redirect('/dashboard')

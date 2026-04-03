@@ -1,24 +1,23 @@
+import { getActiveRestaurant } from '@/lib/restaurant-context'
 import { createClient } from '@/lib/supabase/server'
 import { AddCustomerForm } from './AddCustomerForm'
 import { DeleteCustomerButton } from './DeleteCustomerButton'
-import { Users, Phone, Users2, StickyNote, Plus } from 'lucide-react'
+import { Phone, Users2, Plus } from 'lucide-react'
 import { EditCustomerDialog } from './EditCustomerDialog'
 import { Button } from '@/components/ui/button'
 
 export const metadata = { title: 'Saved Customers — TableBook' }
 
-export default async function CustomersPage() {
+export default async function ({ params }: { params: Promise<{ restaurantId: string }> }) {
+  const { restaurantId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: membership } = await supabase
-    .from('account_memberships')
-    .select('restaurant_id')
-    .eq('user_id', user.id)
-    .single()
+  const res = await getActiveRestaurant(restaurantId)
+  if (!res) return null
 
-  if (!membership?.restaurant_id) return null
+  const membership = res.membership as any
 
   const { data } = await supabase
     .from('common_customers')
@@ -67,8 +66,6 @@ export default async function CustomersPage() {
                       <Phone className="w-3 h-3" /> {c.phone}
                     </span>
                   )}
-
-
                 </div>
               </div>
 

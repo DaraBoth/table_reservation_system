@@ -40,7 +40,9 @@ export async function proxy(request: NextRequest) {
         .from('account_memberships')
         .select('role')
         .eq('user_id', user.id)
-        .single()
+        .order('is_active', { ascending: false }) // Prioritize active memberships
+        .limit(1)
+        .maybeSingle()
 
       if (membership?.role === 'superadmin') {
         return NextResponse.redirect(new URL('/superadmin', request.url))
@@ -60,7 +62,9 @@ export async function proxy(request: NextRequest) {
     .from('account_memberships')
     .select('role, restaurant_id, is_active')
     .eq('user_id', user.id)
-    .single()
+    .order('is_active', { ascending: false }) // Prioritize active memberships
+    .limit(1)
+    .maybeSingle()
 
   if (!membership || !membership.is_active) {
     return NextResponse.redirect(new URL('/login?error=account_disabled', request.url))
