@@ -53,28 +53,57 @@ export default async function ReportsPage({ searchParams }: Props) {
   const startIso = format(monday, "yyyy-MM-dd")
   const endIso = format(sunday, "yyyy-MM-dd")
 
-  // ── Fetch ALL reservations for this week ────────────────────────────────────
-  const { data: resRaw } = await supabase
-    .from('reservations')
-    .select('*, physical_tables(table_name, capacity)')
-    .eq('restaurant_id', rid)
-    .gte('reservation_date', startIso)
-    .lte('reservation_date', endIso)
-    .order('reservation_date', { ascending: true })
+  // ── Parallel Data Fetching (Block 1) ────────────────────────────────────────
+  const [resResponse, ptResponse, restaurantResponse, memberListResponse] = await Promise.all([
+    supabase
+      .from('reservations')
+      .select('*, physical_tables(table_name, capacity)')
+      .eq('restaurant_id', rid)
+      .gte('reservation_date', startIso)
+      .lte('reservation_date', endIso)
+      .order('reservation_date', { ascending: true }),
+    supabase
+      .from('physical_tables')
+      .select('id, table_name, capacity')
+      .eq('restaurant_id', rid)
+      .eq('is_active', true),
+    supabase
+      .from('restaurants')
+      .select('business_type')
+      .eq('id', rid)
+      .single(),
+    membership.role === 'admin' 
+      ? supabase.from('account_memberships').select('user_id').eq('restaurant_id', rid)
+      : Promise.resolve({ data: null })
+  ])
 
-  type ResWithTable = Tables<'reservations'> & {
-    physical_tables: { table_name: string; capacity: number } | null
+  const weekData = (resResponse.data ?? []) as unknown as Array<Tables<'reservations'> & { physical_tables: { table_name: string; capacity: number } | null }>
+  const allTables = (ptResponse.data ?? []) as unknown as Tables<'physical_tables'>[]
+  const businessType = restaurantResponse.data?.business_type || 'restaurant'
+  const memberList = memberListResponse.data
+  const isAdmin = membership.role === 'admin'
+
+  // ── Profile Pre-fetching for Admin (Parallel Block 2) ────────────────────────
+  let staffNames: Record<string, string> = {}
+  if (isAdmin && memberList) {
+    const validMemberIds = new Set(memberList.map(m => m.user_id))
+    const creatorIds = Array.from(new Set(
+      weekData
+        .map(r => r.created_by)
+        .filter((id): id is string => !!id && validMemberIds.has(id))
+    ))
+
+    if (creatorIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', creatorIds)
+      
+      profiles?.forEach(p => { staffNames[p.id] = p.full_name || 'Member' })
+    }
   }
-  const weekData = (resRaw ?? []) as unknown as ResWithTable[]
 
-  // ── Fetch ALL physical tables for this restaurant ───────────────────────────
-  const { data: ptRaw } = await supabase
-     .from('physical_tables')
-     .select('id, table_name, capacity')
-     .eq('restaurant_id', rid)
-     .eq('is_active', true)
-
-  const allTables = (ptRaw ?? []) as unknown as Tables<'physical_tables'>[]
+  const validMemberIds = isAdmin && memberList ? new Set(memberList.map(m => m.user_id)) : new Set<string>()
 
   // ── 1. Weekly Status Trend (Mon to Sun) ─────────────────────────────────────
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -105,8 +134,8 @@ export default async function ReportsPage({ searchParams }: Props) {
       volume: totalVolume
     }
   })
-  .filter(t => t.volume > 0) // Only show tables that have data this week
-  .sort((a, b) => b.volume - a.volume) // Rank busiest tables to the top
+  .filter(t => t.volume > 0)
+  .sort((a, b) => b.volume - a.volume)
 
   // ── 3. Top Customers (By Phone Frequency) ───────────────────────────────────
   const customerMap = new Map<string, { visits: number, guests: number, name: string }>()
@@ -126,54 +155,17 @@ export default async function ReportsPage({ searchParams }: Props) {
     .sort((a, b) => b.visits - a.visits || b.guests - a.guests)
     .slice(0, 5)
 
-  // ── 4. Business Type Details ───────────────────────────────────────────────
-  const { data: restaurant } = await supabase
-    .from('restaurants')
-    .select('business_type')
-    .eq('id', rid)
-    .single()
-
-  const businessType = restaurant?.business_type || 'restaurant'
-
   // ── 5. Staff Performance Tracking (Admin Only) ──────────────────────────────
-  const isAdmin = membership.role === 'admin'
   let staffPerformance: any[] | undefined = undefined
 
   if (isAdmin) {
-     // 1. Get official members (Admins + Staff) of this business only
-     const { data: memberList } = await supabase
-       .from('account_memberships')
-       .select('user_id')
-       .eq('restaurant_id', rid)
-     
-     const validMemberIds = new Set(memberList?.map(m => m.user_id) || [])
-
-     // 2. Get unique creators from this week's data who are ALSO valid members
-     const creatorIds = Array.from(new Set(
-       weekData
-         .map(r => r.created_by)
-         .filter((id): id is string => !!id && validMemberIds.has(id))
-     ))
-
-     // 3. Fetch profiles for these specific members
-     const { data: profiles } = await supabase
-       .from('profiles')
-       .select('id, full_name')
-       .in('id', creatorIds)
-
-     const staffNames: Record<string, string> = {}
-     profiles?.forEach(p => {
-       staffNames[p.id] = p.full_name || 'Unnamed Member'
-     })
-
      const performanceMap = new Map<string, { id: string, name: string, completed: number, confirmed: number, cancelled: number, no_show: number, total: number }>()
 
      weekData.forEach(r => {
        const uid = r.created_by
-       // ONLY track if user is a valid member and we found their ID
        if (!uid || !validMemberIds.has(uid)) return 
        
-       const name = staffNames[uid] || 'Unknown Member'
+       const name = staffNames[uid] || 'Unnamed Member'
        const prev = performanceMap.get(uid) || { id: uid, name, completed: 0, confirmed: 0, cancelled: 0, no_show: 0, total: 0 }
        
        if (r.status === 'completed') prev.completed++

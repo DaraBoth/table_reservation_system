@@ -22,7 +22,14 @@ export default function RegisterSuperadminPage() {
       <div className="w-full max-w-md relative z-10">
         <div className="flex flex-col items-center mb-8">
           <div className="relative w-20 h-20 rounded-[28px] overflow-hidden shadow-[0_0_40px_-5px_rgba(139,92,246,0.3)] border border-white/10 mb-5 animate-in fade-in zoom-in duration-700">
-            <Image src="/logo.png" alt="TableBook Logo" fill className="object-cover" />
+            <Image 
+              src="/logo.png" 
+              alt="TableBook Logo" 
+              fill 
+              priority
+              sizes="80px"
+              className="object-cover" 
+            />
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Superadmin Setup</h1>
           <p className="text-slate-400 mt-2">Initialize your system access</p>

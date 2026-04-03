@@ -17,6 +17,8 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import type { BusinessType } from '@/lib/business-type'
 
+import { useState } from 'react'
+
 interface BottomNavProps {
   isAdmin?: boolean
   businessType?: BusinessType
@@ -24,6 +26,7 @@ interface BottomNavProps {
 
 export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavProps) {
   const pathname = usePathname()
+  const [open, setOpen] = useState(false)
   const terms = getTerms(businessType)
 
   // Use BedDouble icon for hotel/guesthouse rooms, LayoutGrid for restaurant tables
@@ -69,7 +72,7 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
         })}
 
         {/* More Menu Trigger */}
-        <Sheet>
+        <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger
             render={
               <button
@@ -94,26 +97,48 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
               </button>
             }
           />
-          <SheetContent side="right" className="bg-slate-950 border-slate-800 p-0 sm:max-w-xs">
-            <div className="flex flex-col h-full">
-              <SheetHeader className="p-6 border-b border-slate-800">
-                <SheetTitle className="text-white text-lg font-black">Menu</SheetTitle>
+          <SheetContent side="right" className="bg-slate-950/90 backdrop-blur-xl border-slate-800/50 p-0 sm:max-w-xs overflow-hidden">
+            <div className="flex flex-col h-full bg-slate-950/40">
+              <SheetHeader className="p-8 pb-6 text-left border-b border-slate-800/50">
+                <div className="flex items-center gap-3">
+                   <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
+                    <span className="text-white font-black text-[10px]">TB</span>
+                  </div>
+                  <SheetTitle className="text-white text-xl font-black tracking-tight">Menu</SheetTitle>
+                </div>
               </SheetHeader>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                <MenuLink href="/dashboard/reports" icon={BarChart3} label="Reports" active={pathname.startsWith('/dashboard/reports')} />
+              <div className="flex-1 overflow-y-auto p-4 space-y-1.5 mt-2">
+                <MenuLink 
+                  href="/dashboard/reports" 
+                  icon={BarChart3} 
+                  label="Reports" 
+                  active={pathname.startsWith('/dashboard/reports')} 
+                  onClick={() => setOpen(false)}
+                />
                 {isAdmin && (
-                  <>
-                    <MenuLink href="/dashboard/staff" icon={Users} label="Staff Management" active={pathname.startsWith('/dashboard/staff')} />
-                  </>
+                  <MenuLink 
+                    href="/dashboard/staff" 
+                    icon={Users} 
+                    label="Staff" 
+                    active={pathname.startsWith('/dashboard/staff')} 
+                    onClick={() => setOpen(false)}
+                  />
                 )}
-                <MenuLink href="/dashboard/account" icon={UserCircle} label="System Settings" active={pathname.startsWith('/dashboard/account')} />
+                <MenuLink 
+                  href="/dashboard/account" 
+                  icon={UserCircle} 
+                  label="Settings" 
+                  active={pathname.startsWith('/dashboard/account')} 
+                  onClick={() => setOpen(false)}
+                />
 
-                <div className="pt-4 mt-4 border-t border-slate-800">
+                <div className="pt-6 mt-6 border-t border-slate-800/50 px-2">
                   <form action={logout}>
                     <button
                       type="submit"
-                      className="w-full flex items-center gap-3 p-4 rounded-2xl text-red-400 hover:bg-red-500/10 transition-colors font-bold text-sm"
+                      onClick={() => setOpen(false)}
+                      className="w-full flex items-center gap-4 p-4 rounded-2xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all font-bold text-sm border border-transparent hover:border-red-500/20"
                     >
                       <LogOut className="w-5 h-5" />
                       Sign Out
@@ -122,9 +147,12 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
                 </div>
               </div>
 
-              <div className="p-6 bg-slate-900/50 border-t border-slate-800">
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest text-center">
-                  BookJM © 2026
+              <div className="p-8 bg-slate-900/40 border-t border-slate-800/50 flex flex-col gap-1 items-center">
+                <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.2em]">
+                  BookJM
+                </p>
+                <p className="text-[9px] text-slate-700 font-semibold tracking-wider">
+                  VERSION 2.4.0 • © 2026 
                 </p>
               </div>
             </div>
@@ -135,19 +163,28 @@ export function BottomNav({ isAdmin, businessType = 'restaurant' }: BottomNavPro
   )
 }
 
-function MenuLink({ href, icon: Icon, label, active }: { href: string; icon: any; label: string; active: boolean }) {
+function MenuLink({ href, icon: Icon, label, active, onClick }: { href: string; icon: any; label: string; active: boolean; onClick: () => void }) {
   return (
     <Link
       href={href}
+      onClick={onClick}
       className={cn(
-        "flex items-center gap-3 p-4 rounded-2xl transition-all font-bold text-sm",
+        "flex items-center gap-4 p-4 rounded-2xl transition-all font-bold text-sm relative group overflow-hidden border",
         active
-          ? "bg-violet-500/10 text-violet-400 border border-violet-500/20"
-          : "text-slate-400 hover:bg-slate-800/50 hover:text-white"
+          ? "bg-violet-600/10 text-violet-400 border-violet-500/20 shadow-[inset_0_0_12px_rgba(139,92,246,0.05)]"
+          : "text-slate-400 border-transparent hover:bg-slate-800/40 hover:text-white"
       )}
     >
-      <Icon className="w-5 h-5" fill={active ? 'currentColor' : 'none'} />
-      {label}
+      {active && (
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-violet-500 rounded-r-lg shadow-[0_0_12px_rgba(139,92,246,0.8)]" />
+      )}
+      <Icon 
+        className={cn("w-5 h-5 transition-transform duration-300 group-hover:scale-110", active && "drop-shadow-[0_0_8px_rgba(139,92,246,0.4)]")} 
+        fill={active ? 'currentColor' : 'none'} 
+      />
+      <div className="flex flex-col">
+        {label}
+      </div>
     </Link>
   )
 }

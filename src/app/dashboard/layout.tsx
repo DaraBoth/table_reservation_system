@@ -5,25 +5,17 @@ import { redirect } from 'next/navigation'
 import type { BusinessType } from '@/lib/business-type'
 import { RealtimeListener } from '@/components/realtime-listener'
 import { NotificationManager } from '@/components/notification-manager'
+import { getActiveRestaurant } from '@/lib/restaurant-context'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: membershipRaw } = await supabase
-    .from('account_memberships')
-    .select('role, restaurant_id, restaurants(name, business_type, is_new)')
-    .eq('user_id', user.id)
-    .single()
+  const res = await getActiveRestaurant()
+  if (!res) redirect('/login')
 
-  const membership = membershipRaw as {
-    role: string
-    restaurant_id: string | null
-    restaurants: { name: string; business_type: string; is_new: boolean } | null
-  } | null
-
-  if (!membership) redirect('/login')
+  const { membership, allMemberships } = res
   if (membership.role === 'superadmin') redirect('/superadmin')
 
   const { data: profileRaw } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
@@ -39,7 +31,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="flex flex-col min-h-screen bg-slate-950">
       <RealtimeListener restaurantId={membership.restaurant_id ?? undefined} />
       <NotificationManager restaurantId={membership.restaurant_id ?? undefined} />
-      <TopBar brandName={restaurantName} userName={displayName} userEmail={user.email} restaurantId={membership.restaurant_id ?? undefined} />
+      <TopBar 
+        brandName={restaurantName} 
+        userName={displayName} 
+        userEmail={user.email} 
+        restaurantId={membership.restaurant_id ?? undefined} 
+        memberships={allMemberships}
+      />
       <main className="flex-1 px-2.5 pt-4 pb-32 overflow-y-auto">
         {children}
       </main>

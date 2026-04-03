@@ -6,6 +6,15 @@ import { logout } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { LogOut, ChevronRight } from 'lucide-react'
 import { NotificationBell } from '@/components/notification-bell'
+import { RestaurantSwitcher } from './restaurant-switcher'
+
+interface TopBarProps {
+  brandName: string
+  userName: string
+  userEmail?: string
+  restaurantId?: string
+  memberships?: any[]
+}
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Home',
@@ -16,15 +25,10 @@ const pageTitles: Record<string, string> = {
   '/dashboard/account': 'Account',
 }
 
-interface TopBarProps {
-  brandName: string
-  userName: string
-  userEmail?: string
-  restaurantId?: string
-}
-
-export function TopBar({ brandName, userName, restaurantId }: TopBarProps) {
+export function TopBar({ brandName, userName, restaurantId, memberships }: TopBarProps) {
   const pathname = usePathname()
+
+  const hasMultiple = (memberships?.length ?? 0) > 1
 
   // Find matching title (longest match wins for nested routes)
   const title = Object.entries(pageTitles)
@@ -36,7 +40,7 @@ export function TopBar({ brandName, userName, restaurantId }: TopBarProps) {
   return (
     <header className="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-xl border-b border-slate-800/60">
       <div className="flex items-center justify-between px-4 h-14">
-        {/* Left: Back or Brand */}
+        {/* Left: Back or Brand or Switcher */}
         <div className="flex items-center gap-2">
           {isEditing ? (
             <Link
@@ -46,6 +50,11 @@ export function TopBar({ brandName, userName, restaurantId }: TopBarProps) {
               <ChevronRight className="w-4 h-4 rotate-180" />
               Back
             </Link>
+          ) : hasMultiple && restaurantId && memberships ? (
+            <RestaurantSwitcher 
+              currentRestaurantId={restaurantId} 
+              memberships={memberships} 
+            />
           ) : (
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
@@ -57,12 +66,10 @@ export function TopBar({ brandName, userName, restaurantId }: TopBarProps) {
         </div>
 
         {isEditing ? (
-          < h1 className="text-white font-bold text-base absolute left-1/2 -translate-x-1/2">
+          <h1 className="text-white font-bold text-base absolute left-1/2 -translate-x-1/2">
             {title}
           </h1>
-        ) : (
-          <></>
-        )}
+        ) : null}
 
 
         {/* Right: Actions */}

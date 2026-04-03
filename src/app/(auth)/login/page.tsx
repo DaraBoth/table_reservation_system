@@ -40,7 +40,14 @@ function LoginForm() {
         <div className="relative z-10 flex flex-col items-center text-center w-full max-w-sm lg:max-w-md">
           <div className="relative w-32 h-32 lg:w-40 lg:h-40 rounded-[40px] lg:rounded-[48px] overflow-hidden shadow-[0_0_80px_-20px_rgba(139,92,246,0.6)] border border-white/10 mb-8 lg:mb-10 transition-transform duration-700 hover:scale-105 hover:rotate-3">
             <div className="absolute inset-0 bg-gradient-to-tr from-violet-600/20 to-transparent z-10 pointer-events-none" />
-            <Image src="/logo.png" alt="BookJM Logo" fill className="object-cover" />
+            <Image 
+              src="/logo.png" 
+              alt="BookJM Logo" 
+              fill 
+              priority 
+              sizes="(max-width: 1024px) 128px, 160px"
+              className="object-cover" 
+            />
           </div>
           <h1 className="text-4xl lg:text-5xl xl:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white via-slate-200 to-slate-500 tracking-tight mb-4">
             BookJM
@@ -58,7 +65,14 @@ function LoginForm() {
         <div className="md:hidden flex flex-col items-center gap-4 mb-10 w-full">
           <div className="relative w-24 h-24 rounded-[32px] overflow-hidden shadow-[0_0_50px_-15px_rgba(139,92,246,0.4)] border border-white/10">
             <div className="absolute inset-0 bg-gradient-to-tr from-violet-600/20 to-transparent z-10 pointer-events-none" />
-            <Image src="/logo.png" alt="BookJM Logo" fill className="object-cover" />
+            <Image 
+              src="/logo.png" 
+              alt="BookJM Logo" 
+              fill 
+              priority
+              sizes="96px"
+              className="object-cover" 
+            />
           </div>
           <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 tracking-tight">
             BookJM

@@ -30,7 +30,7 @@ const statusLabels: Record<string, string> = {
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  if (!user) redirect('/login')
 
   const { data: membershipRaw } = await supabase
     .from('account_memberships')

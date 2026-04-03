@@ -46,7 +46,8 @@ export async function login(_: ActionState, formData: FormData): Promise<ActionS
     .from('account_memberships')
     .select('role')
     .eq('user_id', user.id)
-    .single()
+    .limit(1)
+    .maybeSingle()
 
   if (membership?.role === 'superadmin') {
     redirect('/superadmin')
@@ -60,6 +61,34 @@ export async function logout() {
   const supabase = await createClient()
   await supabase.auth.signOut()
   redirect('/login')
+}
+
+// ─── Update Profile ──────────────────────────────────────────────────────────
+
+const UpdateProfileSchema = z.object({
+  fullName: z.string().min(2, 'Full name must be at least 2 characters'),
+})
+
+export async function updateOwnProfile(_: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = UpdateProfileSchema.safeParse({
+    fullName: formData.get('fullName'),
+  })
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ full_name: parsed.data.fullName })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/dashboard/account')
+  revalidatePath('/dashboard')
+  return { success: 'Profile updated successfully.' }
 }
 
 // ─── Change own password ──────────────────────────────────────────────────────
@@ -101,14 +130,14 @@ export async function resetUserPassword(_: ActionState, formData: FormData): Pro
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  // Check caller is superadmin or admin
-  const { data: membership } = await supabase
+  const { data: memberships } = await supabase
     .from('account_memberships')
     .select('role, restaurant_id')
     .eq('user_id', user.id)
-    .single()
 
-  if (!membership || !['superadmin', 'admin'].includes(membership.role)) {
+  const membership = memberships?.find(m => ['superadmin', 'admin'].includes(m.role))
+
+  if (!membership) {
     return { error: 'Unauthorized' }
   }
 
