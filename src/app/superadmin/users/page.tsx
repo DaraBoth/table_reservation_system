@@ -1,17 +1,26 @@
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { ShieldAlert, Users, User } from 'lucide-react'
+import { ShieldAlert, Users, User as UserIcon, Calendar, Mail, Trash2, ShieldCheck, Fingerprint } from 'lucide-react'
 import { CreateUserDialog } from './CreateUserDialog'
 import { DeleteUserButton } from './DeleteUserButton'
 import type { Tables } from '@/lib/types/database'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 export const metadata = { title: 'User Management — Superadmin' }
 
-const ROLE_CONFIG = {
-  superadmin: { label: 'Superadmin', icon: ShieldAlert, gradient: 'from-indigo-500 to-blue-600',  bg: 'bg-indigo-600/15', text: 'text-indigo-400' },
-  admin:       { label: 'Admins',    icon: Users,       gradient: 'from-amber-500 to-orange-600',  bg: 'bg-amber-600/15',  text: 'text-amber-400' },
-  staff:       { label: 'Staff',     icon: User,        gradient: 'from-slate-600 to-slate-700',   bg: 'bg-slate-700/30',  text: 'text-slate-400' },
+const ROLE_THEMES = {
+  superadmin: { label: 'System', icon: ShieldAlert, color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
+  admin:       { label: 'Admin',  icon: Users,       color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+  staff:       { label: 'Staff',  icon: UserIcon,    color: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
 } as const
 
 export default async function UsersPage() {
@@ -20,7 +29,7 @@ export default async function UsersPage() {
   const { data: membersRaw, error } = await supabase
     .from('account_memberships')
     .select('*, profiles(full_name, avatar_url), restaurants(name)')
-    .order('role', { ascending: true })
+    .order('created_at', { ascending: false })
 
   const { data: restaurantsRaw } = await supabase
     .from('restaurants')
@@ -31,103 +40,120 @@ export default async function UsersPage() {
   const restaurants = (restaurantsRaw ?? []) as Tables<'restaurants'>[]
 
   return (
-    <div className="space-y-6 pb-10">
-
+    <div className="space-y-8 pb-20">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-white">User Management</h1>
-          <p className="text-slate-500 text-sm mt-0.5">{members.length} total platform users</p>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-black text-white uppercase tracking-tight">Users</h1>
+          <p className="text-slate-500 text-sm font-medium">{members.length} Identifiers registered</p>
         </div>
         <CreateUserDialog restaurants={restaurants} />
       </div>
 
       {/* Error */}
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
-          <p className="text-sm font-bold text-red-400">Database error: {error.message}</p>
+        <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 flex items-center gap-3">
+          <ShieldAlert className="w-5 h-5 text-red-400" />
+          <p className="text-sm font-bold text-red-400">Security synchronization error: {error.message}</p>
         </div>
       )}
 
-      {/* Role sections */}
-      {(['superadmin', 'admin', 'staff'] as const).map((role) => {
-        const roleMembers = members.filter(m => m.role === role)
-        if (roleMembers.length === 0 && role !== 'admin') return null
+      <div className="bg-slate-900/40 border border-slate-800/50 rounded-[2rem] overflow-hidden shadow-2xl backdrop-blur-sm">
+        <Table>
+          <TableHeader className="bg-white/5 border-b border-slate-800">
+            <TableRow className="hover:bg-transparent border-none h-12">
+              <TableHead className="pl-6 text-[9px] font-black text-slate-500 uppercase tracking-widest w-[240px]">Identity</TableHead>
+              <TableHead className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Property</TableHead>
+              <TableHead className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Privilege</TableHead>
+              <TableHead className="text-[9px] font-black text-slate-500 uppercase tracking-widest text-center">Status</TableHead>
+              <TableHead className="pr-6 text-right text-[9px] font-black text-slate-500 uppercase tracking-widest w-20">Controls</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {members.map((m) => {
+              const profile = m.profiles as any
+              const name = profile?.full_name || 'System Identity'
+              const initial = name[0]?.toUpperCase() || '?'
+              const joinedDate = new Date(m.created_at).toLocaleDateString('en-US', {
+                month: 'short', day: 'numeric'
+              })
+              const roleTheme = ROLE_THEMES[m.role as keyof typeof ROLE_THEMES] || ROLE_THEMES.staff
+              const RoleIcon = roleTheme.icon
 
-        const config = ROLE_CONFIG[role]
-        const Icon = config.icon
-
-        return (
-          <section key={role}>
-            {/* Section header */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className={cn('w-7 h-7 rounded-xl flex items-center justify-center', config.bg)}>
-                  <Icon className={cn('w-4 h-4', config.text)} />
-                </div>
-                <h2 className="text-base font-black text-white capitalize">{config.label}</h2>
-                <Badge className="bg-slate-800 text-slate-400 border-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-lg">
-                  {roleMembers.length}
-                </Badge>
-              </div>
-            </div>
-
-            {/* Member cards */}
-            {roleMembers.length > 0 ? (
-              <div className="space-y-2">
-                {roleMembers.map((m) => {
-                  const name = m.profiles?.full_name || 'Unknown User'
-                  const joinedDate = new Date(m.created_at).toLocaleDateString('en-US', {
-                    month: 'short', day: 'numeric', year: 'numeric'
-                  })
-
-                  return (
-                    <div key={m.id} className="bg-slate-900 border border-slate-800 rounded-3xl p-4 flex items-center gap-4">
-                      {/* Avatar */}
-                      <div className={cn(
-                        'w-12 h-12 rounded-2xl bg-gradient-to-br flex items-center justify-center text-base font-black text-white flex-shrink-0',
-                        config.gradient
-                      )}>
-                        {name.slice(0, 2).toUpperCase()}
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-black text-white truncate">{name}</p>
-                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                          {m.restaurants && (
-                            <span className="text-xs text-slate-500 truncate">{m.restaurants.name}</span>
-                          )}
-                          <span className="text-xs text-slate-600">· {joinedDate}</span>
-                        </div>
-                      </div>
-
-                      {/* Status + delete */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Badge className={cn(
-                          'text-[10px] font-bold border px-2 py-0.5 rounded-xl hidden sm:inline-flex',
-                          m.is_active
-                            ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                            : 'bg-red-500/15 text-red-400 border-red-500/30'
-                        )}>
-                          {m.is_active ? 'Active' : 'Disabled'}
-                        </Badge>
-                        {m.role !== 'superadmin' && (
-                          <DeleteUserButton userId={m.user_id} />
-                        )}
+              return (
+                <TableRow key={m.id} className="hover:bg-white/[0.02] border-slate-800 transition-colors h-16 group">
+                  {/* User Info */}
+                  <TableCell className="pl-6">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-8 h-8 rounded-xl border border-slate-800 group-hover:border-blue-500/50 transition-colors shadow-lg">
+                        <AvatarImage src={profile?.avatar_url} />
+                        <AvatarFallback className="bg-slate-800 text-slate-500 font-black text-[10px] uppercase">{initial}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-black text-white group-hover:text-blue-400 transition-colors leading-tight truncate">{name}</span>
+                        <span className="text-[9px] text-slate-600 font-bold uppercase tracking-tight truncate opacity-60">U: {m.user_id.slice(0, 8)}</span>
                       </div>
                     </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="bg-slate-900 border border-slate-800 border-dashed rounded-2xl py-8 text-center">
-                <p className="text-slate-600 text-xs font-bold uppercase tracking-widest">No {config.label.toLowerCase()} yet</p>
-              </div>
-            )}
-          </section>
-        )
-      })}
+                  </TableCell>
+
+                  {/* Property */}
+                  <TableCell>
+                    {m.restaurants ? (
+                       <span className="text-[11px] font-black text-slate-500 uppercase tracking-tight italic truncate max-w-[120px]">{m.restaurants.name}</span>
+                    ) : (
+                      <span className="text-[9px] text-slate-700 font-black uppercase tracking-widest italic opacity-40">Global</span>
+                    )}
+                  </TableCell>
+
+                  {/* Role */}
+                  <TableCell>
+                    <Badge className={cn(
+                      "text-[8px] font-black border px-2 py-0.5 rounded-lg uppercase tracking-widest flex items-center gap-1 w-fit",
+                      roleTheme.color
+                    )}>
+                      <RoleIcon className="w-2.5 h-2.5" />
+                      {roleTheme.label}
+                    </Badge>
+                  </TableCell>
+
+                  {/* Status */}
+                  <TableCell className="text-center">
+                    <div className="flex flex-col items-center gap-0.5">
+                      <Badge className={cn(
+                        'text-[8px] font-black border px-2 py-0.5 rounded-lg uppercase tracking-widest',
+                        m.is_active
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : 'bg-red-500/10 text-red-400 border-red-500/20'
+                      )}>
+                        {m.is_active ? 'Online' : 'Locked'}
+                      </Badge>
+                      <span className="text-[8px] text-slate-600 font-bold uppercase tracking-tight opacity-40">{joinedDate}</span>
+                    </div>
+                  </TableCell>
+
+                  {/* Controls */}
+                  <TableCell className="pr-6 text-right">
+                    <div className="flex items-center justify-end">
+                      {m.role !== 'superadmin' && (
+                        <DeleteUserButton userId={m.user_id} />
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
+        {members.length === 0 && (
+          <div className="text-center py-20 bg-slate-900 border-t border-slate-800">
+             <div className="w-20 h-20 rounded-[2rem] bg-white/5 flex items-center justify-center mx-auto mb-6">
+              <Users className="w-10 h-10 text-slate-700" />
+            </div>
+            <p className="text-slate-300 font-black uppercase tracking-widest text-xs mb-1">No identifiers established</p>
+            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Wait for user registration or manually sync identities</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

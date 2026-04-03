@@ -17,12 +17,12 @@ interface TopBarProps {
 }
 
 const pageTitles: Record<string, string> = {
-  '/dashboard': 'Home',
-  '/dashboard/reservations': 'Bookings',
-  '/dashboard/reservations/new': 'New Booking',
-  '/dashboard/tables': 'Tables',
-  '/dashboard/staff': 'Staff',
-  '/dashboard/account': 'Account',
+  '/': 'Home',
+  '/reservations': 'Bookings',
+  '/reservations/new': 'New Booking',
+  '/tables': 'Tables',
+  '/staff': 'Staff',
+  '/account': 'Account',
 }
 
 export function TopBar({ brandName, userName, restaurantId, memberships }: TopBarProps) {
@@ -30,10 +30,10 @@ export function TopBar({ brandName, userName, restaurantId, memberships }: TopBa
 
   const hasMultiple = (memberships?.length ?? 0) > 1
 
-  // Find matching title (longest match wins for nested routes)
-  const title = Object.entries(pageTitles)
-    .filter(([key]) => pathname === key || pathname.startsWith(key + '/'))
-    .sort((a, b) => b[0].length - a[0].length)[0]?.[1] ?? 'Dashboard'
+  // Find matching title (handle dynamic restaurantId)
+  const segments = pathname.split('/')
+  const relativePath = '/' + segments.slice(3).join('/') // Everything after /dashboard/[id]
+  const title = pageTitles[relativePath] ?? 'Dashboard'
 
   const isEditing = pathname.includes('/edit') || pathname.includes('/new')
 
@@ -44,7 +44,7 @@ export function TopBar({ brandName, userName, restaurantId, memberships }: TopBa
         <div className="flex items-center gap-2">
           {isEditing ? (
             <Link
-              href={pathname.includes('reservations') ? '/dashboard/reservations' : '/dashboard'}
+              href={pathname.includes('reservations') ? `/dashboard/${restaurantId}/reservations` : `/dashboard/${restaurantId}`}
               className="flex items-center gap-1 text-violet-400 text-sm font-semibold"
             >
               <ChevronRight className="w-4 h-4 rotate-180" />

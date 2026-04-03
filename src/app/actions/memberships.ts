@@ -234,3 +234,48 @@ export async function deleteStaffMember(_: ActionState, formData: FormData): Pro
   revalidatePath('/dashboard/staff')
   return { success: 'Staff member account fully removed from database.' }
 }
+
+// ─── Superadmin: Update Special Admin & Features ──────────────────────────────
+
+export async function updateSpecialAdminStatus(_: ActionState, formData: FormData): Promise<ActionState> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { data: membership } = await supabase
+    .from('account_memberships')
+    .select('role')
+    .eq('user_id', user.id)
+    .single()
+
+  if (membership?.role !== 'superadmin') return { error: 'Unauthorized — superadmin only' }
+
+  const membershipId = formData.get('membershipId') as string
+  const isSpecial = formData.get('isSpecial') === 'true'
+  const featuresRaw = formData.get('features') as string
+  let features = {}
+
+  try {
+    features = JSON.parse(featuresRaw || '{}')
+  } catch (e) {
+    return { error: 'Malformed feature configuration payload.' }
+  }
+
+  // Manual UUID & Basic Validation to bypass Zod v4 runtime conflicts
+  if (!membershipId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(membershipId)) {
+    return { error: 'Invalid membership identity format.' }
+  }
+
+  const { error } = await supabase
+    .from('account_memberships')
+    .update({ 
+      is_special_admin: isSpecial,
+      special_features: features
+    } as any)
+    .eq('id', membershipId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/superadmin/admins')
+  return { success: 'Special Admin status and features updated.' }
+}

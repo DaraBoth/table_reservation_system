@@ -18,9 +18,9 @@ const CreateRestaurantSchema = z.object({
   subscriptionExpiresAt: z.string().optional(),
   businessType: z.enum(['restaurant', 'hotel', 'guesthouse']).default('restaurant'),
   // Admin to create alongside the restaurant
-  adminFullName: z.string().min(2, 'Admin name required'),
-  adminUsername: z.string().min(2, 'Admin username required'),
-  adminPassword: z.string().min(6, 'Password must be at least 6 characters'),
+  adminFullName: z.string().optional().or(z.literal('')),
+  adminUsername: z.string().optional().or(z.literal('')),
+  adminPassword: z.string().optional().or(z.literal('')),
 })
 
 export async function createRestaurant(_: ActionState, formData: FormData): Promise<ActionState> {
@@ -28,33 +28,52 @@ export async function createRestaurant(_: ActionState, formData: FormData): Prom
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { data: membership } = await supabase
+  const { data: membershipsRaw } = await supabase
     .from('account_memberships')
-    .select('role')
+    .select('role, is_special_admin, special_features, restaurant_id')
     .eq('user_id', user.id)
-    .single()
 
-  if (membership?.role !== 'superadmin') return { error: 'Unauthorized — superadmin only' }
+  const memberships = (membershipsRaw as any[]) || []
+  const primaryMembership = memberships.find(m => m.is_special_admin) || memberships[0]
+  const isSuperadmin = primaryMembership?.role === 'superadmin'
+  
+  // Parse JSON features safely
+  const specialFeatures = (primaryMembership?.special_features as Record<string, any>) || {}
+  const hasCreationRight = !!specialFeatures['create_restaurant']
+  const isSpecialAdmin = primaryMembership?.is_special_admin === true && hasCreationRight
+  const maxBrands = specialFeatures['create_restaurant']?.max_brands || 1
+
+  if (!isSuperadmin && !isSpecialAdmin) {
+    return { error: 'Unauthorized — elevation required for multi-brand expansion.' }
+  }
+
+  // Quota Enforcement for Special Admins
+  if (isSpecialAdmin && !isSuperadmin) {
+    const activeBrandsCount = memberships?.length || 0
+    if (activeBrandsCount >= maxBrands) {
+      return { error: `Expansion limit reached. You currently have ${activeBrandsCount}/${maxBrands} brands in your portfolio.` }
+    }
+  }
 
   const parsed = CreateRestaurantSchema.safeParse({
-    name: formData.get('name'),
-    slug: formData.get('slug'),
-    contactEmail: formData.get('contactEmail'),
-    contactPhone: formData.get('contactPhone'),
-    address: formData.get('address'),
-    subscriptionExpiresAt: formData.get('subscriptionExpiresAt'),
+    name: formData.get('name') || undefined,
+    slug: formData.get('slug') || undefined,
+    contactEmail: formData.get('contactEmail') || undefined,
+    contactPhone: formData.get('contactPhone') || undefined,
+    address: formData.get('address') || undefined,
+    subscriptionExpiresAt: formData.get('subscriptionExpiresAt') || undefined,
     businessType: formData.get('businessType') || 'restaurant',
-    adminFullName: formData.get('adminFullName'),
-    adminUsername: formData.get('adminUsername'),
-    adminPassword: formData.get('adminPassword'),
+    adminFullName: formData.get('adminFullName') || undefined,
+    adminUsername: formData.get('adminUsername') || undefined,
+    adminPassword: formData.get('adminPassword') || undefined,
   })
 
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
   const adminClient = createAdminClient()
 
-  // 1. Create the restaurant
-  const { data: restaurant, error: restaurantError } = await supabase
+  // 1. Create the restaurant using adminClient to bypass RLS
+  const { data: restaurant, error: restaurantError } = await adminClient
     .from('restaurants')
     .insert({
       name: parsed.data.name,
@@ -70,38 +89,53 @@ export async function createRestaurant(_: ActionState, formData: FormData): Prom
 
   if (restaurantError) return { error: restaurantError.message }
 
-  // 2. Create the admin user via admin API (no email verification)
-  const adminEmail = parsed.data.adminUsername.includes('@')
-    ? parsed.data.adminUsername
-    : `${parsed.data.adminUsername}@system.local`
+  if (isSuperadmin) {
+    // 2. Create the admin user via admin API (no email verification)
+    const adminEmail = parsed.data.adminUsername?.includes('@')
+      ? parsed.data.adminUsername
+      : `${parsed.data.adminUsername}@system.local`
 
-  const { data: newUser, error: userError } = await adminClient.auth.admin.createUser({
-    email: adminEmail,
-    password: parsed.data.adminPassword,
-    email_confirm: true,
-    user_metadata: { full_name: parsed.data.adminFullName },
-  })
-
-  if (userError) {
-    // Rollback restaurant
-    await supabase.from('restaurants').delete().eq('id', restaurant.id)
-    return { error: `Failed to create admin user: ${userError.message}` }
-  }
-
-  // 3. Assign admin role to the new user for this restaurant
-  const { error: membershipError } = await supabase
-    .from('account_memberships')
-    .insert({
-      user_id: newUser.user.id,
-      restaurant_id: restaurant.id,
-      role: 'admin',
+    const { data: newUser, error: userError } = await adminClient.auth.admin.createUser({
+      email: adminEmail,
+      password: parsed.data.adminPassword,
+      email_confirm: true,
+      user_metadata: { full_name: parsed.data.adminFullName },
     })
 
-  if (membershipError) return { error: membershipError.message }
+    if (userError) {
+      // Rollback restaurant
+      await supabase.from('restaurants').delete().eq('id', restaurant.id)
+      return { error: `Failed to build admin identity: ${userError.message}` }
+    }
+
+    // 3. Assign admin role to the new user for this restaurant
+    const { error: membershipError } = await adminClient
+      .from('account_memberships')
+      .insert({
+        user_id: newUser.user.id,
+        restaurant_id: restaurant.id,
+        role: 'admin',
+      })
+    if (membershipError) return { error: membershipError.message }
+  } else {
+    // 2. Special Admin Scenario: The current user becomes the admin of the new restaurant
+    const { error: membershipError } = await adminClient
+      .from('account_memberships')
+      .insert({
+        user_id: user.id,
+        restaurant_id: restaurant.id,
+        role: 'admin',
+        is_special_admin: true, 
+        special_features: specialFeatures
+      } as any)
+    if (membershipError) return { error: membershipError.message }
+  }
 
   revalidatePath('/superadmin/restaurants')
   revalidatePath('/superadmin')
-  return { success: `Restaurant "${parsed.data.name}" created with admin account.` }
+  
+  // Transition back to the newly established brand dashboard
+  redirect(`/dashboard/${restaurant.id}`)
 }
 
 // ─── Update restaurant ────────────────────────────────────────────────────────
@@ -241,7 +275,36 @@ export async function updateSubscription(_: ActionState, formData: FormData): Pr
 
   if (error) return { error: error.message }
 
-  revalidatePath(`/superadmin/restaurants/${restaurantId}`)
   revalidatePath('/superadmin/restaurants')
+  revalidatePath('/superadmin')
   return { success: 'Subscription updated successfully.' }
+}
+
+// ─── Get Expansion Status (Special Admin) ───────────────────────────────────
+
+export async function getExpansionStatus(): Promise<{ count: number; max: number; isSpecial: boolean; isSuper: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { count: 0, max: 0, isSpecial: false, isSuper: false }
+
+  const { data: membershipsRaw } = await supabase
+    .from('account_memberships')
+    .select('role, is_special_admin, special_features, restaurant_id')
+    .eq('user_id', user.id)
+
+  const memberships = (membershipsRaw as any[]) || []
+  const primaryMembership = memberships.find(m => m.is_special_admin) || memberships[0]
+  const isSuper = primaryMembership?.role === 'superadmin'
+  
+  const specialFeatures = (primaryMembership?.special_features as Record<string, any>) || {}
+  const hasCreationRight = !!specialFeatures['create_restaurant']
+  const isSpecial = primaryMembership?.is_special_admin === true && hasCreationRight
+  const max = specialFeatures['create_restaurant']?.max_brands || 1
+
+  return {
+    count: memberships.length,
+    max: isSuper ? Infinity : max,
+    isSpecial,
+    isSuper
+  }
 }

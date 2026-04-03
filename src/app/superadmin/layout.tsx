@@ -27,11 +27,11 @@ export default async function SuperadminLayout({ children }: { children: React.R
   const displayName = profile?.full_name || user.email?.split('@')[0] || 'Superadmin'
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col lg:flex-row">
+    <div className="h-screen bg-slate-950 flex flex-col lg:flex-row overflow-hidden">
       <SuperadminNav userName={displayName} userEmail={user.email} />
 
       {/* Main content */}
-      <main className="flex-1 min-w-0 pt-14 lg:pt-0 overflow-x-hidden">
+      <main className="flex-1 min-w-0 pt-14 lg:pt-0 overflow-y-auto custom-scrollbar">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10 w-full">
           {children}
         </div>

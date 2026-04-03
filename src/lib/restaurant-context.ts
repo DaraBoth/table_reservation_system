@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export const ACTIVE_RESTAURANT_COOKIE = 'active_restaurant_id'
 
-export async function getActiveRestaurant() {
+export async function getActiveRestaurant(routeId?: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
@@ -11,18 +11,19 @@ export async function getActiveRestaurant() {
   // 1. Get all memberships for the user
   const { data: memberships } = await supabase
     .from('account_memberships')
-    .select('role, restaurant_id, restaurants(name, business_type, is_new)')
+    .select('role, restaurant_id, is_special_admin, special_features, restaurants(name, business_type, is_new)')
     .eq('user_id', user.id)
-    .eq('is_active', true)
+    .eq('is_active', true) as any
 
   if (!memberships || memberships.length === 0) return null
 
-  // 2. Get the active ID from cookie
+  // 2. Determine active ID (Prioritize route parameter over cookie)
   const cookieStore = await cookies()
   const cookieId = cookieStore.get(ACTIVE_RESTAURANT_COOKIE)?.value
+  const activeId = routeId || cookieId || memberships[0].restaurant_id
 
-  // 3. Find the membership matching the cookie ID, or fallback to the first one
-  const activeMembership = memberships.find(m => m.restaurant_id === cookieId) || memberships[0]
+  // 3. Find the membership matching the active ID, or fallback to the first one
+  const activeMembership = memberships.find((m: any) => m.restaurant_id === activeId) || memberships[0]
 
   return {
     membership: activeMembership,
@@ -33,7 +34,7 @@ export async function getActiveRestaurant() {
 
 export async function setActiveRestaurantId(id: string) {
   const cookieStore = await cookies()
-  cookieStore.set(ACTIVE_RESTAURANT_COOKIE, id, { 
+  cookieStore.set(ACTIVE_RESTAURANT_COOKIE, id, {
     path: '/',
     maxAge: 60 * 60 * 24 * 30, // 30 days
     httpOnly: true,

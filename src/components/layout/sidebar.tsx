@@ -29,9 +29,23 @@ interface SidebarProps {
   brandName: string
   type: 'superadmin' | 'dashboard'
   isAdmin?: boolean
+  restaurantId?: string
+  memberships?: any[]
+  isSpecialAdmin?: boolean
+  specialFeatures?: Record<string, any>
 }
 
-export function Sidebar({ user, role, brandName, type, isAdmin }: SidebarProps) {
+export function Sidebar({ 
+  user, 
+  role, 
+  brandName, 
+  type, 
+  isAdmin,
+  restaurantId,
+  memberships = [],
+  isSpecialAdmin = false,
+  specialFeatures = {}
+}: SidebarProps) {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
@@ -45,13 +59,13 @@ export function Sidebar({ user, role, brandName, type, isAdmin }: SidebarProps) 
         { href: '/superadmin/admins', label: 'Admin Accounts', icon: ShieldCheck },
       ]
     : [
-        { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/dashboard/reservations', label: 'Reservations', icon: Calendar },
-        { href: '/dashboard/tables', label: 'Tables', icon: TableIcon },
+        { href: `/dashboard/${restaurantId}`, label: 'Overview', icon: LayoutDashboard },
+        { href: `/dashboard/${restaurantId}/reservations`, label: 'Reservations', icon: Calendar },
+        { href: `/dashboard/${restaurantId}/tables`, label: 'Tables', icon: TableIcon },
         ...(isAdmin ? [
-          { href: '/dashboard/staff', label: 'Staff', icon: Users },
+          { href: `/dashboard/${restaurantId}/staff`, label: 'Staff', icon: Users },
         ] : []),
-        { href: '/dashboard/account', label: 'Account', icon: Settings },
+        { href: `/dashboard/${restaurantId}/account`, label: 'Account', icon: Settings },
       ]
 
   // Persist state to localStorage
@@ -86,18 +100,54 @@ export function Sidebar({ user, role, brandName, type, isAdmin }: SidebarProps) 
         {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
       </Button>
 
-      {/* Brand Header */}
-      <div className={cn("p-6 flex items-center gap-3 overflow-hidden transition-all duration-300", isCollapsed ? "justify-center" : "")}>
-        <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-xl shadow-violet-500/20">
-          <span className="text-white font-black text-xs tracking-tighter">TB</span>
-        </div>
-        {!isCollapsed && (
-          <div className="flex flex-col animate-in fade-in slide-in-from-left-2 duration-300 text-nowrap">
-            <span className="font-bold text-white text-base tracking-tight">{brandName}</span>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-              <span className="text-[10px] uppercase tracking-widest font-black text-slate-500">{role}</span>
+      {/* Brand Header & Switcher */}
+      <div className={cn("p-4 flex flex-col gap-2 overflow-hidden transition-all duration-300", isCollapsed ? "items-center" : "")}>
+        <div className="flex items-center gap-3">
+          <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-xl shadow-violet-500/20">
+            <span className="text-white font-black text-xs tracking-tighter">TB</span>
+          </div>
+          {!isCollapsed && (
+            <div className="flex-1 flex flex-col min-w-0 animate-in fade-in slide-in-from-left-2 duration-300">
+              <span className="font-bold text-white text-sm tracking-tight truncate">{brandName}</span>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[9px] uppercase tracking-widest font-black text-slate-500">{role}</span>
+              </div>
             </div>
+          )}
+        </div>
+
+        {/* Portfolio Switcher (Only in Dashboard mode) */}
+        {!isCollapsed && type === 'dashboard' && (memberships.length > 1 || isSpecialAdmin) && (
+          <div className="mt-2 grid grid-cols-1 gap-1 animate-in fade-in slide-in-from-top-2 duration-400">
+            <div className="text-[8px] font-black text-slate-700 uppercase tracking-widest mb-1 px-1">Portfolio</div>
+            
+            {/* Filtered memberships to show other brands */}
+            {memberships.filter(m => m.restaurant_id !== restaurantId).map((m: any) => (
+              <Link 
+                key={m.restaurant_id}
+                href={`/dashboard/${m.restaurant_id}`}
+                className="flex items-center gap-2 p-2 rounded-lg bg-slate-800/20 hover:bg-slate-800/50 border border-slate-700/30 transition-all group/brand"
+              >
+                <div className="w-6 h-6 rounded-md bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] text-slate-500 group-hover/brand:text-white group-hover/brand:bg-violet-600/20 transition-colors uppercase font-black">
+                  {m.restaurants?.name?.slice(0, 2) || 'RT'}
+                </div>
+                <span className="text-[10px] font-bold text-slate-500 group-hover/brand:text-slate-300 truncate">{m.restaurants?.name}</span>
+              </Link>
+            ))}
+
+            {/* Create Brand Trigger for Special Admins */}
+            {isSpecialAdmin && !!specialFeatures['create_restaurant'] && (
+              <Link 
+                href={`/dashboard/${restaurantId}/setup/new`}
+                className="flex items-center gap-2 p-2 rounded-lg bg-violet-600/5 hover:bg-violet-600/10 border border-violet-500/20 transition-all border-dashed group/new mt-1"
+              >
+                <div className="w-6 h-6 rounded-md bg-violet-600 text-white flex items-center justify-center text-[10px] font-black">
+                   +
+                </div>
+                <span className="text-[10px] font-black text-violet-400 uppercase tracking-tight">Establish Brand</span>
+              </Link>
+            )}
           </div>
         )}
       </div>
