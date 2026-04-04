@@ -42,6 +42,7 @@ export function BottomNav({
   const [open, setOpen] = useState(false)
   const [isPortfolioOpen, setIsPortfolioOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isSwitchingRestaurant, setIsSwitchingRestaurant] = useState(false)
   
   const terms = getTerms(businessType)
 
@@ -67,6 +68,38 @@ export function BottomNav({
 
   const maxBrands = specialFeatures['create_restaurant']?.max_brands || 1
   const canEstablishMore = memberships.length < maxBrands || isAdmin // Superadmins can always establish
+
+  const buildTargetPath = (nextRestaurantId: string) => {
+    const segments = pathname.split('/').filter(Boolean)
+    if (segments[0] === 'dashboard' && segments[1]) {
+      const suffix = segments.slice(2).join('/')
+      return suffix
+        ? `/dashboard/${nextRestaurantId}/${suffix}`
+        : `/dashboard/${nextRestaurantId}`
+    }
+    return `/dashboard/${nextRestaurantId}`
+  }
+
+  const handleRestaurantSwitch = async (nextRestaurantId: string) => {
+    if (isSwitchingRestaurant || nextRestaurantId === restaurantId) {
+      setOpen(false)
+      return
+    }
+
+    setIsSwitchingRestaurant(true)
+    try {
+      await fetch('/api/active-restaurant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId: nextRestaurantId }),
+      })
+    } catch {
+      // Navigate anyway; page route still works even if cookie write fails.
+    } finally {
+      const target = buildTargetPath(nextRestaurantId)
+      window.location.assign(target)
+    }
+  }
 
   return (
     <nav className="fixed bottom-6 left-6 right-6 z-50 bg-card/80 backdrop-blur-2xl border border-border/50 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -184,12 +217,13 @@ export function BottomNav({
                        {filteredMemberships.map((m: any) => {
                          const isCurrent = m.restaurant_id === restaurantId
                          return (
-                           <Link 
+                           <button 
                              key={m.restaurant_id}
-                             href={`/dashboard/${m.restaurant_id}`}
-                             onClick={() => setOpen(false)}
+                             type="button"
+                             disabled={isSwitchingRestaurant}
+                             onClick={() => void handleRestaurantSwitch(m.restaurant_id)}
                              className={cn(
-                               "flex items-center justify-between p-4 rounded-2xl border transition-all group/opt",
+                               "w-full flex items-center justify-between p-4 rounded-2xl border transition-all group/opt disabled:opacity-60 disabled:cursor-not-allowed",
                                isCurrent 
                                 ? "bg-violet-600/10 border-violet-500/20 shadow-inner" 
                                 : "bg-transparent border-transparent hover:bg-card hover:border-border"
@@ -210,7 +244,7 @@ export function BottomNav({
                                </div>
                              </div>
                              {isCurrent && <Check className="w-4 h-4 text-violet-400" />}
-                           </Link>
+                           </button>
                          )
                        })}
                     </div>

@@ -87,7 +87,7 @@ export function TableCard({
       {/* Main Tappable Area (The Link) — Lower Index */}
       {isTappable ? (
         <Link 
-            href={`/dashboard/reservations/new?tableId=${table.id}`} 
+          href={`/dashboard/${table.restaurant_id}/reservations/new?tableId=${table.id}`} 
             className="absolute inset-0 z-10"
         />
       ) : (

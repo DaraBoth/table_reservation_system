@@ -135,7 +135,7 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
               )
 
               return isTappable ? (
-                <Link key={t.id} href={`/dashboard/reservations/new?tableId=${t.id}`} className="h-full">
+                <Link key={t.id} href={`/dashboard/${restaurantId}/reservations/new?tableId=${t.id}`} className="h-full">
                   {card}
                 </Link>
               ) : (

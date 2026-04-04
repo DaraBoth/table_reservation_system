@@ -112,7 +112,7 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
           </p>
         </div>
         <Link
-          href="/dashboard/reservations/new"
+          href={`/dashboard/${restaurantId}/reservations/new`}
           className={cn(
             buttonVariants({ size: 'sm' }),
             'bg-gradient-to-r from-violet-600 to-indigo-600 border-0 rounded-xl gap-1.5 font-black text-foreground shadow-lg shadow-violet-500/20 h-10 px-4 transition-all duration-300 active:scale-95'
@@ -148,7 +148,7 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
 
         {bookings.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {bookings.map(res => <BookingCard key={res.id} res={res} />)}
+            {bookings.map(res => <BookingCard key={res.id} res={res} restaurantId={restaurantId} />)}
           </div>
         ) : (
           <div className="py-20 text-center bg-card/30 rounded-[2.5rem] border border-border border-dashed backdrop-blur-sm">
@@ -162,7 +162,7 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
   )
 }
 
-function BookingCard({ res }: { res: Reservation }) {
+function BookingCard({ res, restaurantId }: { res: Reservation; restaurantId: string }) {
   // Use parseISO to handle the reservation_date string correctly
   const start = res.start_time
     ? new Date(`${res.reservation_date}T${res.start_time}`)
@@ -230,6 +230,6 @@ function BookingCard({ res }: { res: Reservation }) {
     </div>
   )
 
-  if (canEdit) return <Link href={`/dashboard/reservations/${res.id}/edit`}>{card}</Link>
+  if (canEdit) return <Link href={`/dashboard/${restaurantId}/reservations/${res.id}/edit`}>{card}</Link>
   return card
 }
