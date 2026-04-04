@@ -6,8 +6,6 @@ import type { BusinessType } from '@/lib/business-type'
 import { RealtimeListener } from '@/components/realtime-listener'
 import { NotificationManager } from '@/components/notification-manager'
 import { getActiveRestaurant } from '@/lib/restaurant-context'
-import { Sidebar } from '@/components/layout/sidebar'
-import { cn } from '@/lib/utils'
 
 export default async function DashboardLayout({ 
   children,
@@ -47,22 +45,8 @@ export default async function DashboardLayout({
   const displayName = profile?.full_name || user.email?.split('@')[0] || 'User'
 
   return (
-    <div className="flex bg-slate-950 h-screen overflow-hidden">
-      {!isAdmin && (
-        <Sidebar 
-          user={{ name: displayName, email: user.email }}
-          role={membership.role}
-          brandName={restaurantName}
-          type="dashboard"
-          isAdmin={isAdmin}
-          restaurantId={restaurantId}
-          memberships={allMemberships}
-          isSpecialAdmin={isSpecialAdmin}
-          specialFeatures={specialFeatures}
-        />
-      )}
-      
-      <div className={cn("flex-1 flex flex-col min-w-0 transition-all duration-500", isAdmin ? "w-full" : "")}>
+    <div className="flex bg-background h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 w-full">
         <RealtimeListener restaurantId={membership.restaurant_id ?? undefined} />
         <NotificationManager restaurantId={membership.restaurant_id ?? undefined} />
         <TopBar 

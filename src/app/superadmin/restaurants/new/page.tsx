@@ -84,21 +84,21 @@ export default function NewRestaurantPage() {
       <div className="flex items-center gap-3">
         <Link
           href="/superadmin/restaurants"
-          className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-xl bg-muted border border-border text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
         </Link>
         <div>
-          <h1 className="text-xl font-black text-white">New {selectedType.label.split('/')[0].trim()}</h1>
-          <p className="text-xs text-slate-500">Set up a new tenant and admin account</p>
+          <h1 className="text-xl font-black text-foreground">New {selectedType.label.split('/')[0].trim()}</h1>
+          <p className="text-xs text-muted-foreground">Set up a new tenant and admin account</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
 
         {/* ── Step 1: Choose business type ── */}
-        <section className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-3">
-          <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest">
+        <section className="bg-card border border-border rounded-3xl p-5 space-y-3">
+          <h2 className="text-xs font-black text-muted-foreground uppercase tracking-widest">
             Step 1 · What kind of business?
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -111,142 +111,142 @@ export default function NewRestaurantPage() {
                   'relative p-4 rounded-2xl border-2 text-left transition-all active:scale-[0.97]',
                   businessType === t.value
                     ? cn('bg-gradient-to-br', t.color, t.border)
-                    : 'bg-slate-950 border-slate-800 hover:border-slate-700'
+                    : 'bg-background border-border hover:border-border'
                 )}
               >
                 {businessType === t.value && (
                   <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
-                    <Check className="w-3 h-3 text-white" />
+                    <Check className="w-3 h-3 text-foreground" />
                   </span>
                 )}
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2 bg-white/10">
-                  {(() => { const TIcon = t.icon; return <TIcon className="w-5 h-5 text-white" /> })()}
+                  {(() => { const TIcon = t.icon; return <TIcon className="w-5 h-5 text-foreground" /> })()}
                 </div>
-                <p className={cn('text-sm font-black', businessType === t.value ? 'text-white' : 'text-slate-300')}>
+                <p className={cn('text-sm font-black', businessType === t.value ? 'text-foreground' : 'text-foreground/70')}>
                   {t.label}
                 </p>
-                <p className="text-xs text-slate-500 mt-1 leading-snug">{t.desc}</p>
+                <p className="text-xs text-muted-foreground mt-1 leading-snug">{t.desc}</p>
               </button>
             ))}
           </div>
         </section>
 
         {/* ── Step 2: Business info ── */}
-        <section className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4">
-          <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest">
+        <section className="bg-card border border-border rounded-3xl p-5 space-y-4">
+          <h2 className="text-xs font-black text-muted-foreground uppercase tracking-widest">
             Step 2 · Business Info
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">
+              <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">
                 Name *
               </label>
               <input
                 name="name"
                 required
                 placeholder={businessType === 'restaurant' ? 'The Golden Fork' : businessType === 'hotel' ? 'Grand Palace Hotel' : 'Sunrise Guest House'}
-                className="w-full h-12 px-4 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-semibold placeholder:text-slate-600 focus:outline-none focus:border-violet-500 transition-colors"
+                className="w-full h-12 px-4 rounded-2xl bg-background border border-border text-foreground text-sm font-semibold placeholder:text-muted-foreground/60 focus:outline-none focus:border-violet-500 transition-colors"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">
+              <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">
                 URL Slug *
               </label>
               <input
                 name="slug"
                 required
                 placeholder={businessType === 'restaurant' ? 'golden-fork' : businessType === 'hotel' ? 'grand-palace' : 'sunrise-guesthouse'}
-                className="w-full h-12 px-4 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-semibold placeholder:text-slate-600 focus:outline-none focus:border-violet-500 transition-colors"
+                className="w-full h-12 px-4 rounded-2xl bg-background border border-border text-foreground text-sm font-semibold placeholder:text-muted-foreground/60 focus:outline-none focus:border-violet-500 transition-colors"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Email</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">Email</label>
               <input
                 name="contactEmail"
                 type="email"
                 placeholder="info@business.com"
-                className="w-full h-12 px-4 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-semibold placeholder:text-slate-600 focus:outline-none focus:border-violet-500 transition-colors"
+                className="w-full h-12 px-4 rounded-2xl bg-background border border-border text-foreground text-sm font-semibold placeholder:text-muted-foreground/60 focus:outline-none focus:border-violet-500 transition-colors"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Phone</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">Phone</label>
               <input
                 name="contactPhone"
                 placeholder="+855 12 345 678"
-                className="w-full h-12 px-4 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-semibold placeholder:text-slate-600 focus:outline-none focus:border-violet-500 transition-colors"
+                className="w-full h-12 px-4 rounded-2xl bg-background border border-border text-foreground text-sm font-semibold placeholder:text-muted-foreground/60 focus:outline-none focus:border-violet-500 transition-colors"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Address</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">Address</label>
             <div className="relative">
-              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 name="address"
                 placeholder="123 Main Street, Phnom Penh"
-                className="w-full h-12 pl-11 pr-4 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-semibold placeholder:text-slate-600 focus:outline-none focus:border-violet-500 transition-colors"
+                className="w-full h-12 pl-11 pr-4 rounded-2xl bg-background border border-border text-foreground text-sm font-semibold placeholder:text-muted-foreground/60 focus:outline-none focus:border-violet-500 transition-colors"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Subscription Expires</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">Subscription Expires</label>
             <div className="relative">
-              <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 name="subscriptionExpiresAt"
                 type="datetime-local"
-                className="w-full h-12 pl-11 pr-4 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-semibold focus:outline-none focus:border-violet-500 transition-colors [color-scheme:dark]"
+                className="w-full h-12 pl-11 pr-4 rounded-2xl bg-background border border-border text-foreground text-sm font-semibold focus:outline-none focus:border-violet-500 transition-colors [color-scheme:dark]"
               />
             </div>
           </div>
         </section>
 
         {/* ── Step 3: Admin account ── */}
-        <section className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4">
+        <section className="bg-card border border-border rounded-3xl p-5 space-y-4">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-xl bg-emerald-600/15 flex items-center justify-center">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
             </div>
-            <h2 className="text-xs font-black text-slate-500 uppercase tracking-widest">
+            <h2 className="text-xs font-black text-muted-foreground uppercase tracking-widest">
               Step 3 · Admin Account
             </h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Full Name *</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">Full Name *</label>
               <input
                 name="adminFullName"
                 required
                 placeholder="Owner Name"
-                className="w-full h-12 px-4 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-semibold placeholder:text-slate-600 focus:outline-none focus:border-violet-500 transition-colors"
+                className="w-full h-12 px-4 rounded-2xl bg-background border border-border text-foreground text-sm font-semibold placeholder:text-muted-foreground/60 focus:outline-none focus:border-violet-500 transition-colors"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Email / Username *</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">Email / Username *</label>
               <input
                 name="adminUsername"
                 required
                 placeholder="admin@hotel.com"
-                className="w-full h-12 px-4 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-semibold placeholder:text-slate-600 focus:outline-none focus:border-violet-500 transition-colors"
+                className="w-full h-12 px-4 rounded-2xl bg-background border border-border text-foreground text-sm font-semibold placeholder:text-muted-foreground/60 focus:outline-none focus:border-violet-500 transition-colors"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Password *</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">Password *</label>
             <input
               name="adminPassword"
               type="password"
               required
               placeholder="••••••••"
-              className="w-full h-12 px-4 rounded-2xl bg-slate-950 border border-slate-700 text-white text-sm font-semibold placeholder:text-slate-600 focus:outline-none focus:border-violet-500 transition-colors"
+              className="w-full h-12 px-4 rounded-2xl bg-background border border-border text-foreground text-sm font-semibold placeholder:text-muted-foreground/60 focus:outline-none focus:border-violet-500 transition-colors"
             />
           </div>
         </section>
@@ -269,7 +269,7 @@ export default function NewRestaurantPage() {
         <button
           type="submit"
           disabled={isPending}
-          className="w-full h-14 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-violet-500/25 transition-all active:scale-[0.98]"
+          className="w-full h-14 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-50 text-foreground rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-violet-500/25 transition-all active:scale-[0.98]"
         >
           {isPending ? (
             <span className="flex items-center justify-center gap-2">

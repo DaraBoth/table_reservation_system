@@ -21,7 +21,10 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#020617', // slate-950 matches our deep dark bg
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#020617' },
+  ],
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1, // Common PWA setup to disable pinch-zoom on Safari forms
@@ -29,16 +32,18 @@ export const viewport: Viewport = {
 
 import { MuiProvider } from '@/components/providers/mui-provider'
 import { AuthProvider } from '@/components/providers/auth-provider'
+import { ThemeProvider } from '@/components/providers/theme-provider'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL || ''} />
       </head>
-      <body className={`${inter.className} bg-slate-950 text-slate-50 antialiased`}>
+      <body className={`${inter.className} antialiased`}>
+        <ThemeProvider>
         <MuiProvider>
           <AuthProvider>
             <NextTopLoader 
@@ -56,6 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Toaster richColors position="top-right" />
           </AuthProvider>
         </MuiProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

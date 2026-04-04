@@ -29,10 +29,10 @@ function LoginForm() {
   const [state, action, pending] = useActionState(login, null)
 
   return (
-    <div className="min-h-screen w-full flex flex-col md:flex-row bg-slate-950">
+    <div className="min-h-screen w-full flex flex-col md:flex-row bg-background">
       
       {/* ── LEFT PANEL: Branding Hero (Visible on md+) ── */}
-      <div className="relative hidden md:flex flex-col items-center justify-center w-full md:w-1/2 p-8 lg:p-16 bg-slate-900 border-r border-white/5 overflow-hidden">
+      <div className="relative hidden md:flex flex-col items-center justify-center w-full md:w-1/2 p-8 lg:p-16 bg-slate-900 dark:bg-card border-r border-white/5 overflow-hidden">
         {/* Dynamic Background Orbs */}
         <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] bg-violet-600/20 rounded-full blur-[140px] pointer-events-none animate-pulse" />
         <div className="absolute bottom-[-20%] right-[-20%] w-[80%] h-[80%] bg-indigo-600/20 rounded-full blur-[140px] pointer-events-none animate-pulse" style={{ animationDelay: '1s' }} />
@@ -59,7 +59,7 @@ function LoginForm() {
       </div>
 
       {/* ── RIGHT PANEL: Clean Flat Form ── */}
-      <div className="relative flex flex-col items-center justify-center w-full md:w-1/2 p-6 sm:p-12 lg:p-24 bg-slate-950">
+      <div className="relative flex flex-col items-center justify-center w-full md:w-1/2 p-6 sm:p-12 lg:p-24 bg-background">
         
         {/* Mobile Branding (Only visible when flex collapses) */}
         <div className="md:hidden flex flex-col items-center gap-4 mb-10 w-full">
@@ -82,8 +82,8 @@ function LoginForm() {
         {/* The Form Container */}
         <div className="w-full max-w-sm">
           <div className="mb-8 lg:mb-10 text-center md:text-left">
-            <h2 className="text-2xl lg:text-3xl font-bold text-white mb-2 tracking-tight">Welcome Back</h2>
-            <p className="text-slate-400 text-sm lg:text-base">Sign in to manage your spaces</p>
+            <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-2 tracking-tight">Welcome Back</h2>
+            <p className="text-muted-foreground text-sm lg:text-base">Sign in to manage your spaces</p>
           </div>
 
           <Suspense fallback={null}>
@@ -92,7 +92,7 @@ function LoginForm() {
 
           <form action={action} className="w-full space-y-6 mt-4">
             <div className="w-full space-y-2">
-              <Label htmlFor="identifier" className="text-slate-400/90 text-xs font-bold uppercase tracking-widest ml-1 block">
+              <Label htmlFor="identifier" className="text-muted-foreground/90 text-xs font-bold uppercase tracking-widest ml-1 block">
                 Account
               </Label>
               <Input
@@ -101,13 +101,13 @@ function LoginForm() {
                 placeholder="Username or Email"
                 required
                 autoComplete="username"
-                className="w-full bg-slate-900 border-slate-800 text-white placeholder:text-slate-600 focus:bg-slate-800 focus:border-violet-500/50 hover:border-slate-700 h-14 rounded-2xl text-base px-5 transition-all shadow-inner"
+                className="w-full bg-card border-border text-foreground placeholder:text-muted-foreground/60 focus:bg-muted focus:border-violet-500/50 hover:border-border h-14 rounded-2xl text-base px-5 transition-all shadow-inner"
               />
             </div>
 
             <div className="w-full space-y-2">
               <div className="flex items-center justify-between ml-1">
-                <Label htmlFor="password" className="text-slate-400/90 text-xs font-bold uppercase tracking-widest block">
+                <Label htmlFor="password" className="text-muted-foreground/90 text-xs font-bold uppercase tracking-widest block">
                   Password
                 </Label>
               </div>
@@ -118,7 +118,7 @@ function LoginForm() {
                 placeholder="••••••••"
                 required
                 autoComplete="current-password"
-                className="w-full bg-slate-900 border-slate-800 text-white placeholder:text-slate-600 focus:bg-slate-800 focus:border-violet-500/50 hover:border-slate-700 h-14 rounded-2xl text-base px-5 transition-all shadow-inner"
+                className="w-full bg-card border-border text-foreground placeholder:text-muted-foreground/60 focus:bg-muted focus:border-violet-500/50 hover:border-border h-14 rounded-2xl text-base px-5 transition-all shadow-inner"
               />
             </div>
 
@@ -131,7 +131,7 @@ function LoginForm() {
             <Button
               type="submit"
               disabled={pending}
-              className="w-full h-14 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-base transition-all duration-300 shadow-[0_4px_20px_rgba(139,92,246,0.3)] hover:shadow-[0_8px_30px_rgba(139,92,246,0.4)] border-0 rounded-2xl mt-8"
+              className="w-full h-14 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-foreground font-bold text-base transition-all duration-300 shadow-[0_4px_20px_rgba(139,92,246,0.3)] hover:shadow-[0_8px_30px_rgba(139,92,246,0.4)] border-0 rounded-2xl mt-8"
             >
               {pending ? (
                 <span className="flex flex-row items-center gap-3">
@@ -145,7 +145,7 @@ function LoginForm() {
             </Button>
           </form>
 
-          <footer className="mt-10 lg:mt-12 pt-6 lg:pt-8 border-t border-slate-800/60 flex items-center justify-center gap-2 text-xs text-slate-500 font-medium w-full">
+          <footer className="mt-10 lg:mt-12 pt-6 lg:pt-8 border-t border-border/60 flex items-center justify-center gap-2 text-xs text-muted-foreground font-medium w-full">
             <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse flex-shrink-0" />
             Secure Connection
           </footer>
@@ -157,7 +157,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Loading...</div>}>
       <LoginForm />
     </Suspense>
   )

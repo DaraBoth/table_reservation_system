@@ -26,17 +26,17 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
         {/* Compact inline header */}
         <div className="flex items-center gap-4 pt-2">
           <div className="w-14 h-14 rounded-[1.5rem] bg-violet-600 flex items-center justify-center shadow-xl shadow-violet-500/30 shrink-0">
-            <Sparkles className="w-7 h-7 text-white" />
+            <Sparkles className="w-7 h-7 text-foreground" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-white tracking-tight">Welcome!</h1>
-            <p className="text-slate-500 text-sm font-medium">Set up your business to get started.</p>
+            <h1 className="text-2xl font-black text-foreground tracking-tight">Welcome!</h1>
+            <p className="text-muted-foreground text-sm font-medium">Set up your business to get started.</p>
           </div>
         </div>
 
         <SetupForm restaurant={membership.restaurants} />
 
-        <p className="text-center text-[10px] text-slate-700 font-bold uppercase tracking-widest leading-relaxed px-4">
+        <p className="text-center text-[10px] text-muted-foreground font-bold uppercase tracking-widest leading-relaxed px-4">
           Admin for {membership.restaurants.name} · Settings can be changed later
         </p>
       </div>

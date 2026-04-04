@@ -79,8 +79,8 @@ export function SetupForm({ restaurant }: { restaurant: any }) {
           className={cn(
             'relative aspect-square rounded-3xl border-2 overflow-hidden transition-all group',
             logoUrl
-              ? 'border-violet-500/40 bg-slate-900'
-              : 'border-dashed border-slate-700 bg-slate-900 hover:border-violet-500/50 active:scale-[0.98]',
+              ? 'border-violet-500/40 bg-card'
+              : 'border-dashed border-border bg-card hover:border-violet-500/50 active:scale-[0.98]',
             uploading && 'pointer-events-none opacity-60'
           )}
         >
@@ -89,8 +89,8 @@ export function SetupForm({ restaurant }: { restaurant: any }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={logoUrl} alt="Logo preview" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5">
-                <Upload className="w-5 h-5 text-white" />
-                <span className="text-white text-[9px] font-black uppercase tracking-widest">Change</span>
+                <Upload className="w-5 h-5 text-foreground" />
+                <span className="text-foreground text-[9px] font-black uppercase tracking-widest">Change</span>
               </div>
             </>
           ) : uploading ? (
@@ -100,25 +100,25 @@ export function SetupForm({ restaurant }: { restaurant: any }) {
             </div>
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-3">
-              <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center group-hover:bg-slate-700 transition-colors">
-                <Upload className="w-5 h-5 text-slate-500 group-hover:text-violet-400 transition-colors" />
+              <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center group-hover:bg-muted transition-colors">
+                <Upload className="w-5 h-5 text-muted-foreground group-hover:text-violet-400 transition-colors" />
               </div>
-              <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest text-center leading-tight">Tap to upload logo</span>
-              <span className="text-[8px] text-slate-700 font-bold">PNG · JPG · WEBP</span>
+              <span className="text-[9px] text-muted-foreground font-black uppercase tracking-widest text-center leading-tight">Tap to upload logo</span>
+              <span className="text-[8px] text-muted-foreground font-bold">PNG · JPG · WEBP</span>
             </div>
           )}
         </button>
 
         {/* Identity tile */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 flex flex-col justify-between gap-3">
-          <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Identity</p>
+        <div className="bg-card border border-border rounded-3xl p-4 flex flex-col justify-between gap-3">
+          <p className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-widest">Identity</p>
 
           {/* Business type — read-only */}
           <div className="flex items-center gap-2 p-2 rounded-xl bg-violet-600/10 border border-violet-500/20">
             <div className="w-6 h-6 rounded-lg bg-violet-600 flex items-center justify-center shrink-0">
-              <TypeIcon className="w-3 h-3 text-white" />
+              <TypeIcon className="w-3 h-3 text-foreground" />
             </div>
-            <span className="text-white font-black text-[10px] flex-1 truncate">{type.label}</span>
+            <span className="text-foreground font-black text-[10px] flex-1 truncate">{type.label}</span>
             <span className="text-[8px] text-violet-400 font-black border border-violet-500/30 px-1 py-0.5 rounded shrink-0">Set</span>
           </div>
 
@@ -129,7 +129,7 @@ export function SetupForm({ restaurant }: { restaurant: any }) {
             onChange={e => setName(e.target.value)}
             required
             placeholder="ភោជនីយដ្ឋាន..."
-            className="h-10 bg-slate-950 border-slate-700 text-white font-bold rounded-xl focus:border-violet-500 transition-all placeholder:text-slate-700 text-xs"
+            className="h-10 bg-background border-border text-foreground font-bold rounded-xl focus:border-violet-500 transition-all placeholder:text-muted-foreground text-xs"
           />
         </div>
       </div>
@@ -139,7 +139,7 @@ export function SetupForm({ restaurant }: { restaurant: any }) {
         <button
           type="button"
           onClick={() => { setLogoUrl(''); setUploadError(null) }}
-          className="w-full h-8 flex items-center justify-center gap-1.5 rounded-2xl bg-slate-900 border border-slate-800 text-slate-500 text-[10px] font-black uppercase tracking-widest hover:text-rose-400 hover:border-rose-500/30 transition-all"
+          className="w-full h-8 flex items-center justify-center gap-1.5 rounded-2xl bg-card border border-border text-muted-foreground text-[10px] font-black uppercase tracking-widest hover:text-rose-400 hover:border-rose-500/30 transition-all"
         >
           <X className="w-3 h-3" /> Remove Logo
         </button>
@@ -153,10 +153,10 @@ export function SetupForm({ restaurant }: { restaurant: any }) {
 
       {/* Row 2: Email + Phone */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-2.5">
+        <div className="bg-card border border-border rounded-3xl p-4 space-y-2.5">
           <div className="flex items-center gap-1.5">
-            <Mail className="w-3 h-3 text-slate-500" />
-            <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Email</p>
+            <Mail className="w-3 h-3 text-muted-foreground" />
+            <p className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-widest">Email</p>
           </div>
           <Input
             name="contactEmail"
@@ -164,13 +164,13 @@ export function SetupForm({ restaurant }: { restaurant: any }) {
             value={contactEmail}
             onChange={e => setContactEmail(e.target.value)}
             placeholder="info@restaurant.com.kh"
-            className="h-10 bg-slate-950 border-slate-700 text-white font-bold rounded-xl focus:border-violet-500 transition-all placeholder:text-slate-700 text-xs"
+            className="h-10 bg-background border-border text-foreground font-bold rounded-xl focus:border-violet-500 transition-all placeholder:text-muted-foreground text-xs"
           />
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-2.5">
+        <div className="bg-card border border-border rounded-3xl p-4 space-y-2.5">
           <div className="flex items-center gap-1.5">
-            <Phone className="w-3 h-3 text-slate-500" />
-            <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Phone</p>
+            <Phone className="w-3 h-3 text-muted-foreground" />
+            <p className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-widest">Phone</p>
           </div>
           <Input
             name="contactPhone"
@@ -178,23 +178,23 @@ export function SetupForm({ restaurant }: { restaurant: any }) {
             value={contactPhone}
             onChange={e => setContactPhone(e.target.value)}
             placeholder="+855 12 345 678"
-            className="h-10 bg-slate-950 border-slate-700 text-white font-bold rounded-xl focus:border-violet-500 transition-all placeholder:text-slate-700 text-xs"
+            className="h-10 bg-background border-border text-foreground font-bold rounded-xl focus:border-violet-500 transition-all placeholder:text-muted-foreground text-xs"
           />
         </div>
       </div>
 
       {/* Row 3: Address */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-2.5">
+      <div className="bg-card border border-border rounded-3xl p-4 space-y-2.5">
         <div className="flex items-center gap-1.5">
-          <MapPin className="w-3 h-3 text-slate-500" />
-          <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">Address</p>
+          <MapPin className="w-3 h-3 text-muted-foreground" />
+          <p className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-widest">Address</p>
         </div>
         <Input
           name="address"
           value={address}
           onChange={e => setAddress(e.target.value)}
           placeholder="ផ្លូវ 278, សង្កាត់ទន្លេបាសាក់, ភ្នំពេញ"
-          className="h-10 bg-slate-950 border-slate-700 text-white font-bold rounded-xl focus:border-violet-500 transition-all placeholder:text-slate-600 text-sm"
+          className="h-10 bg-background border-border text-foreground font-bold rounded-xl focus:border-violet-500 transition-all placeholder:text-muted-foreground/60 text-sm"
         />
       </div>
 

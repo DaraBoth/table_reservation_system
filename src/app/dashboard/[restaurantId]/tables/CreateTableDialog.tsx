@@ -36,24 +36,24 @@ export function CreateTableDialog({ businessType = 'restaurant' }: { businessTyp
       <Confetti active={showConfetti} />
       <SheetTrigger
         render={
-          <Button className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 shadow-lg shadow-violet-500/25 text-white">
+          <Button className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 shadow-lg shadow-violet-500/25 text-foreground">
             + Add {terms.unit}
           </Button>
         }
       />
-      <SheetContent side="bottom" className="bg-slate-950 border-slate-800 text-white p-6 rounded-t-3xl h-[85vh] overflow-y-auto">
+      <SheetContent side="bottom" className="bg-background border-border text-foreground p-6 rounded-t-3xl h-[85vh] overflow-y-auto">
         <SheetHeader className="p-0 mb-4">
-          <SheetTitle className="text-white text-lg font-black italic tracking-tight">Add New {terms.unit}</SheetTitle>
+          <SheetTitle className="text-foreground text-lg font-black italic tracking-tight">Add New {terms.unit}</SheetTitle>
         </SheetHeader>
         <form action={action} className="space-y-4 mt-2">
           <div className="space-y-1.5">
-            <Label className="text-slate-300 text-sm font-bold uppercase tracking-widest">{terms.unit} Name *</Label>
+            <Label className="text-foreground/70 text-sm font-bold uppercase tracking-widest">{terms.unit} Name *</Label>
             <Input name="tableName" required placeholder={businessType === 'restaurant' ? "Table 1, Window Booth..." : "Room 101, Suite A..."}
-              className="bg-slate-900 border-slate-700 text-white placeholder:text-slate-500 focus:border-violet-500 h-14 rounded-2xl text-base px-4" />
+              className="bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500 h-14 rounded-2xl text-base px-4" />
           </div>
           {isHotel ? (
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm font-bold uppercase tracking-widest px-1">Number of {terms.capacityUnit} *</Label>
+              <Label className="text-foreground/70 text-sm font-bold uppercase tracking-widest px-1">Number of {terms.capacityUnit} *</Label>
               <div className="flex gap-2">
                 {[1, 2, 3].map((num) => (
                   <button
@@ -64,7 +64,7 @@ export function CreateTableDialog({ businessType = 'restaurant' }: { businessTyp
                       "flex-1 h-12 rounded-xl border-2 font-bold transition-all",
                       beds === num 
                         ? "border-violet-500 bg-violet-500/10 text-violet-400" 
-                        : "border-slate-800 bg-slate-950 text-slate-500 hover:border-slate-700"
+                        : "border-border bg-background text-muted-foreground hover:border-border"
                     )}
                   >
                     {num} {num === 1 ? terms.capacityUnit.replace(/s$/i, '') : terms.capacityUnit}
@@ -75,20 +75,20 @@ export function CreateTableDialog({ businessType = 'restaurant' }: { businessTyp
             </div>
           ) : (
             <div className="space-y-1.5">
-            <Label className="text-slate-300 text-sm font-bold uppercase tracking-widest px-1">{terms.capacityUnit} *</Label>
+            <Label className="text-foreground/70 text-sm font-bold uppercase tracking-widest px-1">{terms.capacityUnit} *</Label>
             <Input name="capacity" type="number" required min={1} defaultValue={4}
-              className="bg-slate-900 border-slate-700 text-white focus:border-violet-500 h-14 rounded-2xl text-base px-4 font-medium" />
+              className="bg-card border-border text-foreground focus:border-violet-500 h-14 rounded-2xl text-base px-4 font-medium" />
           </div>
           )}
           <div className="space-y-1.5">
-            <Label className="text-slate-300 text-sm font-bold uppercase tracking-widest">Description</Label>
+            <Label className="text-foreground/70 text-sm font-bold uppercase tracking-widest">Description</Label>
             <Textarea name="description" placeholder="Near window, outdoor..."
-              className="bg-slate-900 border-slate-700 text-white placeholder:text-slate-500 focus:border-violet-500 resize-none rounded-2xl text-base p-4 min-h-[100px]" rows={3} />
+              className="bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500 resize-none rounded-2xl text-base p-4 min-h-[100px]" rows={3} />
           </div>
           {state?.error && <p className="text-red-400 text-sm">{state.error}</p>}
           {state?.success && <p className="text-emerald-400 text-sm">{state.success}</p>}
           <Button type="submit" disabled={pending}
-            className="w-full h-14 bg-gradient-to-r from-violet-600 to-indigo-600 border-0 text-white font-black rounded-2xl text-base shadow-lg shadow-violet-500/20">
+            className="w-full h-14 bg-gradient-to-r from-violet-600 to-indigo-600 border-0 text-foreground font-black rounded-2xl text-base shadow-lg shadow-violet-500/20">
             {pending ? 'Creating...' : `Create ${terms.unit}`}
           </Button>
         </form>

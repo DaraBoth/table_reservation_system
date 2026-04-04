@@ -13,12 +13,12 @@ export function AdminPasswordResetCard({ userId, name }: { userId: string; name:
     <Dialog>
       <DialogTrigger
         render={
-          <Button variant="outline" size="sm" className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-800 text-xs">
+          <Button variant="outline" size="sm" className="border-border text-foreground/70 hover:text-foreground hover:bg-muted text-xs">
             Reset Password
           </Button>
         }
       />
-      <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-sm">
+      <DialogContent className="bg-card border-border text-foreground max-w-sm">
         <DialogHeader>
           <DialogTitle>Reset Password for {name}</DialogTitle>
         </DialogHeader>
@@ -29,7 +29,7 @@ export function AdminPasswordResetCard({ userId, name }: { userId: string; name:
             type="password"
             placeholder="New password (min 6 chars)"
             required
-            className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-violet-500"
+            className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500"
           />
           {state?.error && <p className="text-red-400 text-sm">{state.error}</p>}
           {state?.success && <p className="text-emerald-400 text-sm">{state.success}</p>}

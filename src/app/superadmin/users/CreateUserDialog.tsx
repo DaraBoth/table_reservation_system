@@ -22,38 +22,38 @@ export function CreateUserDialog({ restaurants }: { restaurants: Tables<'restaur
           </Button>
         }
       />
-      <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-md">
+      <DialogContent className="bg-card border-border text-foreground max-w-md">
         <DialogHeader>
           <DialogTitle>Create System User</DialogTitle>
         </DialogHeader>
         <form action={action} className="space-y-4 mt-2">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">Full Name *</Label>
+              <Label className="text-foreground/70 text-sm">Full Name *</Label>
               <Input name="fullName" required placeholder="John Doe"
-                className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-violet-500" />
+                className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">Username *</Label>
+              <Label className="text-foreground/70 text-sm">Username *</Label>
               <Input name="username" required placeholder="johndoe"
-                className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-violet-500" />
+                className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500" />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-slate-300 text-sm">Password *</Label>
+            <Label className="text-foreground/70 text-sm">Password *</Label>
             <Input name="password" type="password" required placeholder="min 6 characters"
-              className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-violet-500" />
+              className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">Access Role *</Label>
+              <Label className="text-foreground/70 text-sm">Access Role *</Label>
               <Select name="role" value={role} onValueChange={(val) => setRole(val || 'staff')}>
-                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white focus:border-violet-500">
+                <SelectTrigger className="bg-muted/50 border-border text-foreground focus:border-violet-500">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                <SelectContent className="bg-card border-border text-foreground">
                   <SelectItem value="staff">Staff</SelectItem>
                   <SelectItem value="admin">Restaurant Admin</SelectItem>
                   <SelectItem value="superadmin">Superadmin</SelectItem>
@@ -63,12 +63,12 @@ export function CreateUserDialog({ restaurants }: { restaurants: Tables<'restaur
 
             {(role === 'admin' || role === 'staff') && (
               <div className="space-y-1.5">
-                <Label className="text-slate-300 text-sm">Restaurant Assignment *</Label>
+                <Label className="text-foreground/70 text-sm">Restaurant Assignment *</Label>
                 <Select name="restaurantId" required>
-                  <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white focus:border-violet-500">
+                  <SelectTrigger className="bg-muted/50 border-border text-foreground focus:border-violet-500">
                     <SelectValue placeholder="Select restaurant" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                  <SelectContent className="bg-card border-border text-foreground">
                     {restaurants.map(r => (
                       <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
                     ))}
@@ -86,7 +86,7 @@ export function CreateUserDialog({ restaurants }: { restaurants: Tables<'restaur
             {pending ? 'Creating Account...' : 'Confirm and Create Account'}
           </Button>
           
-          <p className="text-[10px] text-slate-500 text-center">
+          <p className="text-[10px] text-muted-foreground text-center">
             The account will be active immediately. You can disable it later from the user list.
           </p>
         </form>

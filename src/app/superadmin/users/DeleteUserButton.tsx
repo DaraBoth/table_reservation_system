@@ -15,7 +15,7 @@ export function DeleteUserButton({ userId }: { userId: string }) {
         variant="ghost" 
         size="sm" 
         disabled={pending}
-        className="text-slate-600 hover:text-red-400 hover:bg-red-500/5 h-8"
+        className="text-muted-foreground/60 hover:text-red-400 hover:bg-red-500/5 h-8"
       >
         {pending ? '...' : 'Delete'}
       </Button>

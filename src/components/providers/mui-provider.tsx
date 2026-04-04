@@ -1,60 +1,67 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
-import CssBaseline from '@mui/material/CssBaseline'
+import { useTheme } from 'next-themes'
 
-// Create a theme that matches our Slate-950 and Violet aesthetic
+const sharedComponents = {
+  MuiPaper: {
+    styleOverrides: {
+      root: {
+        backgroundImage: 'none',
+        borderRadius: '1.25rem',
+      },
+    },
+  },
+  MuiButton: {
+    styleOverrides: {
+      root: {
+        borderRadius: '0.75rem',
+        textTransform: 'none' as const,
+        fontWeight: 700,
+      },
+    },
+  },
+}
+
 const darkTheme = createTheme({
   palette: {
     mode: 'dark',
-    primary: {
-      main: '#7c3aed', // violet-600
-    },
-    background: {
-      default: '#020617', // slate-950
-      paper: '#0f172a', // slate-900
-    },
-    text: {
-      primary: '#f8fafc', // slate-50
-      secondary: '#94a3b8', // slate-400
-    },
+    primary: { main: '#7c3aed' },
+    background: { default: '#020617', paper: '#0f172a' },
+    text: { primary: '#f8fafc', secondary: '#94a3b8' },
   },
-  typography: {
-    fontFamily: 'var(--font-inter), sans-serif',
-  },
-  components: {
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          backgroundImage: 'none',
-          borderRadius: '1.25rem',
-          border: '1px solid rgba(30, 41, 59, 0.5)', // slate-800/50
-        },
-      },
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: '0.75rem',
-          textTransform: 'none',
-          fontWeight: 700,
-        },
-      },
-    },
-  },
+  typography: { fontFamily: 'var(--font-inter), sans-serif' },
+  components: sharedComponents,
 })
+
+const lightTheme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: { main: '#7c3aed' },
+    background: { default: '#ffffff', paper: '#f8fafc' },
+    text: { primary: '#0f172a', secondary: '#475569' },
+  },
+  typography: { fontFamily: 'var(--font-inter), sans-serif' },
+  components: sharedComponents,
+})
+
+function MuiThemeWrapper({ children }: { children: React.ReactNode }) {
+  const { resolvedTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  const theme = mounted && resolvedTheme === 'light' ? lightTheme : darkTheme
+  return <ThemeProvider theme={theme}>{children}</ThemeProvider>
+}
 
 export function MuiProvider({ children }: { children: React.ReactNode }) {
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <ThemeProvider theme={darkTheme}>
-        {/* We don't use CssBaseline here to avoid conflicting with Tailwind's reset, 
-            but MUI components will pick up the theme correctly */}
+      <MuiThemeWrapper>
         {children}
-      </ThemeProvider>
+      </MuiThemeWrapper>
     </LocalizationProvider>
   )
 }

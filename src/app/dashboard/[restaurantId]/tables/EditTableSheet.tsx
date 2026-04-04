@@ -33,15 +33,15 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
       <SheetTrigger
         render={
           (trigger as React.ReactElement) || (
-            <button className="w-9 h-9 flex items-center justify-center bg-slate-800/50 border border-slate-700 rounded-xl text-slate-400 hover:border-violet-500/50 hover:text-violet-400 transition-all active:scale-90">
+            <button className="w-9 h-9 flex items-center justify-center bg-muted/50 border border-border rounded-xl text-muted-foreground hover:border-violet-500/50 hover:text-violet-400 transition-all active:scale-90">
               <Settings2 className="w-4 h-4" />
             </button>
           )
         }
       />
-      <SheetContent side="bottom" className="bg-slate-950 border-slate-800 text-white p-6 rounded-t-3xl h-[85vh] overflow-y-auto">
+      <SheetContent side="bottom" className="bg-background border-border text-foreground p-6 rounded-t-3xl h-[85vh] overflow-y-auto">
         <SheetHeader className="p-0 mb-4">
-          <SheetTitle className="text-white text-lg font-black italic tracking-tight">Edit {terms.unit}: {table.table_name}</SheetTitle>
+          <SheetTitle className="text-foreground text-lg font-black italic tracking-tight">Edit {terms.unit}: {table.table_name}</SheetTitle>
         </SheetHeader>
 
         <div className="space-y-6 pb-12">
@@ -51,14 +51,14 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
             <input type="hidden" name="isActive" value={String(isActive)} />
 
             <div className="space-y-1.5">
-              <Label className="text-slate-400 text-[10px] font-black uppercase tracking-widest px-1">{terms.unit} Name *</Label>
+              <Label className="text-muted-foreground text-[10px] font-black uppercase tracking-widest px-1">{terms.unit} Name *</Label>
               <Input name="tableName" required defaultValue={table.table_name}
-                className="bg-slate-900 border-slate-700 text-white focus:border-violet-500 rounded-2xl h-14 text-base px-4" />
+                className="bg-card border-border text-foreground focus:border-violet-500 rounded-2xl h-14 text-base px-4" />
             </div>
 
             {isHotel ? (
               <div className="space-y-1.5">
-                <Label className="text-slate-300 text-sm font-bold uppercase tracking-widest px-1">Number of {terms.capacityUnit} *</Label>
+                <Label className="text-foreground/70 text-sm font-bold uppercase tracking-widest px-1">Number of {terms.capacityUnit} *</Label>
                 <div className="flex gap-2">
                   {[1, 2, 3].map((num) => (
                     <button
@@ -69,7 +69,7 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
                         "flex-1 h-12 rounded-xl border-2 font-bold transition-all",
                         beds === num
                           ? "border-violet-500 bg-violet-500/10 text-violet-400"
-                          : "border-slate-800 bg-slate-950 text-slate-500 hover:border-slate-700"
+                          : "border-border bg-background text-muted-foreground hover:border-border"
                       )}
                     >
                       {num} {num === 1 ? terms.capacityUnit.replace(/s$/i, '') : terms.capacityUnit}
@@ -80,30 +80,30 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
               </div>
             ) : (
               <div className="space-y-1.5">
-              <Label className="text-slate-400 text-[10px] font-black uppercase tracking-widest px-1">{terms.capacityUnit} ({terms.partyUnitLower}) *</Label>
+              <Label className="text-muted-foreground text-[10px] font-black uppercase tracking-widest px-1">{terms.capacityUnit} ({terms.partyUnitLower}) *</Label>
               <Input name="capacity" type="number" required min={1} defaultValue={table.capacity}
-                className="bg-slate-900 border-slate-700 text-white focus:border-violet-500 rounded-2xl h-14 text-base px-4" />
+                className="bg-card border-border text-foreground focus:border-violet-500 rounded-2xl h-14 text-base px-4" />
             </div>
             )}
 
             <div className="space-y-1.5">
-              <Label className="text-slate-400 text-[10px] font-black uppercase tracking-widest px-1">Description</Label>
+              <Label className="text-muted-foreground text-[10px] font-black uppercase tracking-widest px-1">Description</Label>
               <Textarea name="description" defaultValue={table.description || ''}
-                className="bg-slate-900 border-slate-700 text-white focus:border-violet-500 resize-none rounded-2xl text-base p-4 min-h-[100px]" rows={3} />
+                className="bg-card border-border text-foreground focus:border-violet-500 resize-none rounded-2xl text-base p-4 min-h-[100px]" rows={3} />
             </div>
 
             {/* Active Status Toggle */}
-            <div className="flex items-center justify-between p-4 bg-slate-950/50 border border-slate-800 rounded-2xl">
+            <div className="flex items-center justify-between p-4 bg-background/50 border border-border rounded-2xl">
               <div>
-                <p className="text-sm font-bold text-white">Active Status</p>
-                <p className="text-xs text-slate-500">Enable or disable this {terms.unitLower} for {terms.bookingsLower}</p>
+                <p className="text-sm font-bold text-foreground">Active Status</p>
+                <p className="text-xs text-muted-foreground">Enable or disable this {terms.unitLower} for {terms.bookingsLower}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsActive(!isActive)}
                 className={cn(
                   "w-12 h-6 rounded-full transition-colors relative focus:outline-none",
-                  isActive ? "bg-emerald-500" : "bg-slate-700"
+                  isActive ? "bg-emerald-500" : "bg-muted"
                 )}
               >
                 <div className={cn(
@@ -124,8 +124,8 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
 
           {/* Danger Zone for Admins - Kept outside main form to fix nesting */}
           {isAdmin && (
-            <div className="pt-6 border-t border-slate-800 space-y-4">
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] px-1">Danger Zone</p>
+            <div className="pt-6 border-t border-border space-y-4">
+              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] px-1">Danger Zone</p>
 
               {!showConfirmDelete ? (
                 <Button
@@ -143,7 +143,7 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
                       type="button"
                       variant="ghost"
                       onClick={() => setShowConfirmDelete(false)}
-                      className="flex-1 h-12 rounded-2xl bg-slate-800 text-slate-300 font-bold border-0"
+                      className="flex-1 h-12 rounded-2xl bg-muted text-foreground/70 font-bold border-0"
                     >
                       Cancel
                     </Button>
@@ -152,7 +152,7 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
                       <Button
                         type="submit"
                         disabled={deletePending}
-                        className="w-full h-12 rounded-2xl bg-rose-600 text-white font-black hover:bg-rose-700 border-0 shadow-lg shadow-rose-900/20"
+                        className="w-full h-12 rounded-2xl bg-rose-600 text-foreground font-black hover:bg-rose-700 border-0 shadow-lg shadow-rose-900/20"
                       >
                         {deletePending ? 'Deleting...' : 'Confirm'}
                       </Button>

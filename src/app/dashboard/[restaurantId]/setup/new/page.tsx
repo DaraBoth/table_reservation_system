@@ -103,7 +103,7 @@ export default function NewBrandPage() {
       {/* Dynamic Expansion Tracker */}
       {status && (
         <div className={cn(
-          "bg-slate-900/60 backdrop-blur-md border rounded-[2rem] p-5 flex items-center justify-between transition-all duration-500 shadow-2xl",
+          "bg-card/60 backdrop-blur-md border rounded-[2rem] p-5 flex items-center justify-between transition-all duration-500 shadow-2xl",
           isAtLimit ? "border-amber-500/30" : "border-violet-500/20"
         )}>
           <div className="flex items-center gap-4">
@@ -114,12 +114,12 @@ export default function NewBrandPage() {
               <Layers className="w-6 h-6" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Portfolio Capacity</span>
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">Portfolio Capacity</span>
               <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-2xl font-black text-white tracking-tighter italic">
-                  {status.count} <span className="text-slate-700 font-bold tracking-normal italic mx-px">/</span> {status.max === Infinity ? '∞' : status.max}
+                <span className="text-2xl font-black text-foreground tracking-tighter italic">
+                  {status.count} <span className="text-muted-foreground font-bold tracking-normal italic mx-px">/</span> {status.max === Infinity ? '∞' : status.max}
                 </span>
-                <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Brands Established</span>
+                <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider">Brands Established</span>
               </div>
             </div>
           </div>
@@ -139,11 +139,11 @@ export default function NewBrandPage() {
       {/* Header */}
       <div className="flex flex-col items-center text-center gap-4 pt-2">
         <div className="w-14 h-14 rounded-[1.75rem] bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-xl shadow-violet-600/30">
-          <Store className="w-7 h-7 text-white" />
+          <Store className="w-7 h-7 text-foreground" />
         </div>
         <div className="space-y-1">
-          <h1 className="text-3xl font-black text-white tracking-tight italic uppercase">Launch Brand</h1>
-          <p className="text-slate-600 text-[10px] font-bold uppercase tracking-[0.2em]">Scale your presence and capture new segments</p>
+          <h1 className="text-3xl font-black text-foreground tracking-tight italic uppercase">Launch Brand</h1>
+          <p className="text-muted-foreground/60 text-[10px] font-bold uppercase tracking-[0.2em]">Scale your presence and capture new segments</p>
         </div>
       </div>
 
@@ -151,8 +151,8 @@ export default function NewBrandPage() {
         {/* Step 1: Type Selection with Compact Items */}
         <div className="space-y-4">
           <div className="flex items-center justify-between px-2">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">1. Logic Module</label>
-            <span className="text-[9px] font-bold text-slate-700 italic uppercase">Optimized layouts available</span>
+            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">1. Logic Module</label>
+            <span className="text-[9px] font-bold text-muted-foreground italic uppercase">Optimized layouts available</span>
           </div>
           <div className="grid grid-cols-1 gap-2">
             {TYPES.map(t => (
@@ -164,26 +164,26 @@ export default function NewBrandPage() {
                   'relative group flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 active:scale-[0.98]',
                   businessType === t.value
                     ? 'bg-violet-600/10 border-violet-500/40 shadow-inner'
-                    : 'bg-slate-900 border-slate-800 hover:border-slate-700'
+                    : 'bg-card border-border hover:border-border'
                 )}
               >
                 <div className={cn(
                   "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300",
-                  businessType === t.value ? "bg-violet-600 text-white shadow-lg shadow-violet-600/20" : "bg-slate-800 text-slate-500 group-hover:bg-slate-750"
+                  businessType === t.value ? "bg-violet-600 text-foreground shadow-lg shadow-violet-600/20" : "bg-muted text-muted-foreground group-hover:bg-muted/80"
                 )}>
                   {(() => { const TIcon = t.icon; return <TIcon className="w-5 h-5 transition-transform group-hover:scale-110" /> })()}
                 </div>
                 <div className="flex-1 text-left">
-                  <p className={cn('text-[11px] font-black uppercase tracking-tight', businessType === t.value ? 'text-white' : 'text-slate-400')}>
+                  <p className={cn('text-[11px] font-black uppercase tracking-tight', businessType === t.value ? 'text-foreground' : 'text-muted-foreground')}>
                     {t.label}
                   </p>
-                  <p className="text-[9px] text-slate-500 font-bold mt-0.5 leading-none uppercase tracking-wide opacity-80">
+                  <p className="text-[9px] text-muted-foreground font-bold mt-0.5 leading-none uppercase tracking-wide opacity-80">
                     {t.desc.split(',')[0]}
                   </p>
                 </div>
                 {businessType === t.value && (
                   <div className="w-5 h-5 rounded-full bg-violet-600 flex items-center justify-center mr-1">
-                    <Check className="w-3 h-3 text-white" />
+                    <Check className="w-3 h-3 text-foreground" />
                   </div>
                 )}
               </button>
@@ -193,58 +193,58 @@ export default function NewBrandPage() {
 
         {/* Step 2: Details with Tight Inputs */}
         <div className="space-y-4">
-          <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">2. Registry Details</label>
-          <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 space-y-4 shadow-xl">
+          <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-2">2. Registry Details</label>
+          <div className="bg-card border border-border rounded-[2rem] p-6 space-y-4 shadow-xl">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5 focus-within:scale-[1.02] transition-transform duration-300">
-                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Legal Brand Name</label>
+                <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1">Legal Brand Name</label>
                 <input
                   name="name"
                   required
                   placeholder="e.g. Skyline Cuisine"
-                  className="w-full h-11 px-5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-bold placeholder:text-slate-700 focus:outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/5 transition-all shadow-inner"
+                  className="w-full h-11 px-5 rounded-xl bg-background border border-border text-xs text-foreground font-bold placeholder:text-muted-foreground focus:outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/5 transition-all shadow-inner"
                 />
               </div>
 
               <div className="space-y-1.5 focus-within:scale-[1.02] transition-transform duration-300">
-                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">URL Identifier</label>
+                <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1">URL Identifier</label>
                 <input
                   name="slug"
                   required
                   placeholder="skyline-cuisine"
-                  className="w-full h-11 px-5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-bold placeholder:text-slate-700 focus:outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/5 transition-all shadow-inner lowercase"
+                  className="w-full h-11 px-5 rounded-xl bg-background border border-border text-xs text-foreground font-bold placeholder:text-muted-foreground focus:outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/5 transition-all shadow-inner lowercase"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Contact Email</label>
+                <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1">Contact Email</label>
                 <input
                   name="contactEmail"
                   type="email"
                   placeholder="hello@skyline.com"
-                  className="w-full h-11 px-5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-white font-bold placeholder:text-slate-700 focus:outline-none focus:border-violet-500 transition-all shadow-inner"
+                  className="w-full h-11 px-5 rounded-xl bg-background border border-border text-[11px] text-foreground font-bold placeholder:text-muted-foreground focus:outline-none focus:border-violet-500 transition-all shadow-inner"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Phone String</label>
+                <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1">Phone String</label>
                 <input
                   name="contactPhone"
                   placeholder="+855 12 345 678"
-                  className="w-full h-11 px-5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-white font-bold placeholder:text-slate-700 focus:outline-none focus:border-violet-500 transition-all shadow-inner"
+                  className="w-full h-11 px-5 rounded-xl bg-background border border-border text-[11px] text-foreground font-bold placeholder:text-muted-foreground focus:outline-none focus:border-violet-500 transition-all shadow-inner"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Physical Location</label>
+              <label className="text-[9px] font-black text-muted-foreground uppercase tracking-widest ml-1">Physical Location</label>
               <div className="relative">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-700" />
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                 <input
                   name="address"
                   placeholder="123 Signature Row, Phnom Penh"
-                  className="w-full h-11 pl-10 pr-5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-white font-bold placeholder:text-slate-700 focus:outline-none focus:border-violet-500 transition-all shadow-inner"
+                  className="w-full h-11 pl-10 pr-5 rounded-xl bg-background border border-border text-[11px] text-foreground font-bold placeholder:text-muted-foreground focus:outline-none focus:border-violet-500 transition-all shadow-inner"
                 />
               </div>
             </div>
@@ -258,8 +258,8 @@ export default function NewBrandPage() {
             className={cn(
               "w-full h-14 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl transition-all active:scale-[0.98] group flex items-center justify-center gap-3",
               isAtLimit 
-                ? "bg-slate-800 text-slate-600 border border-slate-700 cursor-not-allowed" 
-                : "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-violet-600/20"
+                ? "bg-muted text-muted-foreground/60 border border-border cursor-not-allowed" 
+                : "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-foreground shadow-violet-600/20"
             )}
           >
             {isPending ? (
@@ -277,7 +277,7 @@ export default function NewBrandPage() {
             )}
           </button>
 
-          <Link href="/dashboard" className="text-center text-[9px] font-black text-slate-700 uppercase tracking-widest hover:text-white transition-colors flex items-center justify-center gap-2">
+          <Link href="/dashboard" className="text-center text-[9px] font-black text-muted-foreground uppercase tracking-widest hover:text-foreground transition-colors flex items-center justify-center gap-2">
             <ArrowLeft className="w-3 h-3" />
             Return to Command Center
           </Link>
@@ -286,7 +286,7 @@ export default function NewBrandPage() {
 
       {/* Micro-footer */}
       <div className="text-center">
-        <p className="text-[8px] font-black text-slate-800 uppercase tracking-widest italic opacity-50">Secure multi-brand establishment protocol v2.4</p>
+        <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest italic opacity-50">Secure multi-brand establishment protocol v2.4</p>
       </div>
     </div>
   )

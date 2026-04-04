@@ -48,13 +48,13 @@ export default async function SuperadminPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <LayoutDashboard className="w-5 h-5 text-violet-400" />
-            <h1 className="text-2xl font-black text-white">Platform Overview</h1>
+            <h1 className="text-2xl font-black text-foreground">Platform Overview</h1>
           </div>
-          <p className="text-slate-500 text-sm">Manage all restaurants and users from here.</p>
+          <p className="text-muted-foreground text-sm">Manage all restaurants and users from here.</p>
         </div>
         <Link
           href="/superadmin/restaurants/new"
-          className="flex items-center gap-2 h-11 px-5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-violet-500/25 active:scale-[0.98] transition-all whitespace-nowrap"
+          className="flex items-center gap-2 h-11 px-5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-foreground rounded-2xl font-bold text-sm shadow-lg shadow-violet-500/25 active:scale-[0.98] transition-all whitespace-nowrap"
         >
           <Plus className="w-4 h-4" />
           New Restaurant
@@ -66,13 +66,13 @@ export default async function SuperadminPage() {
         {stats.map((s) => {
           const Icon = s.icon
           return (
-            <div key={s.label} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
+            <div key={s.label} className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-3">
               <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', s.bg)}>
                 <Icon className={cn('w-5 h-5', s.text)} />
               </div>
               <div>
-                <p className="text-2xl font-black text-white tabular-nums">{s.value}</p>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">{s.label}</p>
+                <p className="text-2xl font-black text-foreground tabular-nums">{s.value}</p>
+                <p className="text-xs text-muted-foreground font-medium mt-0.5">{s.label}</p>
               </div>
             </div>
           )
@@ -83,11 +83,11 @@ export default async function SuperadminPage() {
       <div className="grid lg:grid-cols-5 gap-5">
 
         {/* Restaurant list — takes 3 columns */}
-        <div className="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden">
-          <div className="flex items-center justify-between p-5 border-b border-slate-800">
+        <div className="lg:col-span-3 bg-card border border-border rounded-3xl overflow-hidden">
+          <div className="flex items-center justify-between p-5 border-b border-border">
             <div>
-              <h2 className="text-base font-black text-white">All Restaurants</h2>
-              <p className="text-xs text-slate-500 mt-0.5">{list.length} registered</p>
+              <h2 className="text-base font-black text-foreground">All Restaurants</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">{list.length} registered</p>
             </div>
             <Link
               href="/superadmin/restaurants"
@@ -97,7 +97,7 @@ export default async function SuperadminPage() {
             </Link>
           </div>
 
-          <div className="divide-y divide-slate-800">
+          <div className="divide-y divide-border">
             {list.slice(0, 8).map((r) => {
               const isExpired = r.subscription_expires_at && new Date(r.subscription_expires_at) < new Date()
               const leadAdmin = r.account_memberships?.find((m: any) => m.role === 'admin')?.profiles?.full_name || 'No admin'
@@ -105,32 +105,32 @@ export default async function SuperadminPage() {
                 <Link
                   key={r.id}
                   href={`/superadmin/restaurants/${r.id}`}
-                  className="flex items-center gap-4 px-5 py-4 hover:bg-slate-800/50 transition-colors group"
+                  className="flex items-center gap-4 px-5 py-4 hover:bg-muted/50 transition-colors group"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-sm font-black text-slate-400 group-hover:text-white group-hover:border-slate-500 transition-all flex-shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-muted border border-border flex items-center justify-center text-sm font-black text-muted-foreground group-hover:text-foreground group-hover:border-border transition-all flex-shrink-0">
                     {r.name.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-white truncate group-hover:text-violet-300 transition-colors">{r.name}</p>
-                    <p className="text-xs text-slate-500 truncate mt-0.5">{leadAdmin}</p>
+                    <p className="text-sm font-bold text-foreground truncate group-hover:text-violet-300 transition-colors">{r.name}</p>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">{leadAdmin}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <Badge className={cn(
                       'text-[10px] font-bold px-2 py-0.5 rounded-lg border hidden sm:inline-flex',
                       isExpired ? 'bg-red-500/15 text-red-400 border-red-500/30'
                         : r.is_active ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                        : 'bg-slate-700 text-slate-400 border-slate-600'
+                        : 'bg-muted text-muted-foreground border-border'
                     )}>
                       {isExpired ? 'Expired' : r.is_active ? 'Active' : 'Suspended'}
                     </Badge>
-                    <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all" />
+                    <ArrowRight className="w-4 h-4 text-muted-foreground/60 group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all" />
                   </div>
                 </Link>
               )
             })}
             {list.length === 0 && (
               <div className="p-12 text-center">
-                <p className="text-slate-500 text-sm">No restaurants yet</p>
+                <p className="text-muted-foreground text-sm">No restaurants yet</p>
               </div>
             )}
           </div>
@@ -140,24 +140,24 @@ export default async function SuperadminPage() {
         <div className="lg:col-span-2 space-y-4">
 
           {/* Recent Activity */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden">
-            <div className="flex items-center gap-3 p-5 border-b border-slate-800">
+          <div className="bg-card border border-border rounded-3xl overflow-hidden">
+            <div className="flex items-center gap-3 p-5 border-b border-border">
               <div className="w-8 h-8 rounded-xl bg-indigo-600/15 flex items-center justify-center">
                 <Zap className="w-4 h-4 text-indigo-400" />
               </div>
-              <h2 className="text-base font-black text-white">Recent Activity</h2>
+              <h2 className="text-base font-black text-foreground">Recent Activity</h2>
             </div>
             <div className="p-3 space-y-1">
               {recentActivity?.map((a, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-slate-800/40 transition-colors">
-                  <div className="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 flex-shrink-0">
+                <div key={i} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-muted/40 transition-colors">
+                  <div className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center text-muted-foreground flex-shrink-0">
                     {a.role === 'admin' ? <UserPlus className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-white truncate">
+                    <p className="text-sm font-bold text-foreground truncate">
                       {(a as any).profiles?.full_name || 'User'}
                     </p>
-                    <p className="text-xs text-slate-500 truncate">
+                    <p className="text-xs text-muted-foreground truncate">
                       {(a as any).restaurants?.name || 'Platform'} · {a.role}
                     </p>
                   </div>
@@ -165,16 +165,16 @@ export default async function SuperadminPage() {
               ))}
               {(!recentActivity || recentActivity.length === 0) && (
                 <div className="p-8 text-center">
-                  <Clock className="w-8 h-8 text-slate-700 mx-auto mb-2" />
-                  <p className="text-slate-600 text-xs font-bold uppercase tracking-widest">No recent events</p>
+                  <Clock className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-muted-foreground/60 text-xs font-bold uppercase tracking-widest">No recent events</p>
                 </div>
               )}
             </div>
           </div>
 
           {/* Quick Links */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-2">
-            <p className="text-xs font-black text-slate-500 uppercase tracking-widest px-2 mb-3">Quick Links</p>
+          <div className="bg-card border border-border rounded-3xl p-4 space-y-2">
+            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2 mb-3">Quick Links</p>
             {[
               { href: '/superadmin/users',  label: 'User Management',  icon: Users,      color: 'text-blue-400'   },
               { href: '/superadmin/admins', label: 'Admin Accounts',   icon: ShieldCheck,color: 'text-amber-400'  },
@@ -185,21 +185,21 @@ export default async function SuperadminPage() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="flex items-center gap-3 px-3 py-3 rounded-2xl hover:bg-slate-800/60 transition-colors group"
+                  className="flex items-center gap-3 px-3 py-3 rounded-2xl hover:bg-muted/60 transition-colors group"
                 >
                   <Icon className={cn('w-4 h-4 flex-shrink-0', link.color)} />
-                  <span className="text-sm font-semibold text-slate-300 group-hover:text-white transition-colors">{link.label}</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-slate-600 ml-auto group-hover:text-slate-400 transition-colors" />
+                  <span className="text-sm font-semibold text-foreground/70 group-hover:text-foreground transition-colors">{link.label}</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/60 ml-auto group-hover:text-muted-foreground transition-colors" />
                 </Link>
               )
             })}
           </div>
 
           {/* System status */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5">
+          <div className="bg-card border border-border rounded-3xl p-5">
             <div className="flex items-center gap-2 mb-4">
               <Activity className="w-4 h-4 text-emerald-400" />
-              <h3 className="text-sm font-black text-white">System Status</h3>
+              <h3 className="text-sm font-black text-foreground">System Status</h3>
             </div>
             <div className="space-y-3">
               {[
@@ -208,7 +208,7 @@ export default async function SuperadminPage() {
                 { label: 'Auth Gateway', status: 'Secured' },
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between">
-                  <span className="text-xs text-slate-400 font-semibold">{item.label}</span>
+                  <span className="text-xs text-muted-foreground font-semibold">{item.label}</span>
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="text-xs text-emerald-400 font-bold">{item.status}</span>

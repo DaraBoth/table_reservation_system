@@ -40,7 +40,7 @@ export function NumberTicker({
     <motion.span
       ref={ref}
       className={cn(
-        "inline-block tabular-nums text-white tracking-tighter",
+        "inline-block tabular-nums text-foreground tracking-tighter",
         className,
       )}
     >

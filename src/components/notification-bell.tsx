@@ -107,7 +107,7 @@ export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
         "relative w-9 h-9 flex items-center justify-center rounded-xl transition-all active:scale-90",
         permission === 'granted' 
           ? "text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20" 
-          : "text-slate-500 bg-slate-900 border border-slate-800 hover:border-violet-500/50 hover:text-violet-400"
+          : "text-muted-foreground bg-card border border-border hover:border-violet-500/50 hover:text-violet-400"
       )}
       title={permission === 'granted' ? 'Notifications Active' : 'Enable Notifications'}
     >

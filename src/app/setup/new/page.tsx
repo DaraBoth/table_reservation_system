@@ -94,19 +94,19 @@ export default function GlobalSetupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center custom-scrollbar overflow-x-hidden p-0 m-0">
+    <div className="min-h-screen bg-background flex flex-col items-center custom-scrollbar overflow-x-hidden p-0 m-0">
       <form onSubmit={handleSubmit} className="w-full min-h-screen flex flex-col animate-in fade-in duration-700">
         
         {/* Mobile Header / Navigation Bar */}
-        <div className="sticky top-0 z-50 w-full bg-slate-950/80 backdrop-blur-xl border-b border-slate-900 px-6 py-4 flex items-center justify-between">
-          <Link href="/dashboard" className="group flex items-center gap-2 text-slate-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest">
+        <div className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-xl border-b border-border px-6 py-4 flex items-center justify-between">
+          <Link href="/dashboard" className="group flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-[10px] font-black uppercase tracking-widest">
             <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
             Dashboard
           </Link>
           {status && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-border">
               <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", isAtLimit ? "bg-amber-500" : "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]")} />
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+              <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
                 Quota: {status.count}/{status.max === Infinity ? '∞' : status.max}
               </span>
             </div>
@@ -119,14 +119,14 @@ export default function GlobalSetupPage() {
             <div className="relative">
               <div className="absolute inset-0 bg-violet-600/20 blur-3xl rounded-full" />
               <div className="relative w-20 h-20 rounded-[2rem] bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-2xl shadow-violet-600/30">
-                <Sparkles className="w-10 h-10 text-white animate-pulse" />
+                <Sparkles className="w-10 h-10 text-foreground animate-pulse" />
               </div>
             </div>
             <div className="space-y-3">
-              <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter italic uppercase leading-tight">
+              <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tighter italic uppercase leading-tight">
                 Establish Brand
               </h1>
-              <p className="text-slate-600 text-[10px] font-bold uppercase tracking-[0.3em] leading-relaxed max-w-sm mx-auto">
+              <p className="text-muted-foreground/60 text-[10px] font-bold uppercase tracking-[0.3em] leading-relaxed max-w-sm mx-auto">
                 Deploying high-density business logic to your portfolio context
               </p>
             </div>
@@ -135,10 +135,10 @@ export default function GlobalSetupPage() {
           {/* Module Identification Section */}
           <div className="w-full space-y-6">
             <div className="flex items-center gap-3 w-full justify-center lg:justify-start lg:max-w-4xl lg:mx-auto">
-              <div className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-card border border-border flex items-center justify-center">
                 <Layers className="w-4 h-4 text-violet-500" />
               </div>
-              <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] italic">Module Identification</h2>
+              <h2 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">Module Identification</h2>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full lg:max-w-4xl lg:mx-auto">
@@ -151,26 +151,26 @@ export default function GlobalSetupPage() {
                     'relative group flex flex-col gap-5 p-7 rounded-[2.5rem] border transition-all duration-500 active:scale-[0.98] text-left w-full',
                     businessType === t.value
                       ? 'bg-violet-600/10 border-violet-500/50 shadow-[0_30px_60px_rgba(0,0,0,0.3)]'
-                      : 'bg-slate-900/40 border-slate-800/50 hover:bg-slate-900 hover:border-slate-700'
+                      : 'bg-card/40 border-border/50 hover:bg-card hover:border-border'
                   )}
                 >
                   <div className={cn(
                     "w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 shrink-0",
-                    businessType === t.value ? "bg-violet-600 text-white shadow-xl shadow-violet-600/40" : "bg-slate-800 text-slate-600 group-hover:scale-110"
+                    businessType === t.value ? "bg-violet-600 text-foreground shadow-xl shadow-violet-600/40" : "bg-muted text-muted-foreground/60 group-hover:scale-110"
                   )}>
                     {(() => { const TIcon = t.icon; return <TIcon className="w-7 h-7" /> })()}
                   </div>
                   <div>
-                    <p className={cn('text-[14px] font-black uppercase tracking-tight', businessType === t.value ? 'text-white' : 'text-slate-400 group-hover:text-white transition-colors')}>
+                    <p className={cn('text-[14px] font-black uppercase tracking-tight', businessType === t.value ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground transition-colors')}>
                       {t.label}
                     </p>
-                    <p className="text-[10px] text-slate-600 font-bold mt-2 leading-relaxed opacity-80">
+                    <p className="text-[10px] text-muted-foreground/60 font-bold mt-2 leading-relaxed opacity-80">
                       {t.desc}
                     </p>
                   </div>
                   {businessType === t.value && (
                     <div className="absolute top-8 right-8 w-6 h-6 rounded-full bg-violet-600 flex items-center justify-center shadow-lg shadow-violet-600/50 animate-in zoom-in duration-300">
-                      <Check className="w-4 h-4 text-white" />
+                      <Check className="w-4 h-4 text-foreground" />
                     </div>
                   )}
                 </button>
@@ -181,72 +181,72 @@ export default function GlobalSetupPage() {
           {/* Registry Protocol Section */}
           <div className="w-full space-y-6">
             <div className="flex items-center gap-3 w-full justify-center lg:justify-start lg:max-w-4xl lg:mx-auto">
-              <div className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-card border border-border flex items-center justify-center">
                 <Globe className="w-4 h-4 text-violet-500" />
               </div>
-              <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] italic">Registry Protocol</h2>
+              <h2 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">Registry Protocol</h2>
             </div>
 
-            <div className="w-full lg:max-w-4xl lg:mx-auto glassmorphic-card rounded-[3rem] p-8 md:p-12 space-y-10 border border-slate-800/50 bg-slate-900/20 shadow-2xl relative overflow-hidden">
+            <div className="w-full lg:max-w-4xl lg:mx-auto glassmorphic-card rounded-[3rem] p-8 md:p-12 space-y-10 border border-border/50 bg-card/20 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Brand Identity</label>
+                  <label className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest ml-1">Brand Identity</label>
                   <input
                     name="name"
                     required
                     placeholder="e.g. Noir Bistro"
-                    className="w-full h-14 px-8 rounded-3xl bg-slate-950 border border-slate-900 text-sm text-white font-bold placeholder:text-slate-800 focus:outline-none focus:border-violet-500 transition-all shadow-inner uppercase tracking-wider"
+                    className="w-full h-14 px-8 rounded-3xl bg-background border border-border text-sm text-foreground font-bold placeholder:text-muted-foreground/20 focus:outline-none focus:border-violet-500 transition-all shadow-inner uppercase tracking-wider"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Slug Identifier</label>
+                  <label className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest ml-1">Slug Identifier</label>
                   <div className="relative">
-                    <Globe className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-800" />
+                    <Globe className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                       name="slug"
                       required
                       placeholder="noir-bistro"
-                      className="w-full h-14 pl-14 pr-8 rounded-3xl bg-slate-950 border border-slate-900 text-sm text-white font-bold placeholder:text-slate-800 focus:outline-none focus:border-violet-500 transition-all shadow-inner lowercase italic"
+                      className="w-full h-14 pl-14 pr-8 rounded-3xl bg-background border border-border text-sm text-foreground font-bold placeholder:text-muted-foreground/20 focus:outline-none focus:border-violet-500 transition-all shadow-inner lowercase italic"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Primary Contact Email</label>
+                  <label className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest ml-1">Primary Contact Email</label>
                   <div className="relative">
-                    <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-800" />
+                    <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                       name="contactEmail"
                       type="email"
                       placeholder="hello@noir.com"
-                      className="w-full h-14 pl-14 pr-8 rounded-3xl bg-slate-950 border border-slate-900 text-sm text-white font-bold placeholder:text-slate-800 focus:outline-none focus:border-violet-500 transition-all shadow-inner"
+                      className="w-full h-14 pl-14 pr-8 rounded-3xl bg-background border border-border text-sm text-foreground font-bold placeholder:text-muted-foreground/20 focus:outline-none focus:border-violet-500 transition-all shadow-inner"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Phone Registry</label>
+                  <label className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest ml-1">Phone Registry</label>
                   <div className="relative">
-                    <Phone className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-800" />
+                    <Phone className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                       name="contactPhone"
                       placeholder="+855 12 345 678"
-                      className="w-full h-14 pl-14 pr-8 rounded-3xl bg-slate-950 border border-slate-900 text-sm text-white font-bold placeholder:text-slate-800 focus:outline-none focus:border-violet-500 transition-all shadow-inner"
+                      className="w-full h-14 pl-14 pr-8 rounded-3xl bg-background border border-border text-sm text-foreground font-bold placeholder:text-muted-foreground/20 focus:outline-none focus:border-violet-500 transition-all shadow-inner"
                     />
                   </div>
                 </div>
 
                 <div className="md:col-span-2 space-y-2">
-                  <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1">Deployment Address</label>
+                  <label className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest ml-1">Deployment Address</label>
                   <div className="relative">
-                    <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-800" />
+                    <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                       name="address"
                       placeholder="Signature Square, Central Park, Level 4"
-                      className="w-full h-14 pl-14 pr-8 rounded-3xl bg-slate-950 border border-slate-900 text-sm text-white font-bold placeholder:text-slate-800 focus:outline-none focus:border-violet-500 transition-all shadow-inner"
+                      className="w-full h-14 pl-14 pr-8 rounded-3xl bg-background border border-border text-sm text-foreground font-bold placeholder:text-muted-foreground/20 focus:outline-none focus:border-violet-500 transition-all shadow-inner"
                     />
                   </div>
                 </div>
@@ -261,8 +261,8 @@ export default function GlobalSetupPage() {
               className={cn(
                 "w-full h-20 rounded-[2.5rem] font-black text-[14px] uppercase tracking-[0.4em] shadow-2xl transition-all active:scale-[0.98] group flex items-center justify-center gap-4 border",
                 isAtLimit 
-                  ? "bg-slate-950 text-slate-800 border-slate-900 cursor-not-allowed" 
-                  : "bg-violet-600 border-violet-500 text-white hover:bg-violet-500 shadow-violet-600/40"
+                  ? "bg-background text-muted-foreground border-border cursor-not-allowed" 
+                  : "bg-violet-600 border-violet-500 text-foreground hover:bg-violet-500 shadow-violet-600/40"
               )}
             >
               {isPending ? (
@@ -274,7 +274,7 @@ export default function GlobalSetupPage() {
                 </>
               )}
             </button>
-            <p className="text-center text-[9px] text-slate-800 font-bold uppercase tracking-[0.3em] mt-8 opacity-40 italic">
+            <p className="text-center text-[9px] text-muted-foreground font-bold uppercase tracking-[0.3em] mt-8 opacity-40 italic">
                Enterprise Security Protocol • Global Brand Deployment v2.4 
             </p>
           </div>

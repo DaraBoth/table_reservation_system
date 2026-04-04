@@ -38,7 +38,7 @@ export function RestaurantSwitcher({ currentRestaurantId, memberships }: Restaur
             variant="ghost"
             role="combobox"
             aria-expanded={open}
-            className="flex items-center gap-2 px-2 h-9 text-white hover:bg-white/5 rounded-xl transition-all duration-200"
+            className="flex items-center gap-2 px-2 h-9 text-foreground hover:bg-white/5 rounded-xl transition-all duration-200"
           >
             <div className="w-6 h-6 rounded-md bg-gradient-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/30 flex items-center justify-center shrink-0">
               <Store className="w-3.5 h-3.5 text-violet-400" />
@@ -51,11 +51,11 @@ export function RestaurantSwitcher({ currentRestaurantId, memberships }: Restaur
         }
       />
       <DropdownMenuContent 
-        className="w-[200px] bg-slate-900 border-slate-800 text-slate-200 p-1 shadow-2xl rounded-2xl" 
+        className="w-[200px] bg-card border-border text-foreground/80 p-1 shadow-2xl rounded-2xl" 
         align="start"
       >
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-slate-500 font-bold px-2 py-1.5">
+          <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold px-2 py-1.5">
             Your Restaurants
           </DropdownMenuLabel>
           {memberships.map((membership) => (
@@ -76,7 +76,7 @@ export function RestaurantSwitcher({ currentRestaurantId, memberships }: Restaur
                 "flex items-center justify-between px-2 py-2 cursor-pointer rounded-xl transition-colors",
                 membership.restaurant_id === currentRestaurantId 
                   ? "bg-violet-500/10 text-violet-400" 
-                  : "hover:bg-slate-800"
+                  : "hover:bg-muted"
               )}
             >
               <div className="flex items-center gap-2">
@@ -91,10 +91,10 @@ export function RestaurantSwitcher({ currentRestaurantId, memberships }: Restaur
         </DropdownMenuGroup>
         
         {/* Placeholder for "Add New" for Admins if relevant, or just a separator */}
-        <DropdownMenuSeparator className="bg-slate-800 mx-1 my-1" />
+        <DropdownMenuSeparator className="bg-muted mx-1 my-1" />
         <DropdownMenuItem 
           disabled 
-          className="flex items-center gap-2 px-2 py-2 text-slate-500 rounded-xl opacity-50"
+          className="flex items-center gap-2 px-2 py-2 text-muted-foreground rounded-xl opacity-50"
         >
           <PlusCircle className="w-4 h-4" />
           <span className="text-sm font-medium">Add Business</span>

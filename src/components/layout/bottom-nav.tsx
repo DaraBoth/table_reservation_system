@@ -69,7 +69,7 @@ export function BottomNav({
   const canEstablishMore = memberships.length < maxBrands || isAdmin // Superadmins can always establish
 
   return (
-    <nav className="fixed bottom-6 left-6 right-6 z-50 bg-slate-900/80 backdrop-blur-2xl border border-slate-800/50 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <nav className="fixed bottom-6 left-6 right-6 z-50 bg-card/80 backdrop-blur-2xl border border-border/50 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div
         className="flex items-stretch justify-around px-2 py-3"
       >
@@ -86,14 +86,14 @@ export function BottomNav({
               prefetch={true}
               className={cn(
                 'flex flex-col items-center justify-start flex-1 gap-1.5 transition-all duration-200 relative min-w-[4rem]',
-                isActive ? 'text-violet-400' : 'text-slate-500'
+                isActive ? 'text-violet-400' : 'text-muted-foreground'
               )}
             >
               <Icon
                 className={cn('w-6 h-6 transition-all duration-300', isActive && 'scale-110 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]')}
                 fill={isActive ? 'currentColor' : 'none'}
               />
-              <span className={cn('text-[10px] font-bold tracking-wide transition-colors', isActive ? 'text-violet-400' : 'text-slate-500')}>
+              <span className={cn('text-[10px] font-bold tracking-wide transition-colors', isActive ? 'text-violet-400' : 'text-muted-foreground')}>
                 {item.label}
               </span>
             </Link>
@@ -113,7 +113,7 @@ export function BottomNav({
               <button
                 className={cn(
                   'flex flex-col items-center justify-start flex-1 gap-1.5 transition-all duration-200 relative min-w-[4rem]',
-                  isPortfolioOpen || pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname.startsWith('/dashboard/reports') ? 'text-violet-400' : 'text-slate-500'
+                  isPortfolioOpen || pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname.startsWith('/dashboard/reports') ? 'text-violet-400' : 'text-muted-foreground'
                 )}
               >
                 <Menu
@@ -125,39 +125,39 @@ export function BottomNav({
                 />
                 <span className={cn(
                   "text-[10px] font-bold tracking-wide transition-colors",
-                  (isPortfolioOpen || pathname === `/dashboard/${restaurantId}/account` || pathname === `/dashboard/${restaurantId}/staff` || pathname.startsWith(`/dashboard/${restaurantId}/reports`)) ? 'text-violet-400' : 'text-slate-500'
+                  (isPortfolioOpen || pathname === `/dashboard/${restaurantId}/account` || pathname === `/dashboard/${restaurantId}/staff` || pathname.startsWith(`/dashboard/${restaurantId}/reports`)) ? 'text-violet-400' : 'text-muted-foreground'
                 )}>
                   More
                 </span>
               </button>
             }
           />
-          <SheetContent side="right" className="bg-slate-950/90 backdrop-blur-xl border-slate-800/50 p-0 sm:max-w-xs overflow-hidden">
-            <div className="flex flex-col h-full bg-slate-950/40">
-              <SheetHeader className="p-6 pb-4 text-left border-b border-slate-800/50">
+          <SheetContent side="right" className="bg-background/90 backdrop-blur-xl border-border/50 p-0 sm:max-w-xs overflow-hidden">
+            <div className="flex flex-col h-full bg-background/40">
+              <SheetHeader className="p-6 pb-4 text-left border-b border-border/50">
                 <button 
                   onClick={() => setIsPortfolioOpen(!isPortfolioOpen)}
                   className="flex items-center justify-between w-full group"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-600/20 group-hover:scale-105 transition-transform">
-                      <span className="text-white font-black text-[12px] uppercase">
+                      <span className="text-foreground font-black text-[12px] uppercase">
                         {currentRestaurantName.slice(0, 2)}
                       </span>
                     </div>
                     <div className="flex flex-col text-left">
-                      <SheetTitle className="text-white text-base font-black tracking-tight leading-none">
+                      <SheetTitle className="text-foreground text-base font-black tracking-tight leading-none">
                         {currentRestaurantName}
                       </SheetTitle>
-                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">
+                      <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mt-1">
                         {isPortfolioOpen ? 'Close Portfolio' : 'Switch Brand'}
                       </span>
                     </div>
                   </div>
                   {isPortfolioOpen ? (
-                    <ChevronUp className="w-5 h-5 text-slate-600 group-hover:text-violet-400 transition-colors" />
+                    <ChevronUp className="w-5 h-5 text-muted-foreground/60 group-hover:text-violet-400 transition-colors" />
                   ) : (
-                    <ChevronDown className="w-5 h-5 text-slate-600 group-hover:text-violet-400 transition-colors" />
+                    <ChevronDown className="w-5 h-5 text-muted-foreground/60 group-hover:text-violet-400 transition-colors" />
                   )}
                 </button>
               </SheetHeader>
@@ -167,15 +167,15 @@ export function BottomNav({
                   <div className="p-4 space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
                     {/* Vercel-style Search */}
                     <div className="relative group">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-violet-400 transition-colors" />
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 group-focus-within:text-violet-400 transition-colors" />
                       <input 
                         autoFocus
                         placeholder="Find Brand..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-11 pl-11 pr-12 rounded-2xl bg-slate-900 border border-slate-800/50 text-[11px] text-white font-bold placeholder:text-slate-700 focus:outline-none focus:border-violet-500/50 focus:ring-4 focus:ring-violet-500/5 transition-all"
+                        className="w-full h-11 pl-11 pr-12 rounded-2xl bg-card border border-border/50 text-[11px] text-foreground font-bold placeholder:text-muted-foreground focus:outline-none focus:border-violet-500/50 focus:ring-4 focus:ring-violet-500/5 transition-all"
                       />
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded border border-slate-800 text-[8px] font-black text-slate-700 uppercase tracking-widest hidden sm:block">
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded border border-border text-[8px] font-black text-muted-foreground uppercase tracking-widest hidden sm:block">
                         Esc
                       </div>
                     </div>
@@ -192,21 +192,21 @@ export function BottomNav({
                                "flex items-center justify-between p-4 rounded-2xl border transition-all group/opt",
                                isCurrent 
                                 ? "bg-violet-600/10 border-violet-500/20 shadow-inner" 
-                                : "bg-transparent border-transparent hover:bg-slate-900 hover:border-slate-800"
+                                : "bg-transparent border-transparent hover:bg-card hover:border-border"
                              )}
                            >
                              <div className="flex items-center gap-3">
                                <div className={cn(
                                  "w-9 h-9 rounded-[0.9rem] flex items-center justify-center text-[10px] uppercase font-black transition-all",
-                                 isCurrent ? "bg-violet-600 text-white" : "bg-slate-900 border border-slate-800 text-slate-600 group-hover/opt:text-white group-hover/opt:bg-slate-800"
+                                 isCurrent ? "bg-violet-600 text-foreground" : "bg-card border border-border text-muted-foreground/60 group-hover/opt:text-foreground group-hover/opt:bg-muted"
                                )}>
                                  {m.restaurants?.name?.slice(0, 2) || 'RT'}
                                </div>
                                <div className="flex flex-col">
-                                 <span className={cn("text-[12px] font-bold tracking-tight", isCurrent ? "text-white" : "text-slate-400 group-hover/opt:text-white")}>
+                                 <span className={cn("text-[12px] font-bold tracking-tight", isCurrent ? "text-foreground" : "text-muted-foreground group-hover/opt:text-foreground")}>
                                    {m.restaurants?.name}
                                  </span>
-                                 <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest mt-0.5">{m.role}</span>
+                                 <span className="text-[8px] text-muted-foreground/60 font-black uppercase tracking-widest mt-0.5">{m.role}</span>
                                </div>
                              </div>
                              {isCurrent && <Check className="w-4 h-4 text-violet-400" />}
@@ -217,7 +217,7 @@ export function BottomNav({
 
                     {/* Establishment Trigger (Vercel style at bottom) */}
                     {isSpecialAdmin && canEstablishMore && (
-                      <div className="pt-4 mt-4 border-t border-slate-900">
+                      <div className="pt-4 mt-4 border-t border-border">
                         <Link 
                           href={`/dashboard/${restaurantId}/setup/new`}
                           onClick={() => setOpen(false)}
@@ -256,12 +256,12 @@ export function BottomNav({
                       onClick={() => setOpen(false)}
                     />
 
-                    <div className="pt-6 mt-6 border-t border-slate-800/50 px-2 text-center">
+                    <div className="pt-6 mt-6 border-t border-border/50 px-2 text-center">
                       <form action={logout}>
                         <button
                           type="submit"
                           onClick={() => setOpen(false)}
-                          className="w-full flex items-center justify-center gap-4 p-4 rounded-2xl text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all font-bold text-sm border border-transparent hover:border-red-500/20"
+                          className="w-full flex items-center justify-center gap-4 p-4 rounded-2xl text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all font-bold text-sm border border-transparent hover:border-red-500/20"
                         >
                           <LogOut className="w-5 h-5" />
                           Sign Out
@@ -272,11 +272,11 @@ export function BottomNav({
                 )}
               </div>
 
-              <div className="p-8 bg-slate-900/10 border-t border-slate-900/50 flex flex-col gap-1 items-center">
-                <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.2em]">
+              <div className="p-8 bg-card/10 border-t border-border/50 flex flex-col gap-1 items-center">
+                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em]">
                   BookJM
                 </p>
-                <p className="text-[9px] text-slate-800 font-semibold tracking-wider italic">
+                <p className="text-[9px] text-muted-foreground font-semibold tracking-wider italic">
                   VERSION 2.4.0 • © 2026 
                 </p>
               </div>
@@ -297,7 +297,7 @@ function MenuLink({ href, icon: Icon, label, active, onClick, className }: { hre
         "flex items-center gap-4 p-4 rounded-2xl transition-all font-bold text-sm relative group overflow-hidden border",
         active
           ? "bg-violet-600/10 text-violet-400 border-violet-500/20 shadow-[inset_0_0_12px_rgba(139,92,246,0.05)]"
-          : "text-slate-400 border-transparent hover:bg-slate-800/40 hover:text-white",
+          : "text-muted-foreground border-transparent hover:bg-muted/40 hover:text-foreground",
         className
       )}
     >

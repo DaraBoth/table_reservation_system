@@ -24,37 +24,37 @@ function Calendar({
         months: "flex flex-col sm:flex-row gap-2",
         month: "flex flex-col gap-4",
         caption: "flex justify-center pt-1 relative items-center w-full",
-        caption_label: "text-sm font-medium text-white",
+        caption_label: "text-sm font-medium text-foreground",
         nav: "flex items-center gap-1",
         nav_button: cn(
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 transition-opacity text-slate-400 hover:text-white"
+          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
         ),
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
         table: "w-full border-collapse space-x-1",
         head_row: "flex",
         head_cell:
-          "text-slate-500 rounded-md w-8 font-normal text-[0.8rem] uppercase",
+          "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem] uppercase",
         row: "flex w-full mt-2",
         cell: cn(
-          "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-slate-800/50 [&:has([aria-selected].day-outside)]:bg-slate-800/20 [&:has([aria-selected].day-range-end)]:rounded-r-md",
+          "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-muted/50 [&:has([aria-selected].day-outside)]:bg-muted/20 [&:has([aria-selected].day-range-end)]:rounded-r-md",
           props.mode === "range"
             ? "[&:has(>.day-range-end)]:rounded-r-md [&:has(>.day-range-start)]:rounded-l-md first:[&:has(>.day-range-start)]:rounded-l-md last:[&:has(>.day-range-end)]:rounded-r-md"
             : "[&:has(>.day-selected)]:rounded-md"
         ),
         day: cn(
-          "h-8 w-8 p-0 font-normal aria-selected:opacity-100 hover:bg-slate-800 rounded-md transition-colors"
+          "h-8 w-8 p-0 font-normal aria-selected:opacity-100 hover:bg-muted rounded-md transition-colors"
         ),
         day_range_start: "day-range-start",
         day_range_end: "day-range-end",
         day_selected:
-          "bg-violet-600 text-white hover:bg-violet-600 hover:text-white focus:bg-violet-600 focus:text-white",
-        day_today: "bg-slate-800 text-white font-bold",
+          "bg-violet-600 text-foreground hover:bg-violet-600 hover:text-foreground focus:bg-violet-600 focus:text-foreground",
+        day_today: "bg-muted text-foreground font-bold",
         day_outside:
-          "day-outside text-slate-600 opacity-50 aria-selected:bg-slate-800/20 aria-selected:text-slate-600 aria-selected:opacity-30",
-        day_disabled: "text-slate-700 opacity-50",
+          "day-outside text-muted-foreground/60 opacity-50 aria-selected:bg-muted/20 aria-selected:text-muted-foreground/60 aria-selected:opacity-30",
+        day_disabled: "text-muted-foreground opacity-50",
         day_range_middle:
-          "aria-selected:bg-slate-800 aria-selected:text-slate-300",
+          "aria-selected:bg-muted aria-selected:text-foreground/70",
         day_hidden: "invisible",
         ...classNames,
       }}

@@ -50,10 +50,10 @@ export function SuperadminNav({ userName, userEmail }: SuperadminNavProps) {
               'flex items-center gap-3 px-4 py-3 rounded-2xl font-semibold text-sm transition-all',
               isActive
                 ? 'bg-violet-600/15 text-violet-300 border border-violet-500/25'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60 border border-transparent'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/60 border border-transparent'
             )}
           >
-            <Icon className={cn('w-5 h-5 flex-shrink-0', isActive ? 'text-violet-400' : 'text-slate-500')} />
+            <Icon className={cn('w-5 h-5 flex-shrink-0', isActive ? 'text-violet-400' : 'text-muted-foreground')} />
             {item.label}
             {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-400" />}
           </Link>
@@ -65,17 +65,17 @@ export function SuperadminNav({ userName, userEmail }: SuperadminNavProps) {
   return (
     <>
       {/* ── Desktop Sidebar ─────────────────────────────────── */}
-      <aside className="hidden lg:flex flex-col w-64 min-h-screen bg-slate-900/60 backdrop-blur-xl border-r border-slate-800/60 flex-shrink-0">
+      <aside className="hidden lg:flex flex-col w-64 min-h-screen bg-card/60 backdrop-blur-xl border-r border-border/60 flex-shrink-0">
         {/* Brand */}
-        <div className="flex items-center gap-3 p-6 border-b border-slate-800/60">
+        <div className="flex items-center gap-3 p-6 border-b border-border/60">
           <div className="relative w-10 h-10 overflow-hidden flex-shrink-0">
             <Image src="/logo.png" alt="TableBook Logo" fill className="object-cover" />
           </div>
           <div>
-            <p className="text-white font-bold text-sm">TableBook</p>
+            <p className="text-foreground font-bold text-sm">TableBook</p>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Superadmin</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Superadmin</span>
             </div>
           </div>
         </div>
@@ -86,18 +86,18 @@ export function SuperadminNav({ userName, userEmail }: SuperadminNavProps) {
         </nav>
 
         {/* User + Sign out */}
-        <div className="p-3 border-t border-slate-800/60 space-y-1">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-800/30">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+        <div className="p-3 border-t border-border/60 space-y-1">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-muted/30">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center text-foreground font-bold text-xs flex-shrink-0">
               {userName.slice(0, 2).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-bold text-white truncate">{userName}</p>
-              {userEmail && <p className="text-[10px] text-slate-500 truncate">{userEmail}</p>}
+              <p className="text-xs font-bold text-foreground truncate">{userName}</p>
+              {userEmail && <p className="text-[10px] text-muted-foreground truncate">{userEmail}</p>}
             </div>
           </div>
           <form action={logout}>
-            <button type="submit" className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all font-semibold">
+            <button type="submit" className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm text-muted-foreground hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all font-semibold">
               <LogOut className="w-4 h-4" />
               Sign Out
             </button>
@@ -106,16 +106,16 @@ export function SuperadminNav({ userName, userEmail }: SuperadminNavProps) {
       </aside>
 
       {/* ── Mobile Top Bar ───────────────────────────────────── */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/60">
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14 bg-background/90 backdrop-blur-xl border-b border-border/60">
         <div className="flex items-center gap-3">
           <div className="relative w-8 h-8 overflow-hidden">
             <Image src="/logo.png" alt="TableBook Logo" fill className="object-cover" />
           </div>
-          <span className="text-white font-bold text-sm">Superadmin</span>
+          <span className="text-foreground font-bold text-sm">Superadmin</span>
         </div>
         <button
           onClick={() => setOpen(true)}
-          className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-800 border border-slate-700 text-slate-300"
+          className="w-9 h-9 flex items-center justify-center rounded-xl bg-muted border border-border text-foreground/70"
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -128,16 +128,16 @@ export function SuperadminNav({ userName, userEmail }: SuperadminNavProps) {
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
 
           {/* Drawer panel */}
-          <div className="relative ml-auto w-72 h-full bg-slate-950 border-l border-slate-800 flex flex-col">
+          <div className="relative ml-auto w-72 h-full bg-background border-l border-border flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div className="flex items-center gap-3">
                 <div className="relative w-8 h-8 overflow-hidden">
                   <Image src="/logo.png" alt="TableBook Logo" fill className="object-cover" />
                 </div>
-                <span className="text-white font-bold text-sm">TableBook</span>
+                <span className="text-foreground font-bold text-sm">TableBook</span>
               </div>
-              <button onClick={() => setOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-white">
+              <button onClick={() => setOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -148,14 +148,14 @@ export function SuperadminNav({ userName, userEmail }: SuperadminNavProps) {
             </nav>
 
             {/* Footer */}
-            <div className="p-3 border-t border-slate-800 space-y-1">
-              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-800/40">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center text-white font-bold text-xs">
+            <div className="p-3 border-t border-border space-y-1">
+              <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-muted/40">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center text-foreground font-bold text-xs">
                   {userName.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-white truncate">{userName}</p>
-                  {userEmail && <p className="text-[10px] text-slate-500 truncate">{userEmail}</p>}
+                  <p className="text-xs font-bold text-foreground truncate">{userName}</p>
+                  {userEmail && <p className="text-[10px] text-muted-foreground truncate">{userEmail}</p>}
                 </div>
               </div>
               <form action={logout}>

@@ -66,10 +66,10 @@ export function TableCard({
         className={cn(
           'absolute inset-0 border transition-all duration-500 rounded-3xl z-0 overflow-hidden',
           isOffline
-            ? 'bg-slate-950 border-slate-800/60 opacity-50'
+            ? 'bg-background border-border/60 opacity-50'
             : isBusy
               ? 'bg-gradient-to-br from-rose-500/10 via-slate-900/40 to-slate-900/60 border-rose-500/30'
-              : 'bg-slate-900 border-slate-800/80 hover:border-emerald-500/40 hover:bg-slate-900/80 shadow-lg'
+              : 'bg-card border-border/80 hover:border-emerald-500/40 hover:bg-card/80 shadow-lg'
         )}
       >
         {/* 🖱️ Interactive Follow-Glow */}
@@ -101,7 +101,7 @@ export function TableCard({
           businessType={businessType} 
           isAdmin={isAdmin}
           trigger={
-            <button className="w-8 h-8 flex items-center justify-center bg-slate-950/80 border border-slate-700/50 rounded-xl text-slate-400 hover:border-violet-500/50 hover:text-violet-400 backdrop-blur-sm transition-all shadow-xl active:scale-90">
+            <button className="w-8 h-8 flex items-center justify-center bg-background/80 border border-border/50 rounded-xl text-muted-foreground hover:border-violet-500/50 hover:text-violet-400 backdrop-blur-sm transition-all shadow-xl active:scale-90">
               <Settings2 className="w-4 h-4" />
             </button>
           }
@@ -113,7 +113,7 @@ export function TableCard({
         <div className="flex items-center justify-between mb-1">
           <span className={cn(
             'w-2.5 h-2.5 rounded-full flex-shrink-0',
-            isOffline ? 'bg-slate-700'
+            isOffline ? 'bg-muted'
               : isBusy ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.6)] animate-pulse'
                 : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]'
           )} />
@@ -123,10 +123,10 @@ export function TableCard({
 
         {/* Info */}
         <div className="mt-1">
-          <p className={cn('text-2xl font-black leading-tight italic tracking-tighter', isOffline ? 'text-slate-600' : isBusy ? 'text-rose-100' : 'text-white')}>
+          <p className={cn('text-2xl font-black leading-tight italic tracking-tighter', isOffline ? 'text-muted-foreground/60' : isBusy ? 'text-rose-100' : 'text-foreground')}>
             {table.table_name}
           </p>
-          <p className={cn('text-[11px] font-bold mt-0.5', isOffline ? 'text-slate-700' : 'text-slate-500 uppercase tracking-tighter')}>
+          <p className={cn('text-[11px] font-bold mt-0.5', isOffline ? 'text-muted-foreground' : 'text-muted-foreground uppercase tracking-tighter')}>
             {table.capacity} {terms.capacityUnit}
           </p>
         </div>
@@ -136,7 +136,7 @@ export function TableCard({
           <div className="flex items-center gap-1.5 flex-wrap">
             <Badge className={cn(
               'text-[10px] font-black w-fit px-2.5 py-0.5 rounded-lg border uppercase tracking-widest transition-all duration-500',
-              isOffline ? 'bg-slate-800 text-slate-600 border-slate-700'
+              isOffline ? 'bg-muted text-muted-foreground/60 border-border'
                 : isBusy ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
                   : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
             )}>

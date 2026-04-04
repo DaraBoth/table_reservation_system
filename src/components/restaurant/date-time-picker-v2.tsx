@@ -46,7 +46,7 @@ export function DateTimePickerV2({ value, onChange }: DateTimePickerProps) {
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {/* Date Input */}
       <div>
-        <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">
+        <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">
           Date
         </label>
         <div className="relative flex items-center">
@@ -57,8 +57,8 @@ export function DateTimePickerV2({ value, onChange }: DateTimePickerProps) {
             onChange={handleDateChange}
             min={format(new Date(), 'yyyy-MM-dd')}
             className={cn(
-              "w-full h-14 pl-11 pr-3 rounded-2xl border-2 border-slate-700 bg-slate-900",
-              "text-white text-sm font-semibold",
+              "w-full h-14 pl-11 pr-3 rounded-2xl border-2 border-border bg-card",
+              "text-foreground text-sm font-semibold",
               "focus:border-violet-500 focus:outline-none transition-colors",
               "[color-scheme:dark]"
             )}
@@ -68,7 +68,7 @@ export function DateTimePickerV2({ value, onChange }: DateTimePickerProps) {
 
       {/* Time Input */}
       <div>
-        <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">
+        <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">
           Time
         </label>
         <div className="relative flex items-center">
@@ -79,8 +79,8 @@ export function DateTimePickerV2({ value, onChange }: DateTimePickerProps) {
             onChange={handleTimeChange}
             step={900}
             className={cn(
-              "w-full h-14 pl-11 pr-3 rounded-2xl border-2 border-slate-700 bg-slate-900",
-              "text-white text-sm font-semibold",
+              "w-full h-14 pl-11 pr-3 rounded-2xl border-2 border-border bg-card",
+              "text-foreground text-sm font-semibold",
               "focus:border-emerald-500 focus:outline-none transition-colors",
               "[color-scheme:dark]"
             )}

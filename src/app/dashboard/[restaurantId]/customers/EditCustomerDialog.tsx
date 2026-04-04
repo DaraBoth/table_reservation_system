@@ -31,37 +31,37 @@ export function EditCustomerDialog({ customer }: EditCustomerDialogProps) {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         render={
-          <Button variant="ghost" size="icon-sm" className="text-slate-400 hover:text-violet-400 hover:bg-violet-500/10 rounded-xl">
+          <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-violet-400 hover:bg-violet-500/10 rounded-xl">
             <Pencil className="w-4 h-4" />
           </Button>
         }
       />
-      <SheetContent side="bottom" className="bg-slate-900 border-slate-800 text-white p-6 rounded-t-3xl">
+      <SheetContent side="bottom" className="bg-card border-border text-foreground p-6 rounded-t-3xl">
         <SheetHeader className="p-0 mb-4">
-          <SheetTitle className="text-white text-lg font-black italic tracking-tight">Edit Customer Reference</SheetTitle>
+          <SheetTitle className="text-foreground text-lg font-black italic tracking-tight">Edit Customer Reference</SheetTitle>
         </SheetHeader>
         <form action={action} className="space-y-4 mt-2">
           <input type="hidden" name="id" value={customer.id} />
           
           <div className="space-y-1.5">
-            <Label className="text-slate-300 text-sm">Full Name *</Label>
+            <Label className="text-foreground/70 text-sm">Full Name *</Label>
             <Input 
               name="name" 
               required 
               defaultValue={customer.name}
               placeholder="e.g. Sokha Chan"
-              className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-violet-500" 
+              className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500" 
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-slate-300 text-sm">Phone</Label>
+            <Label className="text-foreground/70 text-sm">Phone</Label>
             <Input 
               name="phone" 
               type="tel"
               defaultValue={customer.phone || ''}
               placeholder="e.g. 012 345 678"
-              className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-violet-500" 
+              className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500" 
             />
           </div>
 

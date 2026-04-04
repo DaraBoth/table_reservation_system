@@ -30,7 +30,7 @@ const statusColors: Record<string, string> = {
   confirmed: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
   arrived: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   cancelled: 'bg-red-500/20 text-red-400 border-red-500/30',
-  completed: 'bg-slate-600/40 text-slate-300 border-slate-700',
+  completed: 'bg-muted/60/40 text-foreground/70 border-border',
   no_show: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
 }
 
@@ -48,7 +48,7 @@ const statusAvatarBg: Record<string, string> = {
   confirmed: 'from-emerald-600/30 to-teal-600/30 border-emerald-500/20',
   arrived: 'from-blue-600/30 to-indigo-600/30 border-blue-500/20',
   cancelled: 'from-red-600/20 to-rose-600/20 border-red-500/20',
-  completed: 'from-slate-600/30 to-slate-700/30 border-slate-600/20',
+  completed: 'from-slate-600/30 to-slate-700/30 border-border/20',
   no_show: 'from-orange-600/30 to-amber-600/30 border-orange-500/20',
 }
 
@@ -104,10 +104,10 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
       {/* Header */}
       <div className="flex items-center justify-between pt-2">
         <div className="flex flex-col gap-0.5">
-          <h1 className="text-xl font-black text-white italic tracking-tight uppercase">
+          <h1 className="text-xl font-black text-foreground italic tracking-tight uppercase">
             {terms.bookings}
           </h1>
-          <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest leading-none">
+          <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest leading-none">
             Manage your schedule
           </p>
         </div>
@@ -115,7 +115,7 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
           href="/dashboard/reservations/new"
           className={cn(
             buttonVariants({ size: 'sm' }),
-            'bg-gradient-to-r from-violet-600 to-indigo-600 border-0 rounded-xl gap-1.5 font-black text-white shadow-lg shadow-violet-500/20 h-10 px-4 transition-all duration-300 active:scale-95'
+            'bg-gradient-to-r from-violet-600 to-indigo-600 border-0 rounded-xl gap-1.5 font-black text-foreground shadow-lg shadow-violet-500/20 h-10 px-4 transition-all duration-300 active:scale-95'
           )}
         >
           <Plus className="w-4 h-4" /> New {terms.booking}
@@ -133,8 +133,8 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
       <section className="space-y-4">
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
-            <ClipboardList className="w-3.5 h-3.5 text-slate-500" />
-            <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            <ClipboardList className="w-3.5 h-3.5 text-muted-foreground" />
+            <h2 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
               Booked for {isSelectedToday ? 'Today' : format(parseISO(selectedDate), 'MMM dd')}
             </h2>
           </div>
@@ -151,10 +151,10 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
             {bookings.map(res => <BookingCard key={res.id} res={res} />)}
           </div>
         ) : (
-          <div className="py-20 text-center bg-slate-900/30 rounded-[2.5rem] border border-slate-800 border-dashed backdrop-blur-sm">
-            <ClipboardList className="w-8 h-8 text-slate-800 mx-auto mb-3 opacity-20" />
-            <p className="text-slate-500 font-black text-lg italic tracking-tight">No {terms.bookingsLower} for this day</p>
-            <p className="text-slate-600 text-[10px] font-bold uppercase tracking-widest mt-1">Check another day or create a new booking</p>
+          <div className="py-20 text-center bg-card/30 rounded-[2.5rem] border border-border border-dashed backdrop-blur-sm">
+            <ClipboardList className="w-8 h-8 text-muted-foreground mx-auto mb-3 opacity-20" />
+            <p className="text-muted-foreground font-black text-lg italic tracking-tight">No {terms.bookingsLower} for this day</p>
+            <p className="text-muted-foreground/60 text-[10px] font-bold uppercase tracking-widest mt-1">Check another day or create a new booking</p>
           </div>
         )}
       </section>
@@ -177,12 +177,12 @@ function BookingCard({ res }: { res: Reservation }) {
     <div className={cn(
       'relative flex flex-col gap-3 p-4 rounded-3xl border-2 transition-all duration-300',
       canEdit
-        ? 'bg-slate-900 border-slate-800 hover:border-violet-500/50 active:scale-[0.97]'
-        : 'bg-slate-900/50 border-slate-800/50'
+        ? 'bg-card border-border hover:border-violet-500/50 active:scale-[0.97]'
+        : 'bg-card/50 border-border/50'
     )}>
       <div className="flex items-start justify-between gap-2">
         <div className={cn(
-          'w-12 h-12 rounded-2xl bg-gradient-to-br border flex items-center justify-center text-xl font-black text-white flex-shrink-0 shadow-lg',
+          'w-12 h-12 rounded-2xl bg-gradient-to-br border flex items-center justify-center text-xl font-black text-foreground flex-shrink-0 shadow-lg',
           statusAvatarBg[res.status] ?? 'from-violet-600/30 to-indigo-600/30 border-violet-500/20'
         )}>
           {res.guest_name?.slice(0, 1).toUpperCase() || '?'}
@@ -192,21 +192,21 @@ function BookingCard({ res }: { res: Reservation }) {
         </Badge>
       </div>
       <div>
-        <p className="text-sm font-black text-white leading-tight truncate">{res.guest_name}</p>
-        {res.guest_phone && <p className="text-xs text-slate-500 mt-0.5 truncate">{res.guest_phone}</p>}
+        <p className="text-sm font-black text-foreground leading-tight truncate">{res.guest_name}</p>
+        {res.guest_phone && <p className="text-xs text-muted-foreground mt-0.5 truncate">{res.guest_phone}</p>}
       </div>
-      <div className="flex items-center gap-2 text-xs text-slate-400">
-        <span className="bg-slate-800 px-2 py-0.5 rounded-lg font-semibold text-slate-300 truncate max-w-[60px]">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <span className="bg-muted px-2 py-0.5 rounded-lg font-semibold text-foreground/70 truncate max-w-[60px]">
           {res.unit_name || res.physical_tables?.table_name || '—'}
         </span>
         {res.party_size && res.party_size > 0 && (
-          <><span className="text-slate-600">·</span><span>{res.party_size}p</span></>
+          <><span className="text-muted-foreground/60">·</span><span>{res.party_size}p</span></>
         )}
       </div>
       {timeStr && (
         <div className="flex flex-col gap-1.5">
-          <p className="text-[11px] text-slate-500 font-black flex items-center gap-1 uppercase tracking-tight">
-            <Calendar className="w-3 h-3 text-slate-600" /> {timeStr}
+          <p className="text-[11px] text-muted-foreground font-black flex items-center gap-1 uppercase tracking-tight">
+            <Calendar className="w-3 h-3 text-muted-foreground/60" /> {timeStr}
           </p>
 
           {/* Premium Range Badge for Multi-day stays */}
@@ -222,7 +222,7 @@ function BookingCard({ res }: { res: Reservation }) {
       )}
       {canEdit && (
         <div className="flex items-center justify-end">
-          <span className="text-[10px] text-slate-600 font-black uppercase tracking-tighter flex items-center gap-0.5">
+          <span className="text-[10px] text-muted-foreground/60 font-black uppercase tracking-tighter flex items-center gap-0.5">
             Manage <ChevronRight className="w-3 h-3" />
           </span>
         </div>

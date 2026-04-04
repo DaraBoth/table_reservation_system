@@ -131,8 +131,8 @@ export function TablesClient({
 
   return (
     <div className="relative space-y-6">
-      {/* 🔮 Magic UI Style Grid Background */}
-      <div className="absolute inset-0 -top-20 -z-10 h-[1000px] w-full bg-slate-950 [background:radial-gradient(125%_125%_at_50%_10%,#020617_40%,#1e1b4b_100%)]">
+      {/* 🔮 Magic UI Style Grid Background — only in dark mode */}
+      <div className="absolute inset-0 -top-20 -z-10 h-[1000px] w-full bg-background hidden dark:block [background:radial-gradient(125%_125%_at_50%_10%,#020617_40%,#1e1b4b_100%)]">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-20" />
       </div>
 
@@ -140,7 +140,7 @@ export function TablesClient({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-black text-white italic tracking-tight uppercase">
+            <h1 className="text-xl font-black text-foreground italic tracking-tight uppercase">
               {terms.units} Status
             </h1>
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
@@ -148,7 +148,7 @@ export function TablesClient({
               <span className="text-[9px] font-black text-indigo-400 uppercase tracking-tighter">Live Feed</span>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-slate-500">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <Clock className="w-3 h-3" />
             <p className="text-[10px] font-black uppercase tracking-[0.2em]">
               {format(now, 'EEEE, MMM d, yyyy • hh:mm a')}
@@ -159,7 +159,7 @@ export function TablesClient({
         <div className="flex items-center gap-2">
           <Link
             href="/dashboard/reports"
-            className="flex items-center gap-1.5 h-10 px-4 bg-slate-900 border border-slate-800 rounded-xl text-slate-300 text-xs font-black uppercase tracking-tight hover:border-violet-500/50 hover:text-violet-300 transition-all shadow-lg"
+            className="flex items-center gap-1.5 h-10 px-4 bg-card border border-border rounded-xl text-foreground/70 text-xs font-black uppercase tracking-tight hover:border-violet-500/50 hover:text-violet-300 transition-all shadow-lg"
           >
             <BarChart3 className="w-3.5 h-3.5" /> Reports
           </Link>
@@ -179,16 +179,16 @@ export function TablesClient({
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden group bg-slate-900/40 border border-emerald-500/20 rounded-3xl p-5 flex items-center gap-4 transition-all hover:bg-slate-900/60"
+          className="relative overflow-hidden group bg-card/40 border border-emerald-500/20 rounded-3xl p-5 flex items-center gap-4 transition-all hover:bg-card/60"
         >
           <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center shadow-inner">
             <CircleCheck className="w-6 h-6 text-emerald-400" />
           </div>
           <div>
-            <p className="text-3xl font-black text-white leading-tight">
+            <p className="text-3xl font-black text-foreground leading-tight">
               <NumberTicker value={freeCount} />
             </p>
-            <p className="text-[10px] text-slate-500 font-extrabold uppercase tracking-widest mt-0.5">Available</p>
+            <p className="text-[10px] text-muted-foreground font-extrabold uppercase tracking-widest mt-0.5">Available</p>
           </div>
           <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full -mr-12 -mt-12 blur-2xl group-hover:bg-emerald-500/10 transition-all" />
         </motion.div>
@@ -197,16 +197,16 @@ export function TablesClient({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="relative overflow-hidden group bg-slate-900/40 border border-rose-500/20 rounded-3xl p-5 flex items-center gap-4 transition-all hover:bg-slate-900/60"
+          className="relative overflow-hidden group bg-card/40 border border-rose-500/20 rounded-3xl p-5 flex items-center gap-4 transition-all hover:bg-card/60"
         >
           <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center shadow-inner">
             <CircleX className="w-6 h-6 text-rose-400" />
           </div>
           <div>
-            <p className="text-3xl font-black text-white leading-tight">
+            <p className="text-3xl font-black text-foreground leading-tight">
               <NumberTicker value={busyCount} />
             </p>
-            <p className="text-[10px] text-slate-500 font-extrabold uppercase tracking-widest mt-0.5">Booked</p>
+            <p className="text-[10px] text-muted-foreground font-extrabold uppercase tracking-widest mt-0.5">Booked</p>
           </div>
           <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-full -mr-12 -mt-12 blur-2xl group-hover:bg-rose-500/10 transition-all" />
         </motion.div>
@@ -242,15 +242,15 @@ export function TablesClient({
           })}
         </div>
       ) : (
-        <div className="text-center py-20 bg-slate-900/30 rounded-[2.5rem] border border-slate-800 border-dashed backdrop-blur-sm">
-          <p className="text-slate-400 font-black text-lg italic tracking-tight">No {terms.unitsLower} yet</p>
-          <p className="text-slate-600 text-xs mt-1 mb-8 font-bold uppercase tracking-widest">Add your first unit to start live operations</p>
+        <div className="text-center py-20 bg-card/30 rounded-[2.5rem] border border-border border-dashed backdrop-blur-sm">
+          <p className="text-muted-foreground font-black text-lg italic tracking-tight">No {terms.unitsLower} yet</p>
+          <p className="text-muted-foreground/60 text-xs mt-1 mb-8 font-bold uppercase tracking-widest">Add your first unit to start live operations</p>
         </div>
       )}
 
       <div className="text-center space-y-2 pt-8 pb-4 opacity-50 flex flex-col items-center">
         <Activity className="w-4 h-4 text-emerald-500 animate-pulse mb-1" />
-        <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.2em] leading-relaxed px-8">
+        <p className="text-[10px] text-muted-foreground/60 font-black uppercase tracking-[0.2em] leading-relaxed px-8">
           Everything updates live as it happens.
         </p>
       </div>

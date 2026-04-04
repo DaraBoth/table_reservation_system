@@ -17,16 +17,16 @@ export default async function RestaurantDetailPage({ params }: { params: Promise
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <Link href="/superadmin/restaurants" className="text-sm text-slate-500 hover:text-slate-300 transition-colors">
+        <Link href="/superadmin/restaurants" className="text-sm text-muted-foreground hover:text-foreground/70 transition-colors">
           ← Back to restaurants
         </Link>
         <div className="flex items-center gap-3 mt-2">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center text-lg font-bold text-white">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center text-lg font-bold text-foreground">
             {restaurant.name.slice(0, 2).toUpperCase()}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">{restaurant.name}</h1>
-            <p className="text-slate-400 text-sm">/{restaurant.slug}</p>
+            <h1 className="text-2xl font-bold text-foreground">{restaurant.name}</h1>
+            <p className="text-muted-foreground text-sm">/{restaurant.slug}</p>
           </div>
         </div>
       </div>

@@ -141,11 +141,11 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgb(30 41 59); /* slate-800 */
+    background: var(--border);
     border-radius: 10px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgb(51 65 85); /* slate-700 */
+    background: var(--muted-foreground);
   }
 }
 
@@ -158,10 +158,10 @@
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: theme('colors.slate.800');
+    background: var(--border);
     border-radius: 10px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: theme('colors.slate.700');
+    background: var(--muted-foreground);
   }
-}
+}

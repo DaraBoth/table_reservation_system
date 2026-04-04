@@ -14,7 +14,7 @@ export default function RegisterSuperadminPage() {
   const [state, action, pending] = useActionState(tempRegisterSuperadmin, null)
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-600/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none" />
@@ -31,8 +31,8 @@ export default function RegisterSuperadminPage() {
               className="object-cover" 
             />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Superadmin Setup</h1>
-          <p className="text-slate-400 mt-2">Initialize your system access</p>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">Superadmin Setup</h1>
+          <p className="text-muted-foreground mt-2">Initialize your system access</p>
         </div>
 
         {/* Manual Alert Replacement */}
@@ -46,46 +46,46 @@ export default function RegisterSuperadminPage() {
           </div>
         </div>
 
-        <Card className="bg-slate-900/50 border-slate-800 backdrop-blur-xl shadow-2xl">
+        <Card className="bg-card/50 border-border backdrop-blur-xl shadow-2xl">
           <CardHeader>
-            <CardTitle className="text-white text-xl">Create Account</CardTitle>
-            <CardDescription className="text-slate-400">
+            <CardTitle className="text-foreground text-xl">Create Account</CardTitle>
+            <CardDescription className="text-muted-foreground">
               Enter your credentials to gain full platform control
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form action={action} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="fullName" className="text-slate-300">Full Name</Label>
+                <Label htmlFor="fullName" className="text-foreground/70">Full Name</Label>
                 <Input
                   id="fullName"
                   name="fullName"
                   placeholder="System Administrator"
                   required
-                  className="bg-slate-950/50 border-slate-800 text-white placeholder:text-slate-600 focus:border-violet-500 transition-colors h-11"
+                  className="bg-background/50 border-border text-foreground placeholder:text-muted-foreground/60 focus:border-violet-500 transition-colors h-11"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-slate-300">Username</Label>
+                <Label htmlFor="username" className="text-foreground/70">Username</Label>
                 <Input
                   id="username"
                   name="username"
                   placeholder="superadmin"
                   required
-                  className="bg-slate-950/50 border-slate-800 text-white placeholder:text-slate-600 focus:border-violet-500 transition-colors h-11"
+                  className="bg-background/50 border-border text-foreground placeholder:text-muted-foreground/60 focus:border-violet-500 transition-colors h-11"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-slate-300">Password</Label>
+                <Label htmlFor="password" className="text-foreground/70">Password</Label>
                 <Input
                   id="password"
                   name="password"
                   type="password"
                   placeholder="••••••••"
                   required
-                  className="bg-slate-950/50 border-slate-800 text-white placeholder:text-slate-600 focus:border-violet-500 transition-colors h-11"
+                  className="bg-background/50 border-border text-foreground placeholder:text-muted-foreground/60 focus:border-violet-500 transition-colors h-11"
                 />
               </div>
 
@@ -104,13 +104,13 @@ export default function RegisterSuperadminPage() {
               <Button
                 type="submit"
                 disabled={pending}
-                className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold h-11 shadow-lg shadow-violet-500/20 border-0 transition-all active:scale-[0.98]"
+                className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-foreground font-semibold h-11 shadow-lg shadow-violet-500/20 border-0 transition-all active:scale-[0.98]"
               >
                 {pending ? 'Initializing...' : 'Create Superadmin Account'}
               </Button>
 
               <div className="text-center pt-2">
-                <Link href="/login" className="text-sm text-slate-500 hover:text-violet-400 transition-colors">
+                <Link href="/login" className="text-sm text-muted-foreground hover:text-violet-400 transition-colors">
                   Already have an account? Sign in
                 </Link>
               </div>
@@ -118,7 +118,7 @@ export default function RegisterSuperadminPage() {
           </CardContent>
         </Card>
 
-        <p className="text-center text-slate-600 text-[10px] mt-8 uppercase tracking-widest font-bold">
+        <p className="text-center text-muted-foreground/60 text-[10px] mt-8 uppercase tracking-widest font-bold">
           &copy; 2026 TableBook Platform &bull; Security Critical
         </p>
       </div>

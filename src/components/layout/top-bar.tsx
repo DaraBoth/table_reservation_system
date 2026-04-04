@@ -38,7 +38,7 @@ export function TopBar({ brandName, userName, restaurantId, memberships }: TopBa
   const isEditing = pathname.includes('/edit') || pathname.includes('/new')
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-xl border-b border-slate-800/60">
+    <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/60">
       <div className="flex items-center justify-between px-4 h-14">
         {/* Left: Back or Brand or Switcher */}
         <div className="flex items-center gap-2">
@@ -58,15 +58,15 @@ export function TopBar({ brandName, userName, restaurantId, memberships }: TopBa
           ) : (
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
-                <span className="text-white font-black text-[10px]">TB</span>
+                <span className="text-foreground font-black text-[10px]">TB</span>
               </div>
-              <span className="text-white font-bold text-sm">{brandName}</span>
+              <span className="text-foreground font-bold text-sm">{brandName}</span>
             </div>
           )}
         </div>
 
         {isEditing ? (
-          <h1 className="text-white font-bold text-base absolute left-1/2 -translate-x-1/2">
+          <h1 className="text-foreground font-bold text-base absolute left-1/2 -translate-x-1/2">
             {title}
           </h1>
         ) : null}
@@ -80,7 +80,7 @@ export function TopBar({ brandName, userName, restaurantId, memberships }: TopBa
               variant="ghost"
               size="icon"
               type="submit"
-              className="w-9 h-9 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl"
+              className="w-9 h-9 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded-xl"
               title="Sign out"
             >
               <LogOut className="w-4 h-4" />

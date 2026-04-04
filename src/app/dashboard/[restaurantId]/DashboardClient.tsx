@@ -30,7 +30,7 @@ const statusColors: Record<string, string> = {
   confirmed: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
   arrived: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   cancelled: 'bg-red-500/20 text-red-400 border-red-500/30',
-  completed: 'bg-slate-600/40 text-slate-300 border-slate-700',
+  completed: 'bg-muted/60/40 text-foreground/70 border-border',
   no_show: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
 }
 
@@ -82,8 +82,8 @@ export function DashboardClient({ initialData, restaurantId }: DashboardClientPr
         animate={{ opacity: 1, x: 0 }}
         className="pt-2"
       >
-        <p className="text-slate-400 text-sm font-medium tracking-tight uppercase">{todayStr}</p>
-        <h1 className="text-3xl font-black text-white mt-1 italic tracking-tighter">Today's Overview</h1>
+        <p className="text-muted-foreground text-sm font-medium tracking-tight uppercase">{todayStr}</p>
+        <h1 className="text-3xl font-black text-foreground mt-1 italic tracking-tighter">Today's Overview</h1>
       </motion.div>
 
       {/* Stats Row with Magic Card Glow */}
@@ -102,7 +102,7 @@ export function DashboardClient({ initialData, restaurantId }: DashboardClientPr
             <Link 
               href={stat.href}
               onMouseMove={handleMouseMove}
-              className="relative overflow-hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2 hover:border-slate-700 hover:bg-slate-900 transition-all active:scale-[0.97] group h-full"
+              className="relative overflow-hidden bg-card/60 border border-border rounded-2xl p-4 flex flex-col gap-2 hover:border-border hover:bg-card transition-all active:scale-[0.97] group h-full"
             >
               {/* 🖱️ Interactive Follow-Glow */}
               <motion.div
@@ -124,10 +124,10 @@ export function DashboardClient({ initialData, restaurantId }: DashboardClientPr
                   stat.color === 'violet' ? 'text-violet-400' : stat.color === 'amber' ? 'text-amber-400' : 'text-emerald-400'
                 )} />
               </div>
-              <div className="text-3xl font-black text-white tabular-nums relative z-10 mt-1">
+              <div className="text-3xl font-black text-foreground tabular-nums relative z-10 mt-1">
                 <NumberTicker value={stat.count ?? 0} />
               </div>
-              <div className="text-[10px] text-slate-500 font-black uppercase tracking-widest leading-tight relative z-10">
+              <div className="text-[10px] text-muted-foreground font-black uppercase tracking-widest leading-tight relative z-10">
                 {stat.label}
               </div>
             </Link>
@@ -143,7 +143,7 @@ export function DashboardClient({ initialData, restaurantId }: DashboardClientPr
       >
         <Link
           href={`/dashboard/${restaurantId}/reservations/new`}
-          className="relative group flex items-center justify-between w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-2xl p-4 shadow-lg shadow-violet-500/25 transition-all active:scale-[0.98] overflow-hidden"
+          className="relative group flex items-center justify-between w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-foreground rounded-2xl p-4 shadow-lg shadow-violet-500/25 transition-all active:scale-[0.98] overflow-hidden"
         >
           {/* Animated Shine Layer */}
           <motion.div 
@@ -158,17 +158,17 @@ export function DashboardClient({ initialData, restaurantId }: DashboardClientPr
             </div>
             <div>
               <p className="font-black text-base leading-tight italic tracking-tight">New {terms.booking}</p>
-              <p className="text-white/70 text-[10px] uppercase font-bold tracking-tight mt-0.5">Add a new {terms.unitLower} {terms.bookingLower}</p>
+              <p className="text-foreground/70 text-[10px] uppercase font-bold tracking-tight mt-0.5">Add a new {terms.unitLower} {terms.bookingLower}</p>
             </div>
           </div>
-          <ChevronRight className="w-5 h-5 text-white/60 group-hover:translate-x-1 transition-transform" />
+          <ChevronRight className="w-5 h-5 text-foreground/60 group-hover:translate-x-1 transition-transform" />
         </Link>
       </motion.div>
 
       {/* Upcoming Bookings with Staggered List Animation */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-black text-white uppercase tracking-widest italic">Upcoming {terms.bookings}</h2>
+          <h2 className="text-base font-black text-foreground uppercase tracking-widest italic">Upcoming {terms.bookings}</h2>
           <Link href={`/dashboard/${restaurantId}/reservations`} className="text-[10px] text-violet-400 font-black uppercase tracking-widest hover:text-violet-300 transition-colors">
             See all →
           </Link>
@@ -191,7 +191,7 @@ export function DashboardClient({ initialData, restaurantId }: DashboardClientPr
                   >
                     <Link
                       href={`/dashboard/${restaurantId}/reservations/${res.id}/edit`}
-                      className="flex items-center gap-4 p-4 rounded-2xl bg-slate-900/40 border border-slate-800/60 hover:border-slate-700/80 hover:bg-slate-900/60 active:scale-[0.99] transition-all group"
+                      className="flex items-center gap-4 p-4 rounded-2xl bg-card/40 border border-border/60 hover:border-border/80 hover:bg-card/60 active:scale-[0.99] transition-all group"
                     >
                       {/* Avatar */}
                       <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-600/20 to-indigo-600/20 border border-violet-500/10 flex items-center justify-center text-lg font-black text-violet-300 flex-shrink-0 group-hover:scale-105 transition-transform">
@@ -200,8 +200,8 @@ export function DashboardClient({ initialData, restaurantId }: DashboardClientPr
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-white truncate group-hover:text-violet-200 transition-colors">{res.guest_name}</p>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter mt-0.5">
+                        <p className="text-sm font-bold text-foreground truncate group-hover:text-violet-200 transition-colors">{res.guest_name}</p>
+                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter mt-0.5">
                           {res.physical_tables?.table_name ?? '—'} {!terms.hasCheckout && `· ${res.party_size} People`}
                         </p>
                       </div>
@@ -211,7 +211,7 @@ export function DashboardClient({ initialData, restaurantId }: DashboardClientPr
                         <Badge className={cn('text-[9px] font-black px-2 py-0.5 border rounded-lg uppercase tracking-widest', statusColors[res.status] ?? '')}>
                           {statusLabels[res.status] ?? res.status}
                         </Badge>
-                        <span className="text-[10px] text-slate-600 font-bold">
+                        <span className="text-[10px] text-muted-foreground/60 font-bold">
                           {dateDisplay} · {timeDisplay}
                         </span>
                       </div>
@@ -223,10 +223,10 @@ export function DashboardClient({ initialData, restaurantId }: DashboardClientPr
               <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-center py-12 bg-slate-900/30 rounded-3xl border border-slate-800 border-dashed"
+                className="text-center py-12 bg-card/30 rounded-3xl border border-border border-dashed"
               >
-                <Clock className="w-10 h-10 text-slate-700 mx-auto mb-3 opacity-50" />
-                <p className="text-slate-500 text-xs font-black uppercase tracking-widest italic">No bookings yet Today</p>
+                <Clock className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-50" />
+                <p className="text-muted-foreground text-xs font-black uppercase tracking-widest italic">No bookings yet Today</p>
                 <Link
                   href={`/dashboard/${restaurantId}/reservations/new`}
                   className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-violet-600/10 text-violet-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-violet-600/20 transition-all"
