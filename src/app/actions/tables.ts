@@ -11,16 +11,31 @@ const TableSchema = z.object({
   description: z.string().optional(),
 })
 
+async function getMembershipForRestaurant(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  restaurantId: string,
+) {
+  const { data: membership } = await supabase
+    .from('account_memberships')
+    .select('role, restaurant_id')
+    .eq('user_id', userId)
+    .eq('restaurant_id', restaurantId)
+    .eq('is_active', true)
+    .maybeSingle()
+
+  return membership
+}
+
 export async function createPhysicalTable(_: ActionState, formData: FormData): Promise<ActionState> {
+  const restaurantId = String(formData.get('restaurantId') || '')
+  if (!restaurantId) return { error: 'Restaurant context missing' }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { data: membership } = await supabase
-    .from('account_memberships')
-    .select('role, restaurant_id')
-    .eq('user_id', user.id)
-    .single()
+  const membership = await getMembershipForRestaurant(supabase, user.id, restaurantId)
 
   const canManage = membership?.role === 'admin' || membership?.role === 'superadmin' || membership?.role === 'staff'
   if (!canManage || !membership.restaurant_id) {
@@ -44,20 +59,19 @@ export async function createPhysicalTable(_: ActionState, formData: FormData): P
 
   if (error) return { error: error.message }
 
-  revalidatePath('/dashboard/tables')
+  revalidatePath(`/dashboard/${restaurantId}/tables`)
   return { success: `Table "${parsed.data.tableName}" created.` }
 }
 
 export async function updatePhysicalTable(_: ActionState, formData: FormData): Promise<ActionState> {
+  const restaurantId = String(formData.get('restaurantId') || '')
+  if (!restaurantId) return { error: 'Restaurant context missing' }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { data: membership } = await supabase
-    .from('account_memberships')
-    .select('role, restaurant_id')
-    .eq('user_id', user.id)
-    .single()
+  const membership = await getMembershipForRestaurant(supabase, user.id, restaurantId)
 
   const canEdit = membership?.role === 'admin' || membership?.role === 'superadmin' || membership?.role === 'staff'
   if (!canEdit) return { error: 'Unauthorized' }
@@ -84,20 +98,19 @@ export async function updatePhysicalTable(_: ActionState, formData: FormData): P
 
   if (error) return { error: error.message }
 
-  revalidatePath('/dashboard/tables')
+  revalidatePath(`/dashboard/${restaurantId}/tables`)
   return { success: 'Table updated.' }
 }
 
 export async function deletePhysicalTable(_: ActionState, formData: FormData): Promise<ActionState> {
+  const restaurantId = String(formData.get('restaurantId') || '')
+  if (!restaurantId) return { error: 'Restaurant context missing' }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { data: membership } = await supabase
-    .from('account_memberships')
-    .select('role, restaurant_id')
-    .eq('user_id', user.id)
-    .single()
+  const membership = await getMembershipForRestaurant(supabase, user.id, restaurantId)
 
   const isAdmin = membership?.role === 'admin' || membership?.role === 'superadmin'
   if (!isAdmin) return { error: 'Unauthorized — Admin only' }
@@ -116,6 +129,6 @@ export async function deletePhysicalTable(_: ActionState, formData: FormData): P
 
   if (error) return { error: error.message }
 
-  revalidatePath('/dashboard/tables')
+  revalidatePath(`/dashboard/${restaurantId}/tables`)
   return { success: 'Unit deleted successfully.' }
 }

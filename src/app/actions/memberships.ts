@@ -14,16 +14,31 @@ const CreateStaffSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
 })
 
+async function getMembershipForRestaurant(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  restaurantId: string,
+) {
+  const { data: membership } = await supabase
+    .from('account_memberships')
+    .select('role, restaurant_id')
+    .eq('user_id', userId)
+    .eq('restaurant_id', restaurantId)
+    .eq('is_active', true)
+    .maybeSingle()
+
+  return membership
+}
+
 export async function createStaffAccount(_: ActionState, formData: FormData): Promise<ActionState> {
+  const restaurantId = String(formData.get('restaurantId') || '')
+  if (!restaurantId) return { error: 'Restaurant context missing' }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { data: membership } = await supabase
-    .from('account_memberships')
-    .select('role, restaurant_id')
-    .eq('user_id', user.id)
-    .single()
+  const membership = await getMembershipForRestaurant(supabase, user.id, restaurantId)
 
   if (membership?.role !== 'admin' || !membership.restaurant_id) {
     return { error: 'Unauthorized — admin only' }
@@ -62,7 +77,7 @@ export async function createStaffAccount(_: ActionState, formData: FormData): Pr
 
   if (membershipError) return { error: membershipError.message }
 
-  revalidatePath('/dashboard/staff')
+  revalidatePath(`/dashboard/${restaurantId}/staff`)
   return { success: `Staff account for "${parsed.data.fullName}" created.` }
 }
 
@@ -73,11 +88,15 @@ export async function toggleMemberStatus(_: ActionState, formData: FormData): Pr
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { data: membership } = await supabase
-    .from('account_memberships')
-    .select('role, restaurant_id')
-    .eq('user_id', user.id)
-    .single()
+  const restaurantId = String(formData.get('restaurantId') || '')
+
+  const membership = restaurantId
+    ? await getMembershipForRestaurant(supabase, user.id, restaurantId)
+    : (await supabase
+        .from('account_memberships')
+        .select('role, restaurant_id')
+        .eq('user_id', user.id)
+        .single()).data
 
   const memberId = formData.get('memberId') as string
   const isActive = formData.get('isActive') === 'true'
@@ -90,19 +109,20 @@ export async function toggleMemberStatus(_: ActionState, formData: FormData): Pr
       .eq('id', memberId)
     if (error) return { error: error.message }
   } else if (membership?.role === 'admin') {
+    if (!restaurantId) return { error: 'Restaurant context missing' }
     // Admin can only toggle staff in their restaurant
     const { error } = await supabase
       .from('account_memberships')
       .update({ is_active: isActive })
       .eq('id', memberId)
-      .eq('restaurant_id', membership.restaurant_id!)
+      .eq('restaurant_id', restaurantId)
       .eq('role', 'staff')
     if (error) return { error: error.message }
   } else {
     return { error: 'Unauthorized' }
   }
 
-  revalidatePath('/dashboard/staff')
+  if (restaurantId) revalidatePath(`/dashboard/${restaurantId}/staff`)
   revalidatePath('/superadmin/admins')
   return { success: `Account ${isActive ? 'enabled' : 'disabled'}.` }
 }
@@ -198,15 +218,14 @@ export async function deleteUserAccount(_: ActionState, formData: FormData): Pro
 // ─── Admin: Delete Staff Member (Hard Delete) ──────────────────────────────────
 
 export async function deleteStaffMember(_: ActionState, formData: FormData): Promise<ActionState> {
+  const restaurantId = String(formData.get('restaurantId') || '')
+  if (!restaurantId) return { error: 'Restaurant context missing' }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { data: membership } = await supabase
-    .from('account_memberships')
-    .select('role, restaurant_id')
-    .eq('user_id', user.id)
-    .single()
+  const membership = await getMembershipForRestaurant(supabase, user.id, restaurantId)
 
   if (membership?.role !== 'admin' || !membership.restaurant_id) {
     return { error: 'Unauthorized — admin only' }
@@ -220,7 +239,7 @@ export async function deleteStaffMember(_: ActionState, formData: FormData): Pro
     .from('account_memberships')
     .select('role, restaurant_id')
     .eq('user_id', targetUserId)
-    .eq('restaurant_id', membership.restaurant_id)
+    .eq('restaurant_id', restaurantId)
     .eq('role', 'staff')
     .single()
 
@@ -231,7 +250,7 @@ export async function deleteStaffMember(_: ActionState, formData: FormData): Pro
 
   if (error) return { error: error.message }
 
-  revalidatePath('/dashboard/staff')
+  revalidatePath(`/dashboard/${restaurantId}/staff`)
   return { success: 'Staff member account fully removed from database.' }
 }
 

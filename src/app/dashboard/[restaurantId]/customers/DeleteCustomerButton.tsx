@@ -6,12 +6,13 @@ import { Trash2 } from 'lucide-react'
 
 type ActionState = { error: string } | { success: true } | null
 
-export function DeleteCustomerButton({ id, name }: { id: string; name: string }) {
+export function DeleteCustomerButton({ id, name, restaurantId }: { id: string; name: string; restaurantId: string }) {
   const [, action, pending] = useActionState<ActionState, FormData>(deleteCommonCustomer as any, null)
 
   return (
     <form action={action}>
       <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="restaurantId" value={restaurantId} />
       <button
         type="submit"
         disabled={pending}

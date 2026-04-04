@@ -163,7 +163,7 @@ export function TablesClient({
           >
             <BarChart3 className="w-3.5 h-3.5" /> Reports
           </Link>
-          <CreateTableDialog businessType={businessType as any} />
+          <CreateTableDialog businessType={businessType as any} restaurantId={restaurantId} />
         </div>
       </div>
 

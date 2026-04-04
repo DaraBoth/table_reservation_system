@@ -48,6 +48,7 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
           {/* Main Update Form */}
           <form action={action} className="space-y-5">
             <input type="hidden" name="tableId" value={table.id} />
+            <input type="hidden" name="restaurantId" value={table.restaurant_id ?? ''} />
             <input type="hidden" name="isActive" value={String(isActive)} />
 
             <div className="space-y-1.5">
@@ -149,6 +150,7 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
                     </Button>
                     <form action={deleteAction} className="flex-1">
                       <input type="hidden" name="tableId" value={table.id} />
+                      <input type="hidden" name="restaurantId" value={table.restaurant_id ?? ''} />
                       <Button
                         type="submit"
                         disabled={deletePending}

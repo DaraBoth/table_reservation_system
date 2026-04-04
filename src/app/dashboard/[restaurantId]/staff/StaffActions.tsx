@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Trash2, UserX, UserCheck, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-export function StaffActions({ userId, membershipId, isActive, name }: { userId: string, membershipId: string, isActive: boolean, name: string }) {
+export function StaffActions({ userId, membershipId, isActive, name, restaurantId }: { userId: string, membershipId: string, isActive: boolean, name: string, restaurantId: string }) {
   const [toggleState, toggleAction, togglePending] = useActionState(toggleMemberStatus, null)
   const [deleteState, deleteAction, deletePending] = useActionState(deleteStaffMember, null)
   const [showConfirm, setShowConfirm] = useState(false)
@@ -18,6 +18,7 @@ export function StaffActions({ userId, membershipId, isActive, name }: { userId:
       <form action={toggleAction}>
         <input type="hidden" name="memberId" value={membershipId} />
         <input type="hidden" name="isActive" value={(!isActive).toString()} />
+        <input type="hidden" name="restaurantId" value={restaurantId} />
         <Button
           type="submit"
           variant="outline"
@@ -68,6 +69,7 @@ export function StaffActions({ userId, membershipId, isActive, name }: { userId:
               </Button>
               <form action={deleteAction} onSubmit={() => setShowConfirm(false)}>
                 <input type="hidden" name="userId" value={userId} />
+                <input type="hidden" name="restaurantId" value={restaurantId} />
                 <Button 
                   type="submit"
                   disabled={deletePending}

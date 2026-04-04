@@ -16,9 +16,10 @@ interface TableTabsProps {
   unitsLabel: string
   isAdmin: boolean
   businessType: string
+  restaurantId: string
 }
 
-export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType }: TableTabsProps) {
+export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, restaurantId }: TableTabsProps) {
   const [activeTab, setActiveTab] = useState<'status' | 'settings'>('status')
 
   const freeTables = tables.filter(t => !busyMap.has(t.id) && t.is_active).length
@@ -148,7 +149,7 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType }
         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
            <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-black text-foreground italic tracking-tight">{unitsLabel} Management</h3>
-            <CreateTableDialog businessType={businessType} />
+            <CreateTableDialog businessType={businessType} restaurantId={restaurantId} />
           </div>
 
           <div className="space-y-3">

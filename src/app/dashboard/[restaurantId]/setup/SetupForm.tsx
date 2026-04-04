@@ -14,7 +14,7 @@ const typeInfo: Record<string, { label: string; Icon: React.ComponentType<{ clas
   guesthouse: { label: 'Guest house', Icon: BedDouble, desc: 'Simple lodging' },
 }
 
-export function SetupForm({ restaurant }: { restaurant: any }) {
+export function SetupForm({ restaurant, restaurantId }: { restaurant: any; restaurantId: string }) {
   const [state, action, pending] = useActionState(completeRestaurantSetup, null)
   const [name, setName] = useState<string>(restaurant.name ?? '')
   const [contactEmail, setContactEmail] = useState<string>(restaurant.contact_email ?? '')
@@ -41,7 +41,7 @@ export function SetupForm({ restaurant }: { restaurant: any }) {
     try {
       const supabase = createClient()
       const ext = file.name.split('.').pop()
-      const path = `logos/${restaurant.id}.${ext}`
+      const path = `logos/${restaurantId}.${ext}`
       const { error } = await supabase.storage
         .from('restaurant-assets')
         .upload(path, file, { upsert: true, contentType: file.type })
@@ -58,6 +58,7 @@ export function SetupForm({ restaurant }: { restaurant: any }) {
 
   return (
     <form action={action} className="space-y-3">
+      <input type="hidden" name="restaurantId" value={restaurantId} />
       <input type="hidden" name="businessType" value={businessType} />
       <input type="hidden" name="logoUrl" value={logoUrl} />
       <input

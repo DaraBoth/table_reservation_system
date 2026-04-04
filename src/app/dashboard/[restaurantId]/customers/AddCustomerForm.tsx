@@ -11,9 +11,10 @@ type ActionState = { error: string } | { success: true } | null
 
 interface AddCustomerFormProps {
   trigger?: React.ReactNode
+  restaurantId: string
 }
 
-export function AddCustomerForm({ trigger }: AddCustomerFormProps) {
+export function AddCustomerForm({ trigger, restaurantId }: AddCustomerFormProps) {
   const [state, action, pending] = useActionState<ActionState, FormData>(addCommonCustomer as any, null)
   const [open, setOpen] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
@@ -48,6 +49,7 @@ export function AddCustomerForm({ trigger }: AddCustomerFormProps) {
           <p className="text-xs text-muted-foreground">Quickly save contact details for future seatings</p>
         </SheetHeader>
         <form action={action} className="space-y-4 mt-2">
+          <input type="hidden" name="restaurantId" value={restaurantId} />
           {/* Name */}
           <div>
             <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">

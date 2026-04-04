@@ -6,11 +6,12 @@ import { cn } from '@/lib/utils'
 import { Clock, CircleCheck, UserCheck, CheckCheck, UserX, Ban, Check } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
-export function CancelReservationButton({ reservationId }: { reservationId: string }) {
+export function CancelReservationButton({ reservationId, restaurantId }: { reservationId: string; restaurantId: string }) {
   const [, action, pending] = useActionState(cancelReservation, null)
   return (
     <form action={action} className="w-full">
       <input type="hidden" name="reservationId" value={reservationId} />
+      <input type="hidden" name="restaurantId" value={restaurantId} />
       <button
         type="submit"
         disabled={pending}
@@ -38,9 +39,11 @@ const STATUS_OPTIONS: Array<{
 
 export function UpdateStatusButton({
   reservationId,
+  restaurantId,
   currentStatus,
 }: {
   reservationId: string
+  restaurantId: string
   currentStatus: string
 }) {
   const [selected, setSelected] = useState(currentStatus)
@@ -49,6 +52,7 @@ export function UpdateStatusButton({
   return (
     <form action={action} className="space-y-3">
       <input type="hidden" name="reservationId" value={reservationId} />
+      <input type="hidden" name="restaurantId" value={restaurantId} />
       <input type="hidden" name="status" value={selected} />
 
       {/* Chip grid — 2 columns */}
@@ -67,7 +71,7 @@ export function UpdateStatusButton({
                   : 'border-border bg-background text-muted-foreground hover:border-border hover:text-foreground/70'
               )}
             >
-              <opt.icon className="w-4 h-4 flex-shrink-0" />
+              <opt.icon className="w-4 h-4 shrink-0" />
               <span className="truncate">{opt.label}</span>
               {isActive && (
                 <Check className="ml-auto w-3 h-3 opacity-70" />
@@ -84,7 +88,7 @@ export function UpdateStatusButton({
         className={cn(
           'w-full h-12 rounded-2xl font-bold text-sm transition-all active:scale-[0.98]',
           selected !== currentStatus
-            ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-foreground shadow-lg shadow-violet-500/20'
+            ? 'bg-linear-to-r from-violet-600 to-indigo-600 text-foreground shadow-lg shadow-violet-500/20'
             : 'bg-muted text-muted-foreground/60 cursor-not-allowed'
         )}
       >

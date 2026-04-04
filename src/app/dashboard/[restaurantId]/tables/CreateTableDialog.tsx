@@ -12,7 +12,13 @@ import { cn } from '@/lib/utils'
 import { useEffect } from 'react'
 import { Confetti } from '@/components/magicui/confetti'
 
-export function CreateTableDialog({ businessType = 'restaurant' }: { businessType?: string }) {
+export function CreateTableDialog({
+  businessType = 'restaurant',
+  restaurantId,
+}: {
+  businessType?: string
+  restaurantId: string
+}) {
   const [state, action, pending] = useActionState(createPhysicalTable, null)
   const [open, setOpen] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
@@ -46,6 +52,7 @@ export function CreateTableDialog({ businessType = 'restaurant' }: { businessTyp
           <SheetTitle className="text-foreground text-lg font-black italic tracking-tight">Add New {terms.unit}</SheetTitle>
         </SheetHeader>
         <form action={action} className="space-y-4 mt-2">
+          <input type="hidden" name="restaurantId" value={restaurantId} />
           <div className="space-y-1.5">
             <Label className="text-foreground/70 text-sm font-bold uppercase tracking-widest">{terms.unit} Name *</Label>
             <Input name="tableName" required placeholder={businessType === 'restaurant' ? "Table 1, Window Booth..." : "Room 101, Suite A..."}

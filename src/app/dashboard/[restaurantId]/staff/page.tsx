@@ -43,7 +43,7 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
       {/* Header */}
       <div className="flex items-center justify-between pt-2">
         <p className="text-muted-foreground text-sm">{staff.length} staff members</p>
-        <CreateStaffDialog />
+        <CreateStaffDialog restaurantId={membership.restaurant_id} />
       </div>
 
       {/* Summary strip */}
@@ -116,6 +116,7 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
                     membershipId={s.id} 
                     isActive={s.is_active} 
                     name={name} 
+                    restaurantId={membership.restaurant_id}
                   />
                   <div className="w-px h-6 bg-muted" />
                   <StaffPasswordResetButton userId={s.user_id} name={name} />
@@ -131,7 +132,7 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
           </div>
           <p className="text-foreground/70 font-bold text-base">No staff members yet</p>
           <p className="text-muted-foreground text-sm mt-1 mb-6">Add your first staff member to get started</p>
-          <CreateStaffDialog />
+          <CreateStaffDialog restaurantId={membership.restaurant_id} />
         </div>
       )}
     </div>

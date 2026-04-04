@@ -23,20 +23,34 @@ const ReservationSchema = z.object({
   extraSlots: z.string().optional(),
 })
 
+async function getMembershipForRestaurant(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  restaurantId: string,
+) {
+  const { data: membership } = await supabase
+    .from('account_memberships')
+    .select('role, restaurant_id, restaurants(business_type)')
+    .eq('user_id', userId)
+    .eq('restaurant_id', restaurantId)
+    .eq('is_active', true)
+    .maybeSingle()
+
+  return membership
+}
+
 export async function createReservation(_: ActionState, formData: FormData): Promise<ActionState> {
+  const restaurantId = String(formData.get('restaurantId') || '')
+  if (!restaurantId) return { error: 'Restaurant context missing' }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  // Resolve tenant and business type
-  const { data: membership } = await supabase
-    .from('account_memberships')
-    .select('role, restaurant_id, restaurants(business_type)')
-    .eq('user_id', user.id)
-    .single()
+  const membership = await getMembershipForRestaurant(supabase, user.id, restaurantId)
 
   if (!membership || !membership.restaurant_id) return { error: 'No restaurant assigned' }
-  if (!['admin', 'staff'].includes(membership.role)) return { error: 'Unauthorized' }
+  if (!['admin', 'superadmin', 'staff'].includes(membership.role)) return { error: 'Unauthorized' }
 
   const parsed = ReservationSchema.safeParse({
     tableId: formData.get('tableId'),
@@ -214,24 +228,23 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
     }, { onConflict: 'restaurant_id,phone' })
   }
 
-  revalidatePath('/dashboard/reservations')
-  revalidatePath('/dashboard/tables')
-  revalidatePath('/dashboard')
-  redirect('/dashboard/tables')
+  revalidatePath(`/dashboard/${restaurantId}/reservations`)
+  revalidatePath(`/dashboard/${restaurantId}/tables`)
+  revalidatePath(`/dashboard/${restaurantId}`)
+  redirect(`/dashboard/${restaurantId}/tables`)
 }
 
 // ─── Cancel reservation ───────────────────────────────────────────────────────
 
 export async function cancelReservation(_: ActionState, formData: FormData): Promise<ActionState> {
+  const restaurantId = String(formData.get('restaurantId') || '')
+  if (!restaurantId) return { error: 'Restaurant context missing' }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { data: membership } = await supabase
-    .from('account_memberships')
-    .select('role, restaurant_id')
-    .eq('user_id', user.id)
-    .single()
+  const membership = await getMembershipForRestaurant(supabase, user.id, restaurantId)
 
   if (!membership || !membership.restaurant_id) return { error: 'Unauthorized' }
 
@@ -250,25 +263,24 @@ export async function cancelReservation(_: ActionState, formData: FormData): Pro
   const { notifyCancellation } = await import('@/lib/notifications')
   notifyCancellation(reservationId)
 
-  revalidatePath('/dashboard/reservations')
-  revalidatePath('/dashboard')
+  revalidatePath(`/dashboard/${restaurantId}/reservations`)
+  revalidatePath(`/dashboard/${restaurantId}`)
   return { success: 'Reservation cancelled.' }
 }
 
 // ─── Update reservation status (admin) ───────────────────────────────────────
 
 export async function updateReservationStatus(_: ActionState, formData: FormData): Promise<ActionState> {
+  const restaurantId = String(formData.get('restaurantId') || '')
+  if (!restaurantId) return { error: 'Restaurant context missing' }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { data: membership } = await supabase
-    .from('account_memberships')
-    .select('role, restaurant_id')
-    .eq('user_id', user.id)
-    .single()
+  const membership = await getMembershipForRestaurant(supabase, user.id, restaurantId)
 
-  if (!membership || membership.role !== 'admin') return { error: 'Unauthorized — admins only' }
+  if (!membership || !['admin', 'superadmin'].includes(membership.role)) return { error: 'Unauthorized — admins only' }
 
   const reservationId = formData.get('reservationId') as string
   const status = formData.get('status') as string
@@ -289,27 +301,26 @@ export async function updateReservationStatus(_: ActionState, formData: FormData
     notifyBookingUpdate(reservationId)
   }
 
-  revalidatePath('/dashboard/reservations')
+  revalidatePath(`/dashboard/${restaurantId}/reservations`)
   return { success: 'Status updated.' }
 }
 
 // ─── Update reservation (edit) ────────────────────────────────────────────────
 
 export async function updateReservation(_: ActionState, formData: FormData): Promise<ActionState> {
+  const restaurantId = String(formData.get('restaurantId') || '')
+  if (!restaurantId) return { error: 'Restaurant context missing' }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { data: membership } = await supabase
-    .from('account_memberships')
-    .select('role, restaurant_id')
-    .eq('user_id', user.id)
-    .single()
+  const membership = await getMembershipForRestaurant(supabase, user.id, restaurantId)
 
   if (!membership || !membership.restaurant_id) return { error: 'Unauthorized' }
-  if (!['admin', 'staff'].includes(membership.role)) return { error: 'Unauthorized' }
+  if (!['admin', 'superadmin', 'staff'].includes(membership.role)) return { error: 'Unauthorized' }
 
-  const reservationId = formData.get('id') as string
+  const reservationId = (formData.get('id') || formData.get('reservationId')) as string
   if (!reservationId) return { error: 'Reservation ID required for update' }
 
   const parsed = ReservationSchema.safeParse({
@@ -372,8 +383,8 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
   const { notifyBookingUpdate } = await import('@/lib/notifications')
   notifyBookingUpdate(reservationId)
 
-  revalidatePath('/dashboard/reservations')
-  revalidatePath(`/dashboard/reservations/${reservationId}`)
-  revalidatePath('/dashboard/tables')
-  redirect('/dashboard/tables')
+  revalidatePath(`/dashboard/${restaurantId}/reservations`)
+  revalidatePath(`/dashboard/${restaurantId}/reservations/${reservationId}`)
+  revalidatePath(`/dashboard/${restaurantId}/tables`)
+  redirect(`/dashboard/${restaurantId}/tables`)
 }

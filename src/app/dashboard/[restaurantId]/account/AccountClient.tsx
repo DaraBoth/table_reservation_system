@@ -200,6 +200,7 @@ export function AccountClient({ user, membership, profile }: AccountClientProps)
 
                   <div className="space-y-12">
                     <form action={businessAction} className="space-y-10">
+                      <input type="hidden" name="restaurantId" value={membership?.restaurant_id || ''} />
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                         <div className="space-y-3 col-span-full px-1">
                           <div className="flex items-center gap-2 mb-1">

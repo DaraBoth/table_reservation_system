@@ -91,7 +91,7 @@ export default async function EditReservationPage({ params }: Props) {
                   {statusLabels[reservation.status] ?? reservation.status}
                 </Badge>
               </div>
-              <UpdateStatusButton reservationId={reservation.id} currentStatus={reservation.status} />
+              <UpdateStatusButton reservationId={reservation.id} restaurantId={membership.restaurant_id} currentStatus={reservation.status} />
             </div>
           )}
 
@@ -105,7 +105,7 @@ export default async function EditReservationPage({ params }: Props) {
                 </Badge>
               </div>
             )}
-            <CancelReservationButton reservationId={reservation.id} />
+            <CancelReservationButton reservationId={reservation.id} restaurantId={membership.restaurant_id} />
           </div>
         </div>
       )}

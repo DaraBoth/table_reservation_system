@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Eye, EyeOff } from 'lucide-react'
 
-export function CreateStaffDialog() {
+export function CreateStaffDialog({ restaurantId }: { restaurantId: string }) {
   const [state, action, pending] = useActionState(createStaffAccount, null)
   const [showPassword, setShowPassword] = useState(false)
   return (
@@ -26,6 +26,7 @@ export function CreateStaffDialog() {
           <p className="text-xs text-muted-foreground font-bold">Create a secure login for a new team member</p>
         </SheetHeader>
         <form action={action} className="space-y-4 mt-2">
+          <input type="hidden" name="restaurantId" value={restaurantId} />
           <div className="space-y-1.5">
             <Label className="text-foreground/70 text-sm font-bold uppercase tracking-widest px-1">Full Name *</Label>
             <Input name="fullName" required placeholder="Jane Doe"

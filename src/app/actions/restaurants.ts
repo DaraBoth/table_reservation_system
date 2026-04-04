@@ -183,6 +183,9 @@ export async function updateRestaurant(_: ActionState, formData: FormData): Prom
 // ─── Update Own Restaurant Info (Admin) ──────────────────────────────────────
 
 export async function updateOwnRestaurantInfo(_: ActionState, formData: FormData): Promise<ActionState> {
+  const restaurantId = formData.get('restaurantId') as string
+  if (!restaurantId) return { error: 'Restaurant context missing' }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
@@ -191,6 +194,8 @@ export async function updateOwnRestaurantInfo(_: ActionState, formData: FormData
     .from('account_memberships')
     .select('role, restaurant_id')
     .eq('user_id', user.id)
+    .eq('restaurant_id', restaurantId)
+    .eq('is_active', true)
     .single()
 
   if (!['admin', 'superadmin'].includes(membership?.role || '') || !membership?.restaurant_id) {
@@ -206,18 +211,21 @@ export async function updateOwnRestaurantInfo(_: ActionState, formData: FormData
       address: formData.get('address') as string || null,
       logo_url: formData.get('logoUrl') as string || null,
     })
-    .eq('id', membership.restaurant_id)
+    .eq('id', restaurantId)
 
   if (error) return { error: error.message }
 
-  revalidatePath('/dashboard')
-  revalidatePath('/dashboard/account')
+  revalidatePath(`/dashboard/${restaurantId}`)
+  revalidatePath(`/dashboard/${restaurantId}/account`)
   return { success: 'Business info updated.' }
 }
 
 // ─── Finish Restaurant Setup ──────────────────────────────────────────────────
 
 export async function completeRestaurantSetup(_: ActionState, formData: FormData): Promise<ActionState> {
+  const restaurantId = formData.get('restaurantId') as string
+  if (!restaurantId) return { error: 'Restaurant context missing' }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
@@ -226,6 +234,8 @@ export async function completeRestaurantSetup(_: ActionState, formData: FormData
     .from('account_memberships')
     .select('role, restaurant_id')
     .eq('user_id', user.id)
+    .eq('restaurant_id', restaurantId)
+    .eq('is_active', true)
     .single()
 
   if (!['admin', 'superadmin'].includes(membership?.role || '') || !membership?.restaurant_id) {
@@ -245,7 +255,7 @@ export async function completeRestaurantSetup(_: ActionState, formData: FormData
       address: (formData.get('address') as string) || null,
       logo_url: (formData.get('logoUrl') as string) || null,
     })
-    .eq('id', membership.restaurant_id)
+    .eq('id', restaurantId)
 
   if (error) return { error: error.message }
 

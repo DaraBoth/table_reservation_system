@@ -34,7 +34,7 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
           </div>
         </div>
 
-        <SetupForm restaurant={membership.restaurants} />
+        <SetupForm restaurant={membership.restaurants} restaurantId={membership.restaurant_id} />
 
         <p className="text-center text-[10px] text-muted-foreground font-bold uppercase tracking-widest leading-relaxed px-4">
           Admin for {membership.restaurants.name} · Settings can be changed later

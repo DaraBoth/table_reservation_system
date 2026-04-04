@@ -38,6 +38,7 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
           </p>
         </div>
         <AddCustomerForm 
+          restaurantId={membership.restaurant_id}
           trigger={
             <Button className="h-11 px-6 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 text-foreground font-bold shadow-lg shadow-violet-500/20 active:scale-95 transition-all flex items-center gap-2 group">
               <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
@@ -72,13 +73,14 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
               {/* Actions */}
               <div className="flex items-center gap-1 flex-shrink-0">
                 <EditCustomerDialog 
+                  restaurantId={membership.restaurant_id}
                   customer={{
                     id: c.id,
                     name: c.name,
                     phone: c.phone
                   }} 
                 />
-                <DeleteCustomerButton id={c.id} name={c.name} />
+                <DeleteCustomerButton id={c.id} name={c.name} restaurantId={membership.restaurant_id} />
               </div>
             </div>
           ))}

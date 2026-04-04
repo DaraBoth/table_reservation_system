@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Pencil } from 'lucide-react'
 
 interface EditCustomerDialogProps {
+  restaurantId: string
   customer: {
     id: string
     name: string
@@ -16,7 +17,7 @@ interface EditCustomerDialogProps {
   }
 }
 
-export function EditCustomerDialog({ customer }: EditCustomerDialogProps) {
+export function EditCustomerDialog({ customer, restaurantId }: EditCustomerDialogProps) {
   const [state, action, pending] = useActionState(updateCommonCustomer, null)
   const [open, setOpen] = useState(false)
 
@@ -42,6 +43,7 @@ export function EditCustomerDialog({ customer }: EditCustomerDialogProps) {
         </SheetHeader>
         <form action={action} className="space-y-4 mt-2">
           <input type="hidden" name="id" value={customer.id} />
+          <input type="hidden" name="restaurantId" value={restaurantId} />
           
           <div className="space-y-1.5">
             <Label className="text-foreground/70 text-sm">Full Name *</Label>
