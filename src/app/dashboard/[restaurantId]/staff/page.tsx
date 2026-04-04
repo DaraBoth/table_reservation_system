@@ -22,6 +22,8 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
 
   const membership = membershipRaw as Tables<'account_memberships'> | null
   if (membership?.role !== 'admin') redirect('/dashboard')
+  const currentRestaurantId = membership.restaurant_id
+  if (!currentRestaurantId) redirect('/dashboard')
 
   const { data: raw } = await supabase
     .from('account_memberships')
@@ -43,7 +45,7 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
       {/* Header */}
       <div className="flex items-center justify-between pt-2">
         <p className="text-muted-foreground text-sm">{staff.length} staff members</p>
-        <CreateStaffDialog restaurantId={membership.restaurant_id} />
+        <CreateStaffDialog restaurantId={currentRestaurantId} />
       </div>
 
       {/* Summary strip */}
@@ -84,8 +86,8 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
                 className="bg-card border border-border rounded-3xl p-4 sm:p-5 flex items-center gap-3 sm:gap-4 transition-all duration-300"
               >
                 {/* Avatar */}
-                <div className="relative flex-shrink-0">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-lg font-black text-foreground shadow-lg">
+                <div className="relative shrink-0">
+                  <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-lg font-black text-foreground shadow-lg">
                     {initials}
                   </div>
                   {/* Online dot */}
@@ -95,8 +97,8 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                    <p className="text-sm sm:text-base font-black text-foreground truncate max-w-[80px] sm:max-w-none">{name}</p>
-                    <Badge className={`text-[10px] font-black border px-2 py-0.5 rounded-xl flex-shrink-0 ${
+                    <p className="text-sm sm:text-base font-black text-foreground truncate max-w-20 sm:max-w-none">{name}</p>
+                    <Badge className={`text-[10px] font-black border px-2 py-0.5 rounded-xl shrink-0 ${
                       s.is_active
                         ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.1)]'
                         : 'bg-muted/50 text-muted-foreground border-border'
@@ -110,13 +112,13 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-2 shrink-0">
                   <StaffActions 
                     userId={s.user_id} 
                     membershipId={s.id} 
                     isActive={s.is_active} 
                     name={name} 
-                    restaurantId={membership.restaurant_id}
+                    restaurantId={currentRestaurantId}
                   />
                   <div className="w-px h-6 bg-muted" />
                   <StaffPasswordResetButton userId={s.user_id} name={name} />
@@ -132,7 +134,7 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
           </div>
           <p className="text-foreground/70 font-bold text-base">No staff members yet</p>
           <p className="text-muted-foreground text-sm mt-1 mb-6">Add your first staff member to get started</p>
-          <CreateStaffDialog restaurantId={membership.restaurant_id} />
+          <CreateStaffDialog restaurantId={currentRestaurantId} />
         </div>
       )}
     </div>
