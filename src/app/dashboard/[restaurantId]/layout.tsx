@@ -56,7 +56,7 @@ export default async function DashboardLayout({
           restaurantId={membership.restaurant_id ?? undefined} 
           memberships={allMemberships}
         />
-        <main className="flex-1 overflow-y-auto px-4 py-6 custom-scrollbar">
+        <main className="flex-1 overflow-y-auto px-4 pt-6 pb-32 md:pb-6 custom-scrollbar">
           {children}
         </main>
         {!isNewRestaurant && (
