@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -15,8 +14,6 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export function NotificationManager({ restaurantId }: { restaurantId?: string }) {
-  const supabase = createClient()
-
   useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
       return
@@ -67,10 +64,6 @@ export function NotificationManager({ restaurantId }: { restaurantId?: string })
   }
 
   const syncSubscriptionWithSupabase = async (subscription: PushSubscription) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    // Get basic device info for identification
     const userAgent = navigator.userAgent
     let deviceInfo = 'Unknown Device'
     if (userAgent.match(/iPhone/i)) deviceInfo = 'iPhone'
@@ -78,23 +71,25 @@ export function NotificationManager({ restaurantId }: { restaurantId?: string })
     else if (userAgent.match(/Macintosh/i)) deviceInfo = 'Mac'
     else if (userAgent.match(/Windows/i)) deviceInfo = 'Windows PC'
 
-    const { error } = await supabase
-      .from('push_subscriptions')
-      .upsert({
-        user_id: user.id,
-        restaurant_id: restaurantId || null,
-        endpoint: subscription.endpoint,
-        subscription: subscription as any,
-        device_info: deviceInfo,
-      }, {
-        onConflict: 'user_id,endpoint'
-      })
+    const response = await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        restaurantId,
+        subscription,
+        deviceInfo,
+      }),
+    })
 
-    if (error) {
-      console.error('Error syncing push subscription:', error)
-    } else {
-      console.log('Push subscription synced with Supabase.')
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Error syncing push subscription:', errorText)
+      return
     }
+
+    console.log('Push subscription synced with API.')
   }
 
   return null // Headless manager

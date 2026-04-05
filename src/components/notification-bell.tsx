@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { Bell, BellOff, BellRing } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -19,7 +18,6 @@ function urlBase64ToUint8Array(base64String: string) {
 
 export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('default')
-  const supabase = createClient()
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -71,10 +69,6 @@ export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
         })
       }
 
-      // Sync with Supabase
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
       const userAgent = navigator.userAgent
       let deviceInfo = 'Unknown'
       if (userAgent.match(/iPhone/i)) deviceInfo = 'iPhone'
@@ -82,17 +76,22 @@ export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
       else if (userAgent.match(/Windows/i)) deviceInfo = 'Windows'
       else if (userAgent.match(/Macintosh/i)) deviceInfo = 'Mac'
 
-      const { error } = await supabase.from('push_subscriptions').upsert({
-        user_id: user.id,
-        restaurant_id: restaurantId || null,
-        endpoint: subscription.endpoint,
-        subscription: subscription as any,
-        device_info: deviceInfo,
-      }, { onConflict: 'user_id,endpoint' })
+      const response = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          restaurantId,
+          subscription,
+          deviceInfo,
+        }),
+      })
 
-      if (error) {
+      if (!response.ok) {
+        const errorText = await response.text()
         toast.error('Failed to sync notification settings.')
-        console.error('Sync error:', error)
+        console.error('Sync error:', errorText)
       } else {
         toast.success('This device is now linked to booking alerts!')
       }

@@ -164,6 +164,7 @@ export type Database = {
         Row: {
           created_at: string | null
           device_info: string | null
+          endpoint: string
           id: string
           restaurant_id: string | null
           subscription: Json
@@ -172,6 +173,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           device_info?: string | null
+          endpoint: string
           id?: string
           restaurant_id?: string | null
           subscription: Json
@@ -180,6 +182,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           device_info?: string | null
+          endpoint?: string
           id?: string
           restaurant_id?: string | null
           subscription?: Json

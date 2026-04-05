@@ -1,4 +1,21 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import webpush from 'web-push'
+
+type StoredPushSubscription = {
+  endpoint: string
+  expirationTime?: number | null
+  keys: {
+    p256dh: string
+    auth: string
+  }
+}
+
+type PushSubscriptionRow = {
+  id: string
+  user_id: string | null
+  endpoint: string
+  subscription: StoredPushSubscription
+}
 
 export type PushDispatchResult = {
   ok: boolean
@@ -12,6 +29,69 @@ export type PushDispatchResult = {
 
 function asOptionalString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined
+}
+
+function configureWebPush(debugId: string) {
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+  const privateKey = process.env.VAPID_PRIVATE_KEY
+
+  if (!publicKey || !privateKey) {
+    throw new Error('VAPID keys are not configured for push delivery')
+  }
+
+  webpush.setVapidDetails('mailto:vongpichdarabot@gmail.com', publicKey, privateKey)
+  console.log(`[push:${debugId}] web-push configured`)
+}
+
+async function getEligibleSubscriptions(restaurantId: string, debugId: string): Promise<PushSubscriptionRow[]> {
+  const supabase = createAdminClient()
+
+  const { data: subscriptionsRaw, error: subscriptionError } = await supabase
+    .from('push_subscriptions')
+    .select('id, user_id, endpoint, subscription')
+    .eq('restaurant_id', restaurantId)
+
+  if (subscriptionError) {
+    throw new Error(subscriptionError.message)
+  }
+
+  const subscriptions = (subscriptionsRaw ?? []) as PushSubscriptionRow[]
+  if (subscriptions.length === 0) {
+    console.log(`[push:${debugId}] No subscriptions found for restaurant ${restaurantId}`)
+    return []
+  }
+
+  const userIds = subscriptions
+    .map((subscription) => subscription.user_id)
+    .filter((userId): userId is string => typeof userId === 'string')
+
+  if (userIds.length === 0) {
+    console.log(`[push:${debugId}] No valid user IDs found on subscriptions for restaurant ${restaurantId}`)
+    return []
+  }
+
+  const { data: membershipsRaw, error: membershipError } = await supabase
+    .from('account_memberships')
+    .select('user_id')
+    .eq('restaurant_id', restaurantId)
+    .eq('is_active', true)
+    .in('role', ['admin', 'staff'])
+    .in('user_id', userIds)
+
+  if (membershipError) {
+    throw new Error(membershipError.message)
+  }
+
+  const eligibleUserIds = new Set((membershipsRaw ?? []).map((membership) => membership.user_id))
+  const eligibleSubscriptions = subscriptions.filter((subscription) => subscription.user_id && eligibleUserIds.has(subscription.user_id))
+
+  console.log(`[push:${debugId}] Eligible subscriptions`, {
+    found: subscriptions.length,
+    eligible: eligibleSubscriptions.length,
+    restaurantId,
+  })
+
+  return eligibleSubscriptions
 }
 
 export async function dispatchPushNotification({
@@ -30,23 +110,6 @@ export async function dispatchPushNotification({
   const debugId = `push_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    
-    if (!supabaseUrl || !serviceRoleKey) {
-      const error = 'Missing Supabase credentials for push notification'
-      console.error(`[push:${debugId}] ${error}`)
-      return {
-        ok: false,
-        debugId,
-        sentCount: 0,
-        attemptedCount: 0,
-        failedCount: 0,
-        status: 500,
-        error,
-      }
-    }
-
     console.log(`[push:${debugId}] Dispatching notification`, {
       restaurantId,
       title,
@@ -54,65 +117,80 @@ export async function dispatchPushNotification({
       url,
     })
 
-    const controller = new AbortController()
-    const id = setTimeout(() => controller.abort(), 5000)
+    configureWebPush(debugId)
+    const subscriptions = await getEligibleSubscriptions(restaurantId, debugId)
 
-    const response = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${serviceRoleKey}`,
-      },
-      signal: controller.signal,
-      body: JSON.stringify({
-        restaurant_id: restaurantId,
-        title,
-        body,
-        url,
-        icon,
-        debug_id: debugId,
-      }),
-    })
-    clearTimeout(id)
-
-    const responseText = await response.text()
-    let data: Record<string, unknown> = {}
-
-    if (responseText) {
-      try {
-        data = JSON.parse(responseText) as Record<string, unknown>
-      } catch {
-        data = { raw: responseText }
-      }
-    }
-
-    if (!response.ok) {
-      const error = asOptionalString(data.error) || responseText || 'Failed to trigger send-push Edge Function'
-      console.error(`[push:${debugId}] Failed`, {
-        status: response.status,
-        error,
-        response: data,
-      })
+    if (subscriptions.length === 0) {
       return {
-        ok: false,
+        ok: true,
         debugId,
-        sentCount: Number(data?.sentCount ?? 0),
-        attemptedCount: Number(data?.attemptedCount ?? 0),
-        failedCount: Number(data?.failedCount ?? 0),
-        status: response.status,
-        error,
+        sentCount: 0,
+        attemptedCount: 0,
+        failedCount: 0,
+        status: 200,
       }
     }
 
-    console.log(`[push:${debugId}] Completed`, data)
+    const supabase = createAdminClient()
+    const payload = JSON.stringify({
+      title,
+      body,
+      icon: icon || '/icons/maskable_icon_x192.png',
+      data: {
+        url: url || '/dashboard',
+      },
+    })
+
+    const results = await Promise.all(subscriptions.map(async (subscription, index) => {
+      try {
+        await webpush.sendNotification(subscription.subscription as any, payload)
+        console.log(`[push:${debugId}] Sent to subscription ${index}`, {
+          subscriptionId: subscription.id,
+          endpoint: subscription.endpoint,
+        })
+        return { ok: true }
+      } catch (error) {
+        console.error(`[push:${debugId}] Failed subscription ${index}`, error)
+
+        const statusCode = typeof error === 'object' && error && 'statusCode' in error
+          ? Number((error as { statusCode?: unknown }).statusCode)
+          : undefined
+
+        if (statusCode === 404 || statusCode === 410) {
+          await supabase
+            .from('push_subscriptions')
+            .delete()
+            .eq('id', subscription.id)
+          console.log(`[push:${debugId}] Removed stale subscription`, {
+            subscriptionId: subscription.id,
+            endpoint: subscription.endpoint,
+          })
+        }
+
+        return {
+          ok: false,
+          error: error instanceof Error ? error.message : 'Failed to send push notification',
+        }
+      }
+    }))
+
+    const sentCount = results.filter((result) => result.ok).length
+    const failedCount = results.length - sentCount
+
+    console.log(`[push:${debugId}] Completed`, {
+      attemptedCount: results.length,
+      sentCount,
+      failedCount,
+    })
+
     return {
-      ok: true,
+      ok: failedCount === 0,
       debugId,
-      sentCount: Number(data?.sentCount ?? 0),
-      attemptedCount: Number(data?.attemptedCount ?? 0),
-      failedCount: Number(data?.failedCount ?? 0),
-      status: response.status,
-      error: asOptionalString(data.error),
+      sentCount,
+      attemptedCount: results.length,
+      failedCount,
+      status: failedCount === 0 ? 200 : 207,
+      error: failedCount > 0 ? asOptionalString(results.find((result) => !result.ok)?.error) : undefined,
     }
   } catch (err) {
     const error = err instanceof Error ? err.message : 'Unknown push dispatch error'
