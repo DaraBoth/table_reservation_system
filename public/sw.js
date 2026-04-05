@@ -1,0 +1,92 @@
+self.addEventListener('push', (event) => {
+  if (!event.data) return
+
+  try {
+    const data = event.data.json()
+    const title = data.title || 'TableBook Update'
+    const options = {
+      body: data.body || 'New update available.',
+      icon: data.icon || '/icons/maskable_icon_x192.png',
+      badge: '/icons/maskable_icon_x72.png',
+      data: {
+        url: data.data?.url || '/dashboard',
+      },
+      vibrate: [100, 50, 100],
+      requireInteraction: true,
+    }
+
+    event.waitUntil(self.registration.showNotification(title, options))
+  } catch (error) {
+    console.error('Error in Service Worker push listener:', error)
+  }
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+
+  const targetUrl = event.notification.data?.url || '/dashboard'
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client && 'navigate' in client) {
+          return client.focus().then((focusedClient) => focusedClient.navigate(targetUrl))
+        }
+      }
+
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetUrl)
+      }
+
+      return undefined
+    })
+  )
+})
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
+})
+
+const CACHE_NAME = 'bookjm-assets-v1'
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event
+
+  if (request.destination === 'image' || request.destination === 'font') {
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) return cachedResponse
+
+        return fetch(request).then((networkResponse) => {
+          if (!networkResponse || networkResponse.status !== 200) return networkResponse
+
+          const responseToCache = networkResponse.clone()
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseToCache)
+          })
+          return networkResponse
+        })
+      })
+    )
+    return
+  }
+
+  if (request.destination === 'script' || request.destination === 'style') {
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        const fetchPromise = fetch(request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone()
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseToCache)
+            })
+          }
+          return networkResponse
+        })
+        return cachedResponse || fetchPromise
+      })
+    )
+  }
+})

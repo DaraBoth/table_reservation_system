@@ -1,17 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const rawData = window.atob(base64)
-  const outputArray = new Uint8Array(rawData.length)
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i)
-  }
-  return outputArray
-}
+import { ensurePushServiceWorker, getDeviceInfo, urlBase64ToUint8Array } from '@/lib/push-client'
 
 export function NotificationManager({ restaurantId }: { restaurantId?: string }) {
   useEffect(() => {
@@ -28,7 +18,7 @@ export function NotificationManager({ restaurantId }: { restaurantId?: string })
         return
       }
 
-      const registration = await navigator.serviceWorker.ready
+      const registration = await ensurePushServiceWorker()
       const existingSubscription = await registration.pushManager.getSubscription()
 
       if (existingSubscription) {
@@ -44,7 +34,7 @@ export function NotificationManager({ restaurantId }: { restaurantId?: string })
 
   const subscribeUser = async (registration?: ServiceWorkerRegistration) => {
     try {
-      const serviceWorkerRegistration = registration ?? await navigator.serviceWorker.ready
+      const serviceWorkerRegistration = registration ?? await ensurePushServiceWorker()
       
       const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
       if (!publicVapidKey) {
@@ -64,12 +54,13 @@ export function NotificationManager({ restaurantId }: { restaurantId?: string })
   }
 
   const syncSubscriptionWithSupabase = async (subscription: PushSubscription) => {
-    const userAgent = navigator.userAgent
-    let deviceInfo = 'Unknown Device'
-    if (userAgent.match(/iPhone/i)) deviceInfo = 'iPhone'
-    else if (userAgent.match(/Android/i)) deviceInfo = 'Android Device'
-    else if (userAgent.match(/Macintosh/i)) deviceInfo = 'Mac'
-    else if (userAgent.match(/Windows/i)) deviceInfo = 'Windows PC'
+    const deviceInfo = getDeviceInfo()
+
+    console.log('[push] Auto-sync calling /api/push/subscribe', {
+      restaurantId,
+      endpoint: subscription.endpoint,
+      deviceInfo,
+    })
 
     const response = await fetch('/api/push/subscribe', {
       method: 'POST',

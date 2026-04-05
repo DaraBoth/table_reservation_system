@@ -4,17 +4,7 @@ import { useEffect, useState } from 'react'
 import { Bell, BellOff, BellRing } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const rawData = window.atob(base64)
-  const outputArray = new Uint8Array(rawData.length)
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i)
-  }
-  return outputArray
-}
+import { ensurePushServiceWorker, getDeviceInfo, resetPushRegistration, urlBase64ToUint8Array } from '@/lib/push-client'
 
 export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('default')
@@ -55,26 +45,42 @@ export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
 
   const subscribeUser = async () => {
     try {
-      const registration = await navigator.serviceWorker.ready
+      const registration = await ensurePushServiceWorker()
       const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
       
-      if (!publicVapidKey) return
+      if (!publicVapidKey) {
+        console.error('[push] Missing NEXT_PUBLIC_VAPID_PUBLIC_KEY')
+        toast.error('Push notifications are not configured.')
+        return
+      }
 
       let subscription = await registration.pushManager.getSubscription()
 
       if (!subscription) {
+        console.log('[push] Creating new push subscription')
+        const applicationServerKey = urlBase64ToUint8Array(publicVapidKey)
+        console.log('[push] VAPID key diagnostics', {
+          keyChars: publicVapidKey.length,
+          keyBytes: applicationServerKey.length,
+        })
+
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(publicVapidKey),
+          applicationServerKey,
+        })
+      } else {
+        console.log('[push] Reusing existing push subscription', {
+          endpoint: subscription.endpoint,
         })
       }
 
-      const userAgent = navigator.userAgent
-      let deviceInfo = 'Unknown'
-      if (userAgent.match(/iPhone/i)) deviceInfo = 'iPhone'
-      else if (userAgent.match(/Android/i)) deviceInfo = 'Android'
-      else if (userAgent.match(/Windows/i)) deviceInfo = 'Windows'
-      else if (userAgent.match(/Macintosh/i)) deviceInfo = 'Mac'
+      const deviceInfo = getDeviceInfo()
+
+      console.log('[push] Calling /api/push/subscribe', {
+        restaurantId,
+        endpoint: subscription.endpoint,
+        deviceInfo,
+      })
 
       const response = await fetch('/api/push/subscribe', {
         method: 'POST',
@@ -93,11 +99,23 @@ export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
         toast.error('Failed to sync notification settings.')
         console.error('Sync error:', errorText)
       } else {
+        console.log('[push] /api/push/subscribe completed successfully')
         toast.success('This device is now linked to booking alerts!')
       }
 
     } catch (err) {
       console.error('Subscription failed:', err)
+
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        console.warn('[push] Resetting service worker registration after AbortError')
+        try {
+          await resetPushRegistration()
+        } catch (resetError) {
+          console.error('[push] Failed to reset push registration', resetError)
+        }
+      }
+
+      toast.error(err instanceof Error ? err.message : 'Push subscription failed.')
     }
   }
 
