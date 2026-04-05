@@ -14,8 +14,8 @@ self.addEventListener('push', (event) => {
     const title = data.title || 'TableBook Update';
     const options = {
       body: data.body || 'New update available.',
-      icon: data.icon || '/icons/icon-192x192.png',
-      badge: '/icons/badge-72x72.png',
+      icon: data.icon || '/icons/maskable_icon_x192.png',
+      badge: '/icons/maskable_icon_x72.png',
       data: {
         url: data.data?.url || '/dashboard'
       },

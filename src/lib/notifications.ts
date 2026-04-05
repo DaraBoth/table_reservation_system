@@ -1,5 +1,15 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 
+export type PushDispatchResult = {
+  ok: boolean
+  debugId: string
+  sentCount: number
+  attemptedCount: number
+  failedCount: number
+  status: number
+  error?: string
+}
+
 export async function dispatchPushNotification({
   restaurantId,
   title,
@@ -12,19 +22,36 @@ export async function dispatchPushNotification({
   body: string
   url?: string
   icon?: string
-}) {
+}): Promise<PushDispatchResult> {
+  const debugId = `push_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+
   try {
-    // We use the edge function directly
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
     
     if (!supabaseUrl || !serviceRoleKey) {
-      console.error('Missing Supabase credentials for push notification')
-      return
+      const error = 'Missing Supabase credentials for push notification'
+      console.error(`[push:${debugId}] ${error}`)
+      return {
+        ok: false,
+        debugId,
+        sentCount: 0,
+        attemptedCount: 0,
+        failedCount: 0,
+        status: 500,
+        error,
+      }
     }
 
+    console.log(`[push:${debugId}] Dispatching notification`, {
+      restaurantId,
+      title,
+      body,
+      url,
+    })
+
     const controller = new AbortController()
-    const id = setTimeout(() => controller.abort(), 1000) // 1s timeout for safety
+    const id = setTimeout(() => controller.abort(), 5000)
 
     const response = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
       method: 'POST',
@@ -39,19 +66,62 @@ export async function dispatchPushNotification({
         body,
         url,
         icon,
+        debug_id: debugId,
       }),
     })
     clearTimeout(id)
 
+    const responseText = await response.text()
+    let data: Record<string, unknown> = {}
+
+    if (responseText) {
+      try {
+        data = JSON.parse(responseText) as Record<string, unknown>
+      } catch {
+        data = { raw: responseText }
+      }
+    }
+
     if (!response.ok) {
-      const err = await response.text()
-      console.error('Failed to trigger send-push Edge Function:', err)
-    } else {
-      const data = await response.json()
-      console.log(`Push notification dispatched successfully. Sent to ${data.sentCount} devices.`)
+      const error = data?.error || responseText || 'Failed to trigger send-push Edge Function'
+      console.error(`[push:${debugId}] Failed`, {
+        status: response.status,
+        error,
+        response: data,
+      })
+      return {
+        ok: false,
+        debugId,
+        sentCount: Number(data?.sentCount ?? 0),
+        attemptedCount: Number(data?.attemptedCount ?? 0),
+        failedCount: Number(data?.failedCount ?? 0),
+        status: response.status,
+        error,
+      }
+    }
+
+    console.log(`[push:${debugId}] Completed`, data)
+    return {
+      ok: true,
+      debugId,
+      sentCount: Number(data?.sentCount ?? 0),
+      attemptedCount: Number(data?.attemptedCount ?? 0),
+      failedCount: Number(data?.failedCount ?? 0),
+      status: response.status,
+      error: data?.error,
     }
   } catch (err) {
-    console.error('Error dispatching push notification:', err)
+    const error = err instanceof Error ? err.message : 'Unknown push dispatch error'
+    console.error(`[push:${debugId}] Error dispatching push notification:`, err)
+    return {
+      ok: false,
+      debugId,
+      sentCount: 0,
+      attemptedCount: 0,
+      failedCount: 0,
+      status: 500,
+      error,
+    }
   }
 }
 

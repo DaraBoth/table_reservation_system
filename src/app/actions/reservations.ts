@@ -136,7 +136,7 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
 
     if (error) return { error: error.message }
     const { notifyNewBooking } = await import('@/lib/notifications')
-    notifyNewBooking(data.id)
+    await notifyNewBooking(data.id)
   } else {
     // 🍽️ RESTAURANT: Multi-slot or Split range
     const groupId = (hasExtraSlots || isMultiDay) ? crypto.randomUUID() : null
@@ -214,8 +214,18 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
       }
     }
 
-    const { error } = await supabase.from('reservations').insert(records)
+    const { data: insertedReservations, error } = await supabase
+      .from('reservations')
+      .insert(records)
+      .select('id')
+
     if (error) return { error: error.message }
+
+    const primaryReservationId = insertedReservations?.[0]?.id
+    if (primaryReservationId) {
+      const { notifyNewBooking } = await import('@/lib/notifications')
+      await notifyNewBooking(primaryReservationId)
+    }
   }
 
   // Handle Common Customer saving
@@ -261,7 +271,7 @@ export async function cancelReservation(_: ActionState, formData: FormData): Pro
 
   // 🔔 Trigger Push Notification
   const { notifyCancellation } = await import('@/lib/notifications')
-  notifyCancellation(reservationId)
+  await notifyCancellation(reservationId)
 
   revalidatePath(`/dashboard/${restaurantId}/reservations`)
   revalidatePath(`/dashboard/${restaurantId}`)
@@ -296,9 +306,9 @@ export async function updateReservationStatus(_: ActionState, formData: FormData
   // 🔔 Trigger Push Notification
   const { notifyArrival, notifyBookingUpdate } = await import('@/lib/notifications')
   if (status === 'arrived') {
-    notifyArrival(reservationId)
+    await notifyArrival(reservationId)
   } else {
-    notifyBookingUpdate(reservationId)
+    await notifyBookingUpdate(reservationId)
   }
 
   revalidatePath(`/dashboard/${restaurantId}/reservations`)
@@ -381,7 +391,7 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
 
   // 🔔 Trigger Push Notification
   const { notifyBookingUpdate } = await import('@/lib/notifications')
-  notifyBookingUpdate(reservationId)
+  await notifyBookingUpdate(reservationId)
 
   revalidatePath(`/dashboard/${restaurantId}/reservations`)
   revalidatePath(`/dashboard/${restaurantId}/reservations/${reservationId}`)

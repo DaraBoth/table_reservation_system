@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { toast } from 'sonner'
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -16,34 +15,39 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export function NotificationManager({ restaurantId }: { restaurantId?: string }) {
-  const [isSupported, setIsSupported] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
-    // Check for browser support
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
-      setIsSupported(true)
-      initNotifications()
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+      return
     }
+
+    void initNotifications()
   }, [])
 
   const initNotifications = async () => {
     try {
-      const permission = await Notification.requestPermission()
-      if (permission !== 'granted') {
-        console.log('Notification permission denied.')
+      if (Notification.permission !== 'granted') {
         return
       }
 
-      await subscribeUser()
+      const registration = await navigator.serviceWorker.ready
+      const existingSubscription = await registration.pushManager.getSubscription()
+
+      if (existingSubscription) {
+        await syncSubscriptionWithSupabase(existingSubscription)
+        return
+      }
+
+      await subscribeUser(registration)
     } catch (err) {
       console.error('Failed to init notifications:', err)
     }
   }
 
-  const subscribeUser = async () => {
+  const subscribeUser = async (registration?: ServiceWorkerRegistration) => {
     try {
-      const registration = await navigator.serviceWorker.ready
+      const serviceWorkerRegistration = registration ?? await navigator.serviceWorker.ready
       
       const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
       if (!publicVapidKey) {
@@ -51,7 +55,7 @@ export function NotificationManager({ restaurantId }: { restaurantId?: string })
         return
       }
 
-      const subscription = await registration.pushManager.subscribe({
+      const subscription = await serviceWorkerRegistration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicVapidKey),
       })

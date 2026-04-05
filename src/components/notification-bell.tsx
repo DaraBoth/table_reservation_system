@@ -62,10 +62,14 @@ export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
       
       if (!publicVapidKey) return
 
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicVapidKey),
-      })
+      let subscription = await registration.pushManager.getSubscription()
+
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicVapidKey),
+        })
+      }
 
       // Sync with Supabase
       const { data: { user } } = await supabase.auth.getUser()
