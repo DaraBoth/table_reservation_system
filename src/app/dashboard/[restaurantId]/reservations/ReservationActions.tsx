@@ -25,7 +25,7 @@ export function CancelReservationButton({ reservationId, restaurantId }: { reser
 }
 
 const STATUS_OPTIONS: Array<{
-  value: 'pending' | 'confirmed' | 'arrived' | 'completed' | 'no_show'
+  value: 'pending' | 'confirmed' | 'arrived' | 'completed' | 'no_show' | 'cancelled'
   label: string
   icon: LucideIcon
   color: string
@@ -35,6 +35,7 @@ const STATUS_OPTIONS: Array<{
   { value: 'arrived',   label: 'Arrived',   icon: UserCheck,   color: 'border-blue-500/40    bg-blue-500/10    text-blue-300'   },
   { value: 'completed', label: 'Done',      icon: CheckCheck,  color: 'border-border/40   bg-muted/40   text-foreground/70'  },
   { value: 'no_show',   label: 'No Show',   icon: UserX,       color: 'border-orange-500/40  bg-orange-500/10  text-orange-300' },
+  { value: 'cancelled', label: 'Cancelled', icon: Ban,         color: 'border-red-500/40     bg-red-500/10     text-red-300'    },
 ]
 
 export function UpdateStatusButton({

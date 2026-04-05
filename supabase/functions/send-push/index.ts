@@ -33,7 +33,7 @@ serve(async (req) => {
     // 1. Get all active subscriptions for this restaurant
     const { data: subscriptions, error: subError } = await supabaseClient
       .from('push_subscriptions')
-      .select('subscription')
+      .select('subscription, user_id')
       .eq('restaurant_id', restaurant_id)
 
     if (subError) throw subError
@@ -50,7 +50,37 @@ serve(async (req) => {
       })
     }
 
-    console.log(`[push:${debugId}] Found ${subscriptions.length} subscriptions`)
+    const userIds = subscriptions
+      .map((subscription) => subscription.user_id)
+      .filter((userId): userId is string => typeof userId === 'string')
+
+    const { data: eligibleMemberships, error: membershipError } = await supabaseClient
+      .from('account_memberships')
+      .select('user_id')
+      .eq('restaurant_id', restaurant_id)
+      .eq('is_active', true)
+      .in('role', ['admin', 'staff'])
+      .in('user_id', userIds)
+
+    if (membershipError) throw membershipError
+
+    const eligibleUserIds = new Set((eligibleMemberships || []).map((membership) => membership.user_id))
+    const filteredSubscriptions = subscriptions.filter((subscription) => eligibleUserIds.has(subscription.user_id))
+
+    if (filteredSubscriptions.length === 0) {
+      console.log(`[push:${debugId}] No eligible active staff/admin subscriptions found for restaurant ${restaurant_id}`)
+      return new Response(JSON.stringify({
+        success: true,
+        requestId: debugId,
+        attemptedCount: 0,
+        sentCount: 0,
+        failedCount: 0,
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    console.log(`[push:${debugId}] Found ${filteredSubscriptions.length} eligible staff/admin subscriptions`)
 
     // 2. Set VAPID keys
     const publicKey = Deno.env.get('VAPID_PUBLIC_KEY')
@@ -68,7 +98,7 @@ serve(async (req) => {
     )
 
     // 3. Send notifications in parallel
-    const sendPromises = subscriptions.map((sub: any, index: number) => {
+    const sendPromises = filteredSubscriptions.map((sub: any, index: number) => {
       const payload = JSON.stringify({
         title,
         body,

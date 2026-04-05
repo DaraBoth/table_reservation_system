@@ -256,7 +256,9 @@ export async function cancelReservation(_: ActionState, formData: FormData): Pro
 
   const membership = await getMembershipForRestaurant(supabase, user.id, restaurantId)
 
-  if (!membership || !membership.restaurant_id) return { error: 'Unauthorized' }
+  if (!membership || !membership.restaurant_id || !['admin', 'superadmin', 'staff'].includes(membership.role)) {
+    return { error: 'Unauthorized — staff or admins only' }
+  }
 
   const reservationId = formData.get('reservationId') as string
   if (!reservationId) return { error: 'Reservation ID required' }
@@ -278,7 +280,7 @@ export async function cancelReservation(_: ActionState, formData: FormData): Pro
   return { success: 'Reservation cancelled.' }
 }
 
-// ─── Update reservation status (admin) ───────────────────────────────────────
+// ─── Update reservation status (staff/admin) ─────────────────────────────────
 
 export async function updateReservationStatus(_: ActionState, formData: FormData): Promise<ActionState> {
   const restaurantId = String(formData.get('restaurantId') || '')
@@ -290,7 +292,9 @@ export async function updateReservationStatus(_: ActionState, formData: FormData
 
   const membership = await getMembershipForRestaurant(supabase, user.id, restaurantId)
 
-  if (!membership || !['admin', 'superadmin'].includes(membership.role)) return { error: 'Unauthorized — admins only' }
+  if (!membership || !['admin', 'superadmin', 'staff'].includes(membership.role)) {
+    return { error: 'Unauthorized — staff or admins only' }
+  }
 
   const reservationId = formData.get('reservationId') as string
   const status = formData.get('status') as string
@@ -307,11 +311,17 @@ export async function updateReservationStatus(_: ActionState, formData: FormData
   const { notifyArrival, notifyBookingUpdate } = await import('@/lib/notifications')
   if (status === 'arrived') {
     await notifyArrival(reservationId)
+  } else if (status === 'cancelled') {
+    const { notifyCancellation } = await import('@/lib/notifications')
+    await notifyCancellation(reservationId)
   } else {
     await notifyBookingUpdate(reservationId)
   }
 
   revalidatePath(`/dashboard/${restaurantId}/reservations`)
+  revalidatePath(`/dashboard/${restaurantId}/reservations/${reservationId}`)
+  revalidatePath(`/dashboard/${restaurantId}/tables`)
+  revalidatePath(`/dashboard/${restaurantId}`)
   return { success: 'Status updated.' }
 }
 

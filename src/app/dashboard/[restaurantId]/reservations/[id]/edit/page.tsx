@@ -17,6 +17,7 @@ interface Props {
 const statusColors: Record<string, string> = {
   pending:   'bg-amber-500/20 text-amber-400 border-amber-500/30',
   confirmed: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  arrived:   'bg-blue-500/20 text-blue-400 border-blue-500/30',
   cancelled: 'bg-red-500/20 text-red-400 border-red-500/30',
   completed: 'bg-muted/60/40 text-foreground/70 border-border',
   no_show:   'bg-orange-500/20 text-orange-400 border-orange-500/30',
@@ -25,6 +26,7 @@ const statusColors: Record<string, string> = {
 const statusLabels: Record<string, string> = {
   pending:   'Waiting',
   confirmed: 'Confirmed',
+  arrived:   'Arrived',
   cancelled: 'Cancelled',
   completed: 'Done',
   no_show:   'No Show',
@@ -72,7 +74,7 @@ export default async function EditReservationPage({ params }: Props) {
     )
   }
 
-  const isAdmin = membership.role === 'admin'
+  const canManageStatus = ['admin', 'superadmin', 'staff'].includes(membership.role)
   const canCancel = !['cancelled', 'completed'].includes(reservation.status)
 
   return (
@@ -83,7 +85,7 @@ export default async function EditReservationPage({ params }: Props) {
         <div className="bg-card border border-border rounded-3xl overflow-hidden">
 
           {/* Status section */}
-          {isAdmin && (
+          {canManageStatus && (
             <div className="p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Change Status</p>
@@ -96,8 +98,8 @@ export default async function EditReservationPage({ params }: Props) {
           )}
 
           {/* Cancel — danger zone at bottom */}
-          <div className={cn('p-4', isAdmin && 'border-t border-border')}>
-            {!isAdmin && (
+          <div className={cn('p-4', canManageStatus && 'border-t border-border')}>
+            {!canManageStatus && (
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Current Status</p>
                 <Badge className={cn('text-xs font-black px-3 py-1 border rounded-xl', statusColors[reservation.status] ?? '')}>
