@@ -10,6 +10,10 @@ export type PushDispatchResult = {
   error?: string
 }
 
+function asOptionalString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined
+}
+
 export async function dispatchPushNotification({
   restaurantId,
   title,
@@ -83,7 +87,7 @@ export async function dispatchPushNotification({
     }
 
     if (!response.ok) {
-      const error = data?.error || responseText || 'Failed to trigger send-push Edge Function'
+      const error = asOptionalString(data.error) || responseText || 'Failed to trigger send-push Edge Function'
       console.error(`[push:${debugId}] Failed`, {
         status: response.status,
         error,
@@ -108,7 +112,7 @@ export async function dispatchPushNotification({
       attemptedCount: Number(data?.attemptedCount ?? 0),
       failedCount: Number(data?.failedCount ?? 0),
       status: response.status,
-      error: data?.error,
+      error: asOptionalString(data.error),
     }
   } catch (err) {
     const error = err instanceof Error ? err.message : 'Unknown push dispatch error'
