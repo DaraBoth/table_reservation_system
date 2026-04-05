@@ -9,11 +9,12 @@ interface DateNavigatorProps {
   selectedDate: string // YYYY-MM-DD
   onChange: (date: string) => void
   className?: string
+  todayDate?: string
 }
 
-export function DateNavigator({ selectedDate, onChange, className }: DateNavigatorProps) {
+export function DateNavigator({ selectedDate, onChange, className, todayDate }: DateNavigatorProps) {
   const date = parseISO(selectedDate)
-  const isSelectedToday = isDateToday(date)
+  const isSelectedToday = todayDate ? selectedDate === todayDate : isDateToday(date)
 
   const shiftDate = (amount: number) => {
     const nextDate = addDays(date, amount)

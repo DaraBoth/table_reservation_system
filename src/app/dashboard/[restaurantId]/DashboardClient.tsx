@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { format, parseISO } from 'date-fns'
 import { createClient } from '@/lib/supabase/client'
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion'
 import { CalendarDays, Clock, Plus, ChevronRight, BedDouble, Table2 } from 'lucide-react'
@@ -178,9 +179,9 @@ export function DashboardClient({ initialData, restaurantId }: DashboardClientPr
           <AnimatePresence mode="popLayout">
             {upcomingReservations.length > 0 ? (
               upcomingReservations.map((res, i) => {
-                const start = new Date(`${res.reservation_date}T${res.start_time}`)
-                const dateDisplay = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                const timeDisplay = start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                const start = parseISO(`${res.reservation_date}T${res.start_time}`)
+                const dateDisplay = format(start, 'MMM d')
+                const timeDisplay = format(start, 'hh:mm a')
                 
                 return (
                   <motion.div

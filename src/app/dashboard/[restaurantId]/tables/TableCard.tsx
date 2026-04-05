@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { format, parseISO } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
@@ -147,9 +148,9 @@ export function TableCard({
             {isBusy && busyInfo?.reservationDate && busyInfo?.checkoutDate && busyInfo.reservationDate !== busyInfo.checkoutDate && (
               <Badge className="bg-violet-500/10 text-violet-400 border-violet-500/30 text-[9px] font-black uppercase px-2 py-0.5 rounded-lg flex items-center gap-1 whitespace-nowrap">
                 <Activity className="w-3 h-3" />
-                {new Date(busyInfo.reservationDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                {format(parseISO(busyInfo.reservationDate), 'MMM d')}
                 <span className="opacity-50">→</span>
-                {new Date(busyInfo.checkoutDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                {format(parseISO(busyInfo.checkoutDate), 'MMM d')}
               </Badge>
             )}
           </div>

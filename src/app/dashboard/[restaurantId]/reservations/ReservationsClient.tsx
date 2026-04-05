@@ -22,6 +22,7 @@ interface Props {
   initialBookings: Reservation[]
   restaurantId: string
   initialDate: string
+  todayIso: string
   businessType: string
 }
 
@@ -52,12 +53,11 @@ const statusAvatarBg: Record<string, string> = {
   no_show: 'from-orange-600/30 to-amber-600/30 border-orange-500/20',
 }
 
-export function ReservationsClient({ initialBookings, restaurantId, initialDate, businessType }: Props) {
+export function ReservationsClient({ initialBookings, restaurantId, initialDate, todayIso, businessType }: Props) {
   const [selectedDate, setSelectedDate] = useState(initialDate)
   const [bookings, setBookings] = useState<Reservation[]>(initialBookings)
   const supabase = createClient()
   const terms = getTerms(businessType)
-  const todayIso = format(new Date(), 'yyyy-MM-dd')
   const isSelectedToday = selectedDate === todayIso
 
   const fetchLatestData = useCallback(async () => {
@@ -126,6 +126,7 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
       <DateNavigator
         selectedDate={selectedDate}
         onChange={setSelectedDate}
+        todayDate={todayIso}
         className="w-full"
       />
 
@@ -148,7 +149,7 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
 
         {bookings.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {bookings.map(res => <BookingCard key={res.id} res={res} restaurantId={restaurantId} />)}
+            {bookings.map(res => <BookingCard key={res.id} res={res} restaurantId={restaurantId} todayIso={todayIso} />)}
           </div>
         ) : (
           <div className="py-20 text-center bg-card/30 rounded-[2.5rem] border border-border border-dashed backdrop-blur-sm">
@@ -162,13 +163,13 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
   )
 }
 
-function BookingCard({ res, restaurantId }: { res: Reservation; restaurantId: string }) {
+function BookingCard({ res, restaurantId, todayIso }: { res: Reservation; restaurantId: string; todayIso: string }) {
   // Use parseISO to handle the reservation_date string correctly
   const start = res.start_time
     ? new Date(`${res.reservation_date}T${res.start_time}`)
     : null
 
-  const isToday = res.reservation_date === format(new Date(), 'yyyy-MM-dd')
+  const isToday = res.reservation_date === todayIso
   const canEdit = isToday && !['cancelled', 'completed'].includes(res.status)
 
   const timeStr = start ? format(start, 'hh:mm a') : null

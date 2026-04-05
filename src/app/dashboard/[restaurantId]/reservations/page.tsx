@@ -1,6 +1,6 @@
 import { getActiveRestaurant } from '@/lib/restaurant-context'
 import { createClient } from '@/lib/supabase/server'
-import { format, subDays } from 'date-fns'
+import { format } from 'date-fns'
 import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
 import { ReservationsClient } from './ReservationsClient'
@@ -44,6 +44,7 @@ export default async function ReservationsPage({ params, searchParams }: { param
         initialBookings={(allBookings ?? []) as any}
         restaurantId={membership.restaurant_id}
         initialDate={initialDate}
+        todayIso={todayIso}
         businessType={businessType}
       />
     </div>

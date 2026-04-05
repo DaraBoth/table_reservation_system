@@ -28,6 +28,8 @@ interface TablesClientProps {
   restaurantId: string
   businessType: string
   isAdmin: boolean
+  initialDate: string
+  initialNowIso: string
 }
 
 export function TablesClient({
@@ -35,15 +37,17 @@ export function TablesClient({
   initialBusyRows,
   restaurantId,
   businessType,
-  isAdmin
+  isAdmin,
+  initialDate,
+  initialNowIso
 }: TablesClientProps) {
   const [tables, setTables] = useState(initialTables)
   const [busyRows, setBusyRows] = useState(initialBusyRows)
-  const [now, setNow] = useState(new Date())
+  const [now, setNow] = useState(() => new Date(initialNowIso))
 
   const supabase = createClient()
   const terms = getTerms(businessType)
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
+  const [selectedDate, setSelectedDate] = useState(initialDate)
 
   // Keep clock running
   useEffect(() => {
@@ -171,6 +175,7 @@ export function TablesClient({
       <DateNavigator
         selectedDate={selectedDate}
         onChange={setSelectedDate}
+        todayDate={initialDate}
         className="w-full"
       />
 

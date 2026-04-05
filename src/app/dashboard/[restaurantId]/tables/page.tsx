@@ -34,6 +34,7 @@ export default async function TablesPage({ params }: { params: Promise<{ restaur
 
   const today = new Date()
   const todayDate = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0')
+  const currentTimeIso = today.toISOString()
 
   // Initial Fetch for Busy Status: Anyone whose range covers TODAY
   const { data: busyRows } = await supabase
@@ -52,6 +53,8 @@ export default async function TablesPage({ params }: { params: Promise<{ restaur
         restaurantId={membership.restaurant_id!}
         businessType={businessType}
         isAdmin={isAdmin}
+        initialDate={todayDate}
+        initialNowIso={currentTimeIso}
       />
     </div>
   )
