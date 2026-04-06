@@ -17,8 +17,6 @@ import { motion } from 'framer-motion'
 interface Reservation extends Tables<'reservations'> {
   physical_tables: Pick<Tables<'physical_tables'>, 'table_name' | 'capacity'> | null
   profiles?: { full_name: string | null } | null
-  unit_name?: string | null
-  checkout_date?: string | null
 }
 
 interface Props {
