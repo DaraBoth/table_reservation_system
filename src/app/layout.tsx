@@ -13,6 +13,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'BookJM',
   description: 'Multi-tenant restaurant and hotel management system',
+  manifest: '/manifest.webmanifest',
+  icons: {
+    icon: '/logo.png',
+    apple: '/icons/maskable_icon_x192.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
