@@ -216,14 +216,30 @@ export async function notifyNewBooking(reservationId: string) {
   // 1. Fetch details: Guest, Table, Party Size, Creator
   const { data: res, error } = await supabase
     .from('reservations')
-    .select('*, physical_tables(table_name), profiles!reservations_created_by_profiles_fkey(full_name)')
+    .select('*, physical_tables(table_name)')
     .eq('id', reservationId)
     .single()
 
-  if (error || !res) return
+  if (error || !res) {
+    console.error('[notifyNewBooking] Failed to fetch reservation details', error)
+    return
+  }
+
+  // Fetch creator name separately to avoid broken join syntax
+  let creatorName = 'System'
+  if (res.created_by) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', res.created_by)
+      .maybeSingle()
+    
+    if (profile?.full_name) {
+      creatorName = profile.full_name
+    }
+  }
 
   const tableName = (res.physical_tables as any)?.table_name || '—'
-  const creatorName = (res.profiles as any)?.full_name || 'System'
   
   await dispatchPushNotification({
     restaurantId: res.restaurant_id,
@@ -245,7 +261,10 @@ export async function notifyArrival(reservationId: string) {
     .eq('id', reservationId)
     .single()
 
-  if (error || !res) return
+  if (error || !res) {
+    console.error('[notifyArrival] Failed to fetch reservation', error)
+    return
+  }
 
   const tableName = (res.physical_tables as any)?.table_name || '—'
   
@@ -269,7 +288,10 @@ export async function notifyCancellation(reservationId: string) {
     .eq('id', reservationId)
     .single()
 
-  if (error || !res) return
+  if (error || !res) {
+    console.error('[notifyCancellation] Failed to fetch reservation', error)
+    return
+  }
 
   await dispatchPushNotification({
     restaurantId: res.restaurant_id,
@@ -291,7 +313,10 @@ export async function notifyBookingUpdate(reservationId: string) {
     .eq('id', reservationId)
     .single()
 
-  if (error || !res) return
+  if (error || !res) {
+    console.error('[notifyBookingUpdate] Failed to fetch reservation', error)
+    return
+  }
 
   const tableName = (res.physical_tables as any)?.table_name || '—'
   
