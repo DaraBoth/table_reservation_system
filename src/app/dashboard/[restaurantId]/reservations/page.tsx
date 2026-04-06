@@ -29,6 +29,16 @@ export default async function ReservationsPage({ params, searchParams }: { param
   const initialDate = date || todayIso
   const todayStr = todayIso
 
+  // Fetch Tables for the Share Status report
+  const { data: tableData } = await supabase
+    .from('physical_tables')
+    .select('*')
+    .eq('restaurant_id', membership.restaurant_id)
+    .eq('is_active', true)
+    .order('table_name')
+
+  const tables = tableData || []
+
   // Initial Fetch: Anyone who is IN-HOUSE on the selected date
   const { data: allBookings } = await supabase
     .from('reservations')
@@ -47,6 +57,7 @@ export default async function ReservationsPage({ params, searchParams }: { param
         initialDate={initialDate}
         todayIso={todayIso}
         businessType={businessType}
+        tables={tables}
       />
     </div>
   )

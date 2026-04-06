@@ -12,9 +12,11 @@ import { Textarea } from '@/components/ui/textarea'
 import type { Tables } from '@/lib/types/database'
 import { DateTimePickerV2 } from '@/components/restaurant/date-time-picker-v2'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 import { 
   CheckCircle2, ChevronLeft, ChevronRight, Star, ArrowRight, Calendar, User, 
-  Clock, Activity, PlusCircle, CalendarDays, Sparkles, CircleX, UtensilsCrossed 
+  Clock, Activity, PlusCircle, CalendarDays, Sparkles, CircleX, UtensilsCrossed,
+  Check, Copy, Image as ImageIcon
 } from 'lucide-react'
 import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
@@ -53,7 +55,7 @@ export function RestaurantBookingForm({ tables, restaurantId, initialData, preSe
   })
 
   const [selectedTableId, setSelectedTableId] = useState<string>(initialData?.table_id || preSelectedTableId || '')
-  const [occupiedIds, setOccupiedIds] = useState<string[]>([])
+  const [occupiedDetails, setOccupiedDetails] = useState<{ table_id: string; guest_name: string; start_time: string }[]>([])
   const [commonCustomers, setCommonCustomers] = useState<any[]>([])
 
   const [bookingStatus, setBookingStatus] = useState<string>(initialData?.status || 'confirmed')
@@ -95,13 +97,15 @@ export function RestaurantBookingForm({ tables, restaurantId, initialData, preSe
 
   React.useEffect(() => {
     startOccupancyTransition(async () => {
-      const ids = await getOccupiedTableIds(restaurantId, startTime)
-      // Filter out nulls and typed as string[]
-      const filtered = ids.filter((id): id is string => id !== null && id !== initialData?.table_id)
-      setOccupiedIds(filtered)
-      if (filtered.includes(selectedTableId)) setSelectedTableId('')
+      const details = await getOccupiedTableIds(restaurantId, startTime)
+      // Filter out nulls and handle edit case (don't block the current reservation's table)
+      const filtered = details.filter((d): d is { table_id: string; guest_name: string; start_time: string } => 
+        d.table_id !== null && d.table_id !== initialData?.id // If editing, allow selecting OWN table
+      )
+      setOccupiedDetails(filtered)
+      if (filtered.some(f => f.table_id === selectedTableId)) setSelectedTableId('')
     })
-  }, [startTime, restaurantId, initialData?.table_id])
+  }, [startTime, restaurantId, initialData?.id])
 
   const goTo = (nextStep: number) => {
     setSlideDir(nextStep > step ? 'right' : 'left')
@@ -111,6 +115,10 @@ export function RestaurantBookingForm({ tables, restaurantId, initialData, preSe
 
   const selectedTable = tables.find(t => t.id === selectedTableId)
   const slideClass = slideDir === 'right' ? slideInRight : slideInLeft
+
+  const availableTables = tables.filter(t => !occupiedDetails.some(o => o.table_id === t.id))
+  const bookedTables = tables.filter(t => occupiedDetails.some(o => o.table_id === t.id))
+
 
   return (
     <div className="relative">
@@ -137,7 +145,7 @@ export function RestaurantBookingForm({ tables, restaurantId, initialData, preSe
           <div key={`step1-${renderKey}`} className={cn('space-y-6', slideClass)}>
             
             {/* 🕒 Section: Dining Schedule */}
-            <section className="bg-card rounded-3xl p-4 border border-border space-y-4">
+            <section className="bg-card rounded-3xl p-4 border border-border space-y-4 shadow-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-violet-400" /> When are you dining?
@@ -186,85 +194,88 @@ export function RestaurantBookingForm({ tables, restaurantId, initialData, preSe
                       <div className="w-full sm:w-24">
                          <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">Guests</Label>
                          <div className="relative">
-                           <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400 pointer-events-none" />
-                           <Input
-                             type="number"
-                             min={1}
-                             value={partySize}
-                             onChange={(e) => setPartySize(e.target.value)}
-                             className="h-14 bg-card border-2 border-border/50 text-foreground pl-9 font-black text-lg rounded-2xl focus:border-emerald-500 transition-all"
-                           />
+                            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400 pointer-events-none" />
+                            <Input
+                              type="number"
+                              min={1}
+                              value={partySize}
+                              onChange={(e) => setPartySize(e.target.value)}
+                              className="h-14 bg-card border-2 border-border/50 text-foreground pl-9 font-black text-lg rounded-2xl focus:border-emerald-500 transition-all"
+                            />
                          </div>
                       </div>
                    </div>
                 </div>
-
-                {/* ITEMS: Added Slots */}
-                {extraSlots.map((slot, index) => (
-                  <div key={slot.id} className="relative group/card animate-in slide-in-from-bottom-2 fade-in duration-400">
-                    <div className="bg-background/40 border border-border/60 rounded-2xl p-4 shadow-xl relative overflow-hidden">
-                       <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-2">
-                             <div className="w-8 h-8 rounded-xl bg-violet-500/10 flex items-center justify-center">
-                                <CalendarDays className="w-4 h-4 text-violet-400" />
-                             </div>
-                             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Added Slot #{index + 1}</p>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <div className="flex bg-card/80 p-0.5 rounded-xl border border-border">
-                               <button
-                                 type="button"
-                                 onClick={() => updateExtraSlot(slot.id, slot.date, slot.partySize, 'confirmed')}
-                                 className={cn(
-                                   "px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all",
-                                   slot.status === 'confirmed' ? "bg-emerald-500 text-foreground" : "text-muted-foreground"
-                                 )}
-                               >
-                                 Conf
-                               </button>
-                               <button
-                                 type="button"
-                                 onClick={() => updateExtraSlot(slot.id, slot.date, slot.partySize, 'pending')}
-                                 className={cn(
-                                   "px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all",
-                                   slot.status === 'pending' ? "bg-amber-500 text-foreground" : "text-muted-foreground"
-                                 )}
-                               >
-                                 Wait
-                               </button>
+                
+                {extraSlots.length > 0 && (
+                   <div className="space-y-4">
+                     {extraSlots.map((slot, index) => (
+                       <div key={slot.id} className="relative group/card animate-in slide-in-from-bottom-2 fade-in duration-400">
+                         <div className="bg-background/40 border border-border/60 rounded-2xl p-4 shadow-xl relative overflow-hidden">
+                            <div className="flex items-center justify-between mb-4">
+                               <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                                     <CalendarDays className="w-4 h-4 text-violet-400" />
+                                  </div>
+                                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Added Slot #{index + 1}</p>
+                               </div>
+                               
+                               <div className="flex items-center gap-2">
+                                 <div className="flex bg-card/80 p-0.5 rounded-xl border border-border">
+                                    <button
+                                      type="button"
+                                      onClick={() => updateExtraSlot(slot.id, slot.date, slot.partySize, 'confirmed')}
+                                      className={cn(
+                                        "px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all",
+                                        slot.status === 'confirmed' ? "bg-emerald-500 text-foreground" : "text-muted-foreground"
+                                      )}
+                                    >
+                                      Conf
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => updateExtraSlot(slot.id, slot.date, slot.partySize, 'pending')}
+                                      className={cn(
+                                        "px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-all",
+                                        slot.status === 'pending' ? "bg-amber-500 text-foreground" : "text-muted-foreground"
+                                      )}
+                                    >
+                                      Wait
+                                    </button>
+                                 </div>
+                                 <button
+                                   type="button"
+                                   onClick={() => removeExtraSlot(slot.id)}
+                                   className="w-10 h-10 flex items-center justify-center bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 hover:bg-rose-500 transition-all hover:text-foreground"
+                                 >
+                                   <CircleX className="w-4 h-4" />
+                                 </button>
+                               </div>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => removeExtraSlot(slot.id)}
-                              className="w-10 h-10 flex items-center justify-center bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 hover:bg-rose-500 transition-all hover:text-foreground"
-                            >
-                              <CircleX className="w-4 h-4" />
-                            </button>
-                          </div>
-                       </div>
 
-                       <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
-                          <div className="flex-1">
-                            <DateTimePickerV2 value={slot.date} onChange={(date) => updateExtraSlot(slot.id, date)} />
-                          </div>
-                          <div className="w-full sm:w-24">
-                             <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">Guests</Label>
-                             <div className="relative">
-                               <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-400 pointer-events-none" />
-                               <Input
-                                 type="number"
-                                 min={1}
-                                 value={slot.partySize}
-                                 onChange={(e) => updateExtraSlot(slot.id, slot.date, parseInt(e.target.value) || 1)}
-                                 className="h-14 bg-card border-2 border-border/50 text-foreground pl-9 font-black text-lg rounded-2xl focus:border-violet-500 transition-all"
-                               />
-                             </div>
-                          </div>
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
+                               <div className="flex-1">
+                                 <DateTimePickerV2 value={slot.date} onChange={(date) => updateExtraSlot(slot.id, date)} />
+                               </div>
+                               <div className="w-full sm:w-24">
+                                  <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">Guests</Label>
+                                  <div className="relative">
+                                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-400 pointer-events-none" />
+                                    <Input
+                                      type="number"
+                                      min={1}
+                                      value={slot.partySize}
+                                      onChange={(e) => updateExtraSlot(slot.id, slot.date, parseInt(e.target.value) || 1)}
+                                      className="h-14 bg-card border-2 border-border/50 text-foreground pl-9 font-black text-lg rounded-2xl focus:border-violet-500 transition-all"
+                                    />
+                                  </div>
+                               </div>
+                            </div>
+                         </div>
                        </div>
-                    </div>
-                  </div>
-                ))}
+                     ))}
+                   </div>
+                )}
                 
                 <button
                   type="button"
@@ -277,45 +288,45 @@ export function RestaurantBookingForm({ tables, restaurantId, initialData, preSe
               </div>
             </section>
 
-            {/* 🍽️ Section: Table grid */}
-            <section className="bg-card rounded-3xl p-4 border border-border">
-               <div className="flex items-center justify-between mb-4">
-                 <h2 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                   <UtensilsCrossed className="w-4 h-4 text-indigo-400" /> Table Availability
-                 </h2>
-                 <div className="flex items-center gap-3">
-                   <div className="flex items-center gap-1.5">
-                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                     <span className="text-[10px] font-bold text-muted-foreground uppercase">Free</span>
-                   </div>
-                   <div className="flex items-center gap-1.5">
-                     <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                     <span className="text-[10px] font-bold text-muted-foreground uppercase">Booked</span>
-                   </div>
+            {/* 🍽️ Section: Table grid (Now List View) */}
+            <section className="bg-card rounded-[2rem] p-5 md:p-8 border border-border shadow-xl space-y-8">
+               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-6">
+                 <div className="space-y-1">
+                    <h2 className="text-sm font-black text-foreground uppercase tracking-[0.2em] flex items-center gap-2">
+                       Table Selection
+                    </h2>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">
+                      {bookingStatus === 'confirmed' ? 'Select an available table' : 'Choose any table for waitlist'}
+                    </p>
                  </div>
                </div>
                
-               <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                  {tables.map((table) => {
-                   const isOccupied = occupiedIds.includes(table.id)
+                   const isOccupied = occupiedDetails.some(o => o.table_id === table.id)
                    const isSelected = selectedTableId === table.id
-                   
+                   // Disable selection ONLY if busy and status is NOT "Wait" (pending)
+                   const isDisabled = isOccupied && bookingStatus === 'confirmed'
+
                    return (
                      <button
                        key={table.id}
                        type="button"
-                       disabled={isOccupied}
+                       disabled={isDisabled}
                        onClick={() => setSelectedTableId(table.id)}
                        className={cn(
-                         "h-12 rounded-xl border flex flex-col items-center justify-center transition-all active:scale-95",
-                         isOccupied 
-                           ? "bg-background/50 border-border text-muted-foreground cursor-not-allowed" 
-                           : isSelected
-                             ? "bg-emerald-500 border-emerald-400 text-foreground shadow-lg shadow-emerald-500/20 z-10"
-                             : "bg-background border-border text-muted-foreground hover:border-border hover:text-foreground/80 shadow-xl"
+                         "relative group flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all duration-300",
+                         isSelected 
+                           ? "bg-emerald-500 border-emerald-400 text-foreground ring-4 ring-emerald-500/20 z-10 scale-[1.05]" 
+                           : isOccupied 
+                             ? "bg-rose-500/5 border-rose-500/20 text-rose-400/60 opacity-60" 
+                             : "bg-background border-border hover:border-violet-500/40 text-muted-foreground hover:text-foreground"
                        )}
                      >
-                       <span className="text-[10px] font-black uppercase tracking-widest">{table.table_name}</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest mb-1">{table.table_name}</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[9px] font-bold">{table.capacity} Seats</span>
+                        </div>
                      </button>
                    )
                  })}

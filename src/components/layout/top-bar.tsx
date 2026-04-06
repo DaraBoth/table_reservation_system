@@ -17,24 +17,12 @@ interface TopBarProps {
   memberships?: any[]
 }
 
-const pageTitles: Record<string, string> = {
-  '/': 'Home',
-  '/reservations': 'Bookings',
-  '/reservations/new': 'New Booking',
-  '/tables': 'Tables',
-  '/staff': 'Staff',
-  '/account': 'Account',
-}
 
 export function TopBar({ brandName, userName, avatarUrl, restaurantId, memberships }: TopBarProps) {
   const pathname = usePathname()
 
   const hasMultiple = (memberships?.length ?? 0) > 1
 
-  // Find matching title (handle dynamic restaurantId)
-  const segments = pathname.split('/')
-  const relativePath = '/' + segments.slice(3).join('/') // Everything after /dashboard/[id]
-  const title = pageTitles[relativePath] ?? 'Dashboard'
 
   const isEditing = pathname.includes('/edit') || pathname.includes('/new')
 

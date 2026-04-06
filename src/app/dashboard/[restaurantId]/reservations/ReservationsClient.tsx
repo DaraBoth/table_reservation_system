@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { format, parseISO } from 'date-fns'
 import { Plus, ChevronRight, ClipboardList, Calendar, Clock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { buttonVariants } from '@/components/ui/button-variants'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -12,6 +13,7 @@ import { getTerms } from '@/lib/business-type'
 import { DateNavigator } from '@/components/dashboard/DateNavigator'
 import { Tables } from '@/lib/types/database'
 import { ViewSwitcher, type ViewStyle } from '@/components/dashboard/ViewSwitcher'
+import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 
 interface Reservation extends Tables<'reservations'> {
@@ -26,6 +28,7 @@ interface Props {
   initialDate: string
   todayIso: string
   businessType: string
+  tables: Tables<'physical_tables'>[]
 }
 
 const statusColors: Record<string, string> = {
@@ -55,7 +58,9 @@ const statusAvatarBg: Record<string, string> = {
   no_show: 'from-orange-600/30 to-amber-600/30 border-orange-500/20',
 }
 
-export function ReservationsClient({ initialBookings, restaurantId, currentUserId, initialDate, todayIso, businessType }: Props) {
+export function ReservationsClient({ 
+  initialBookings, restaurantId, currentUserId, initialDate, todayIso, businessType, tables 
+}: Props) {
   const [selectedDate, setSelectedDate] = useState(initialDate)
   const [bookings, setBookings] = useState<Reservation[]>(initialBookings)
   const [viewStyle, setViewStyle] = useState<ViewStyle>('grid')
@@ -78,6 +83,50 @@ export function ReservationsClient({ initialBookings, restaurantId, currentUserI
   const handleViewChange = (style: ViewStyle) => {
     setViewStyle(style)
     localStorage.setItem('reservationsViewStyle', style)
+  }
+
+  const handleShareStatus = async () => {
+    const dateParsed = parseISO(selectedDate)
+    const dateStr = format(dateParsed, 'EEEE, MMM d')
+    const timeStr = format(now, 'hh:mm bb')
+    
+    // Determine which tables are occupied on this specific date
+    // (Note: This is a simplified check based on current dashboard bookings)
+    const occupiedTableIds = bookings
+      .filter(b => ['confirmed', 'arrived'].includes(b.status))
+      .map(b => b.table_id)
+
+    const availableTables = tables.filter(t => !occupiedTableIds.includes(t.id))
+    const bookedTables = tables.filter(t => occupiedTableIds.includes(t.id))
+    
+    let text = `Date: ${dateStr} As of ${timeStr}\n\n`
+    
+    text += `AVAILABLE (${availableTables.length}):\n`
+    availableTables.forEach(t => {
+      text += `• ${t.table_name} (${t.capacity} Seats)\n`
+    })
+    
+    text += `\nBOOKED (${bookedTables.length}):\n`
+    bookedTables.forEach(t => {
+      const res = bookings.find(b => b.table_id === t.id && ['confirmed', 'arrived'].includes(b.status))
+      if (res) {
+        const hhmm = res.start_time?.replace(/^(\d{2}):(\d{2}):\d{2}$/, (_, h, m) => {
+          const hh = parseInt(h);
+          const mm = m;
+          const ampm = hh >= 12 ? 'PM' : 'AM';
+          const displayH = hh % 12 || 12;
+          return `${displayH}:${mm} ${ampm}`;
+        });
+        text += `• ${t.table_name} - ${res.guest_name} ${hhmm}\n`
+      }
+    })
+    
+    try {
+      await navigator.clipboard.writeText(text)
+      toast.success('Status report copied!')
+    } catch (err) {
+      toast.error('Failed to copy status')
+    }
   }
 
   const supabase = createClient()
@@ -136,6 +185,14 @@ export function ReservationsClient({ initialBookings, restaurantId, currentUserI
               <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
               <span className="text-[9px] font-black text-violet-400 uppercase tracking-tighter">Live Feed</span>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleShareStatus}
+              className="h-7 rounded-lg px-2 border-violet-500/20 bg-violet-600/5 text-violet-400 hover:bg-violet-600 hover:text-white transition-all gap-1 text-[9px] font-black uppercase tracking-widest"
+            >
+              Share Status
+            </Button>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground/60">
             <Clock className="w-3 h-3" />

@@ -21,7 +21,7 @@ export async function getCommonCustomers(restaurantId: string) {
 
 /**
  * Identifies tables that are occupied at a given time.
- * Uses a default 2-hour duration to check for overlaps.
+ * Returns detailed occupancy info including guest names.
  */
 export async function getOccupiedTableIds(restaurantId: string, startTime: Date) {
   const supabase = await createClient()
@@ -30,14 +30,11 @@ export async function getOccupiedTableIds(restaurantId: string, startTime: Date)
   const targetStartTime = format(startTime, 'HH:mm:ss')
   const targetEndTime = format(addHours(startTime, 2), 'HH:mm:ss')
 
-  // To find if a table is currently occupied during the requested [targetStartTime, targetEndTime] window:
-  // Existing start_time must be BEFORE requested end_time
-  // Existing end_time must be AFTER requested start_time
   const { data, error } = await supabase
     .from('reservations')
-    .select('table_id')
+    .select('table_id, guest_name, start_time')
     .eq('restaurant_id', restaurantId)
-    .in('status', ['confirmed', 'arrived']) // Explicitly check occupancy (using valid enum values)
+    .in('status', ['confirmed', 'arrived'])
     .eq('reservation_date', targetDate)
     .lt('start_time', targetEndTime)
     .gt('end_time', targetStartTime)
@@ -47,5 +44,9 @@ export async function getOccupiedTableIds(restaurantId: string, startTime: Date)
     return []
   }
 
-  return data.map(r => r.table_id)
+  return data.map(r => ({
+    table_id: r.table_id,
+    guest_name: r.guest_name,
+    start_time: r.start_time
+  }))
 }
