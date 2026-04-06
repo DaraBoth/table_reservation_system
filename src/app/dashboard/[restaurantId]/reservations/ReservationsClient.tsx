@@ -225,7 +225,7 @@ export function ReservationsClient({ initialBookings, restaurantId, currentUserI
                                })}
                              </p>
                              <span className="text-[9px] text-muted-foreground/40 font-bold px-1.5 py-0.5 rounded-lg border border-border bg-card/50 truncate max-w-[100px]">
-                               {res.created_by === currentUserId ? 'Created by you' : `Created by ${res.profiles?.full_name || 'Staff'}`}
+                               {String(res.created_by) === String(currentUserId) ? 'Created by you' : `Created by ${res.profiles?.full_name || 'Staff'}`}
                              </span>
                           </div>
                         </div>
@@ -275,7 +275,7 @@ export function ReservationsClient({ initialBookings, restaurantId, currentUserI
                           })}
                         </p>
                         <p className="text-[8px] text-muted-foreground/60 font-medium truncate italic mt-1 pr-1 border-l pl-1 border-border/20">
-                          {res.created_by === currentUserId ? 'You' : (res.profiles?.full_name?.split(' ')[0] || 'Staff')}
+                          {String(res.created_by) === String(currentUserId) ? 'You' : (res.profiles?.full_name?.split(' ')[0] || 'Staff')}
                         </p>
                       </div>
                       <div className="mt-auto pt-2 border-t border-border/20 flex items-center justify-between">
@@ -362,7 +362,7 @@ function BookingCard({ res, restaurantId, todayIso, currentUserId }: { res: Rese
                <Calendar className="w-3 h-3 text-muted-foreground/60" /> {timeStr}
              </p>
              <p className="text-[9px] text-muted-foreground/50 font-bold truncate italic">
-               {res.created_by === currentUserId ? 'Created by you' : (res.profiles?.full_name || 'Staff')}
+               {String(res.created_by) === String(currentUserId) ? 'Created by you' : (res.profiles?.full_name || 'Staff')}
              </p>
           </div>
 

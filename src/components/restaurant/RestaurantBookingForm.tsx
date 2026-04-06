@@ -126,7 +126,7 @@ export function RestaurantBookingForm({ tables, restaurantId, initialData, preSe
         {isEdit && initialData?.id && <input type="hidden" name="reservationId" value={initialData.id} />}
         {extraSlots.length > 0 && (
           <input type="hidden" name="extraSlots" value={JSON.stringify(extraSlots.map(s => ({
-            date: s.date.toISOString(),
+            date: format(s.date, "yyyy-MM-dd'T'HH:mm:ss"),
             partySize: s.partySize,
             status: s.status
           })))} />

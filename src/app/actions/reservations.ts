@@ -8,6 +8,29 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import type { ActionState } from './auth'
 
+/**
+ * 🛠️ Extract Wall Clock Time (Local)
+ * 
+ * Safely pulls the HH:mm from a ISO-like string (YYYY-MM-DDTHH:mm:ss)
+ * without falling back to new Date() which might shift to UTC in Node.js
+ */
+function extractWallClockTime(isoString: string): string {
+  // Try regex for 'T20:30' pattern
+  const match = isoString.match(/T(\d{2}):(\d{2})/)
+  if (match) return `${match[1]}:${match[2]}:00`
+
+  // Fallback: try splitting
+  if (isoString.includes('T')) {
+    const timePart = isoString.split('T')[1]
+    const [h, m] = timePart.split(':')
+    if (h && m) return `${h.padStart(2, '0')}:${m.padStart(2, '0')}:00`
+  }
+
+  // Final fallback (risky but needed)
+  const d = new Date(isoString)
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:00`
+}
+
 // ─── Create reservation ───────────────────────────────────────────────────────
 
 const ReservationSchema = z.object({
@@ -86,19 +109,15 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
     saveToCommon, extraSlots: extraSlotsRaw 
   } = parsed.data
 
-  // Use provided checkout time (hotel) or default to +2 hours (restaurant)
-  // For "Wall Clock Time" (restaurants), the string is 'YYYY-MM-DDTHH:mm:ss'
-  // and we should take the hours and minutes as-is to avoid timezone shifts.
-  const hourMatch = startTime.match(/T(\d{2}):(\d{2})/)
-  const startTimeStr = hourMatch ? `${hourMatch[1]}:${hourMatch[2]}:00` : 
-                       (String(new Date(startTime).getHours()).padStart(2,'0') + ':' + String(new Date(startTime).getMinutes()).padStart(2,'0') + ':00')
+  // Use robust wall clock time extraction to avoid UTC shifts
+  const startTimeStr = extractWallClockTime(startTime)
 
   const startObj = new Date(startTime)
   const endObj   = providedEnd ? new Date(providedEnd) : new Date(startObj.getTime() + 2 * 60 * 60 * 1000)
   
   const reservationDate = startObj.getFullYear() + '-' + String(startObj.getMonth() + 1).padStart(2,'0') + '-' + String(startObj.getDate()).padStart(2,'0')
   const checkoutDate = endObj.getFullYear() + '-' + String(endObj.getMonth() + 1).padStart(2,'0') + '-' + String(endObj.getDate()).padStart(2,'0')
-  const endTimeStr = String(endObj.getHours()).padStart(2,'0') + ':' + String(endObj.getMinutes()).padStart(2,'0') + ':00'
+  const endTimeStr = extractWallClockTime(endObj.toISOString())
 
   const businessType = (membership as any).restaurants?.business_type || 'restaurant'
   const isHotel = businessType === 'hotel' || businessType === 'guesthouse'
@@ -183,10 +202,10 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
       extraSlots.forEach((slot: { date: string; partySize: number; status?: string }) => {
         const d = new Date(slot.date)
         const dStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0')
-        const tStr = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':00'
+        const tStr = extractWallClockTime(slot.date)
         // Extra slots default to 2hr duration unless specified otherwise
-        const tEnd = new Date(d.getTime() + 2 * 60 * 60 * 1000)
-        const tEndStr = String(tEnd.getHours()).padStart(2,'0') + ':' + String(tEnd.getMinutes()).padStart(2,'0') + ':00'
+        const tEnd = new Date(new Date(slot.date).getTime() + 2 * 60 * 60 * 1000)
+        const tEndStr = extractWallClockTime(tEnd.toISOString())
 
         records.push({
           restaurant_id: membership.restaurant_id,
@@ -381,8 +400,8 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
   
   const reservationDate = startObj.getFullYear() + '-' + String(startObj.getMonth() + 1).padStart(2,'0') + '-' + String(startObj.getDate()).padStart(2,'0')
   const checkoutDate = endObj.getFullYear() + '-' + String(endObj.getMonth() + 1).padStart(2,'0') + '-' + String(endObj.getDate()).padStart(2,'0')
-  const startTimeStr = String(startObj.getHours()).padStart(2,'0') + ':' + String(startObj.getMinutes()).padStart(2,'0') + ':00'
-  const endTimeStr = String(endObj.getHours()).padStart(2,'0') + ':' + String(endObj.getMinutes()).padStart(2,'0') + ':00'
+  const startTimeStr = extractWallClockTime(startTime)
+  const endTimeStr = extractWallClockTime(endObj.toISOString())
 
   // Fetch table name for snapshot (in case table was changed)
   const { data: tableData } = await supabase

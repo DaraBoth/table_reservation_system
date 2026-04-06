@@ -78,13 +78,13 @@ export function TopBar({ brandName, userName, avatarUrl, restaurantId, membershi
           {/* User Identity - Navigates to Account Settings */}
           <Link 
             href={`/dashboard/${restaurantId}/account`}
-            className="hidden sm:flex items-center gap-3 px-3 py-1.5 rounded-full bg-violet-600/5 border border-violet-500/10 hover:bg-violet-600/10 transition-colors group cursor-pointer active:scale-95"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-violet-600/5 border border-violet-500/10 hover:bg-violet-600/10 transition-all group cursor-pointer active:scale-95 shadow-sm"
           >
-            <div className="flex flex-col items-end">
-              <span className="text-[10px] font-black text-foreground italic uppercase tracking-tighter leading-none">{userName}</span>
-              <span className="text-[8px] text-muted-foreground font-black uppercase tracking-widest mt-0.5 opacity-50">View Profile</span>
+            <div className="flex flex-col items-end min-w-0 max-w-[80px] xs:max-w-none">
+              <span className="text-[10px] font-black text-foreground italic uppercase tracking-tighter leading-none truncate w-full">{userName}</span>
+              <span className="text-[9px] text-violet-500 font-black uppercase tracking-widest mt-0.5 group-hover:text-violet-400 transition-colors">View Profile</span>
             </div>
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-700 border border-violet-500/20 flex items-center justify-center text-[10px] font-black italic text-white shadow-lg overflow-hidden flex-shrink-0 group-hover:shadow-violet-500/10">
+            <div className="w-8 h-8 rounded-xl bg-linear-to-br from-violet-600 to-indigo-700 border border-violet-500/20 flex items-center justify-center text-[10px] font-black italic text-white shadow-xl overflow-hidden flex-shrink-0 group-hover:shadow-violet-500/20 transition-all">
                {avatarUrl ? (
                  <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
                ) : (
