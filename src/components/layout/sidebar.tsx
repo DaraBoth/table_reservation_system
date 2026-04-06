@@ -145,7 +145,7 @@ export function Sidebar({
                 <div className="w-6 h-6 rounded-md bg-violet-600 text-foreground flex items-center justify-center text-[10px] font-black">
                    +
                 </div>
-                <span className="text-[10px] font-black text-violet-400 uppercase tracking-tight">Establish Brand</span>
+                <span className="text-[10px] font-black text-violet-400 uppercase tracking-tight">Add Business</span>
               </Link>
             )}
           </div>

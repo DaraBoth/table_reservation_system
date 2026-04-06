@@ -356,7 +356,7 @@ export function TablesClient({
                     
                     <div className="flex-1 min-w-0 flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3 min-w-0">
-                        <p className="text-base font-black italic tracking-tighter truncate">{t.table_name}</p>
+                        <p className="text-base font-black italic tracking-tighter truncate pr-2">{t.table_name}</p>
                         <span className="px-2 py-0.5 rounded-lg bg-muted text-[10px] font-black text-muted-foreground uppercase">{t.capacity} {terms.capacityUnit}</span>
                       </div>
 
@@ -394,14 +394,14 @@ export function TablesClient({
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 relative z-30">
                         <Badge className={cn(
                           'text-[9px] font-black px-2 py-0.5 rounded-lg border uppercase tracking-widest',
                           isOffline ? 'bg-muted text-muted-foreground/60 border-border'
                             : isBusy ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
                               : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                         )}>
-                          {isOffline ? 'OFF' : isBusy ? 'Booked' : 'FREE'}
+                          {isOffline ? 'OFF' : isBusy ? 'Booked' : 'AVAILABLE'}
                         </Badge>
                         <div className="pointer-events-auto">
                           <EditTableSheet 

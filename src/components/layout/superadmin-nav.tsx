@@ -20,6 +20,7 @@ import {
 interface SuperadminNavProps {
   userName: string
   userEmail?: string
+  avatarUrl?: string | null
 }
 
 const NAV_ITEMS = [
@@ -29,7 +30,7 @@ const NAV_ITEMS = [
   { href: '/superadmin/admins',      label: 'Admin Accounts', icon: ShieldCheck },
 ]
 
-export function SuperadminNav({ userName, userEmail }: SuperadminNavProps) {
+export function SuperadminNav({ userName, userEmail, avatarUrl }: SuperadminNavProps) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
@@ -88,8 +89,12 @@ export function SuperadminNav({ userName, userEmail }: SuperadminNavProps) {
         {/* User + Sign out */}
         <div className="p-3 border-t border-border/60 space-y-1">
           <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-muted/30">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center text-foreground font-bold text-xs flex-shrink-0">
-              {userName.slice(0, 2).toUpperCase()}
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center text-foreground font-bold text-xs flex-shrink-0 overflow-hidden">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
+              ) : (
+                userName.slice(0, 2).toUpperCase()
+              )}
             </div>
             <div className="min-w-0">
               <p className="text-xs font-bold text-foreground truncate">{userName}</p>
@@ -150,8 +155,12 @@ export function SuperadminNav({ userName, userEmail }: SuperadminNavProps) {
             {/* Footer */}
             <div className="p-3 border-t border-border space-y-1">
               <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-muted/40">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center text-foreground font-bold text-xs">
-                  {userName.slice(0, 2).toUpperCase()}
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center text-foreground font-bold text-xs overflow-hidden flex-shrink-0">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
+                  ) : (
+                    userName.slice(0, 2).toUpperCase()
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-foreground truncate">{userName}</p>

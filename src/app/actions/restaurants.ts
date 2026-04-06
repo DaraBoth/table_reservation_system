@@ -220,6 +220,59 @@ export async function updateOwnRestaurantInfo(_: ActionState, formData: FormData
   return { success: 'Business info updated.' }
 }
 
+// ─── Update Restaurant Logo (Admin) ──────────────────────────────────────────
+
+export async function updateRestaurantLogo(restaurantId: string, formData: FormData): Promise<ActionState> {
+  if (!restaurantId) return { error: 'Restaurant context missing' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { data: membership } = await supabase
+    .from('account_memberships')
+    .select('role, restaurant_id')
+    .eq('user_id', user.id)
+    .eq('restaurant_id', restaurantId)
+    .eq('is_active', true)
+    .single()
+
+  if (!['admin', 'superadmin'].includes(membership?.role || '') || !membership?.restaurant_id) {
+    return { error: 'Unauthorized — business owner only' }
+  }
+
+  const file = formData.get('file') as Blob
+  if (!file) return { error: 'No logo file provided' }
+
+  const fileName = `${restaurantId}/${Date.now()}.jpg`
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from('logos')
+    .upload(fileName, file, {
+      contentType: 'image/jpeg',
+      upsert: true
+    })
+
+  if (uploadError) return { error: `Logo upload failed: ${uploadError.message}` }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('logos')
+    .getPublicUrl(fileName)
+
+  // Update restaurant info
+  const { error: updateError } = await supabase
+    .from('restaurants')
+    .update({ logo_url: publicUrl })
+    .eq('id', restaurantId)
+
+  if (updateError) return { error: updateError.message }
+
+  revalidatePath(`/dashboard/${restaurantId}`)
+  revalidatePath(`/dashboard/${restaurantId}/account`)
+  revalidatePath(`/`) 
+
+  return { success: 'Logo updated successfully' }
+}
+
 // ─── Finish Restaurant Setup ──────────────────────────────────────────────────
 
 export async function completeRestaurantSetup(_: ActionState, formData: FormData): Promise<ActionState> {

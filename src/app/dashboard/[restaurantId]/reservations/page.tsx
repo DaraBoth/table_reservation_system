@@ -43,6 +43,7 @@ export default async function ReservationsPage({ params, searchParams }: { param
       <ReservationsClient
         initialBookings={(allBookings ?? []) as any}
         restaurantId={membership.restaurant_id}
+        currentUserId={user.id}
         initialDate={initialDate}
         todayIso={todayIso}
         businessType={businessType}

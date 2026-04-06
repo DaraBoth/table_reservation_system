@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { LayoutDashboard, CalendarDays, LayoutGrid, UserCircle, Users, BarChart3, BookUser, BedDouble, Menu, LogOut, ChevronRight, Home, Settings } from 'lucide-react'
 import { getTerms } from '@/lib/business-type'
@@ -28,6 +28,7 @@ interface BottomNavProps {
   specialFeatures?: Record<string, any>
   restaurantId: string
   memberships?: any[]
+  avatarUrl?: string | null
 }
 
 export function BottomNav({ 
@@ -36,9 +37,11 @@ export function BottomNav({
   isSpecialAdmin = false, 
   specialFeatures = {},
   restaurantId,
-  memberships = []
+  memberships = [],
+  avatarUrl
 }: BottomNavProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [isPortfolioOpen, setIsPortfolioOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -97,7 +100,8 @@ export function BottomNav({
       // Navigate anyway; page route still works even if cookie write fails.
     } finally {
       const target = buildTargetPath(nextRestaurantId)
-      window.location.assign(target)
+      router.push(target)
+      setOpen(false)
     }
   }
 
@@ -258,7 +262,7 @@ export function BottomNav({
                           className="w-full flex items-center justify-center gap-3 p-5 rounded-[2rem] bg-violet-600/10 text-violet-400 border border-violet-500/20 hover:bg-violet-600/20 hover:border-violet-500/40 transition-all font-black text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-violet-600/5 group/new"
                         >
                           <PlusCircle className="w-5 h-5 group-hover/new:rotate-90 transition-transform duration-500" />
-                          Establish Brand
+                          Add Business
                         </Link>
                       </div>
                     )}
@@ -284,7 +288,7 @@ export function BottomNav({
 
                     <MenuLink 
                       href={`/dashboard/${restaurantId}/account`} 
-                      icon={UserCircle} 
+                      icon={avatarUrl ? () => <div className="w-5 h-5 rounded-md overflow-hidden"><img src={avatarUrl} className="w-full h-full object-cover" /></div> : UserCircle} 
                       label="Settings" 
                       active={pathname.startsWith(`/dashboard/${restaurantId}/account`)} 
                       onClick={() => setOpen(false)}

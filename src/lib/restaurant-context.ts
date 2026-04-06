@@ -28,10 +28,18 @@ export async function getActiveRestaurant(routeId?: string) {
   // 3. Find the membership matching the active ID, or fallback to the first one
   const activeMembership = memberships.find((m: any) => m.restaurant_id === activeId) || memberships[0]
 
+  // 4. Get the user's profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single()
+
   return {
     membership: activeMembership,
     allMemberships: memberships,
     activeId: activeMembership.restaurant_id,
+    profile: profile || null,
   }
 }
 

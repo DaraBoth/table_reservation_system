@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { format, parseISO } from 'date-fns'
-import { Plus, ChevronRight, ClipboardList, Calendar } from 'lucide-react'
+import { Plus, ChevronRight, ClipboardList, Calendar, Clock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { buttonVariants } from '@/components/ui/button-variants'
 import { cn } from '@/lib/utils'
@@ -22,6 +22,7 @@ interface Reservation extends Tables<'reservations'> {
 interface Props {
   initialBookings: Reservation[]
   restaurantId: string
+  currentUserId?: string
   initialDate: string
   todayIso: string
   businessType: string
@@ -54,10 +55,17 @@ const statusAvatarBg: Record<string, string> = {
   no_show: 'from-orange-600/30 to-amber-600/30 border-orange-500/20',
 }
 
-export function ReservationsClient({ initialBookings, restaurantId, initialDate, todayIso, businessType }: Props) {
+export function ReservationsClient({ initialBookings, restaurantId, currentUserId, initialDate, todayIso, businessType }: Props) {
   const [selectedDate, setSelectedDate] = useState(initialDate)
   const [bookings, setBookings] = useState<Reservation[]>(initialBookings)
   const [viewStyle, setViewStyle] = useState<ViewStyle>('grid')
+  const [now, setNow] = useState(new Date())
+
+  // Keep clock running
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000)
+    return () => clearInterval(timer)
+  }, [])
 
   // Load view preference
   useEffect(() => {
@@ -117,16 +125,26 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between pt-2">
-        <div className="flex flex-col gap-0.5">
-          <h1 className="text-xl font-black text-foreground italic tracking-tight uppercase">
-            {terms.bookings}
-          </h1>
-          <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest leading-none">
-            Manage your schedule
-          </p>
+      {/* Header with Live Pulse and Date/Time */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-black text-foreground italic tracking-tight uppercase">
+              {terms.bookings}
+            </h1>
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-violet-600/10 border border-violet-500/20">
+              <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
+              <span className="text-[9px] font-black text-violet-400 uppercase tracking-tighter">Live Feed</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-muted-foreground/60">
+            <Clock className="w-3 h-3" />
+            <p className="text-[10px] font-black uppercase tracking-[0.2em]">
+              {format(now, 'EEEE, MMM d, yyyy • hh:mm a')}
+            </p>
+          </div>
         </div>
+
         <div className="flex items-center gap-2">
           <ViewSwitcher currentStyle={viewStyle} onStyleChange={handleViewChange} />
           <Link
@@ -207,7 +225,7 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
                                })}
                              </p>
                              <span className="text-[9px] text-muted-foreground/40 font-bold px-1.5 py-0.5 rounded-lg border border-border bg-card/50 truncate max-w-[100px]">
-                               Created by {res.profiles?.full_name || 'Staff Member'}
+                               {res.created_by === currentUserId ? 'Created by you' : `Created by ${res.profiles?.full_name || 'Staff'}`}
                              </span>
                           </div>
                         </div>
@@ -257,7 +275,7 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
                           })}
                         </p>
                         <p className="text-[8px] text-muted-foreground/60 font-medium truncate italic mt-1 pr-1 border-l pl-1 border-border/20">
-                          By {res.profiles?.full_name?.split(' ')[0] || 'Staff'}
+                          {res.created_by === currentUserId ? 'You' : (res.profiles?.full_name?.split(' ')[0] || 'Staff')}
                         </p>
                       </div>
                       <div className="mt-auto pt-2 border-t border-border/20 flex items-center justify-between">
@@ -277,7 +295,7 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.02 }}
                 >
-                  <BookingCard res={res} restaurantId={restaurantId} todayIso={todayIso} />
+                  <BookingCard res={res} restaurantId={restaurantId} todayIso={todayIso} currentUserId={currentUserId} />
                 </motion.div>
               )
             })}
@@ -294,7 +312,7 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
   )
 }
 
-function BookingCard({ res, restaurantId, todayIso }: { res: Reservation; restaurantId: string; todayIso: string }) {
+function BookingCard({ res, restaurantId, todayIso, currentUserId }: { res: Reservation; restaurantId: string; todayIso: string; currentUserId?: string }) {
   const start = res.start_time
     ? new Date(`${res.reservation_date}T${res.start_time}`)
     : null
@@ -344,7 +362,7 @@ function BookingCard({ res, restaurantId, todayIso }: { res: Reservation; restau
                <Calendar className="w-3 h-3 text-muted-foreground/60" /> {timeStr}
              </p>
              <p className="text-[9px] text-muted-foreground/50 font-bold truncate italic">
-               Created by {res.profiles?.full_name || 'Staff'}
+               {res.created_by === currentUserId ? 'Created by you' : (res.profiles?.full_name || 'Staff')}
              </p>
           </div>
 

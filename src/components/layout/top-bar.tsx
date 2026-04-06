@@ -12,6 +12,7 @@ interface TopBarProps {
   brandName: string
   userName: string
   userEmail?: string
+  avatarUrl?: string | null
   restaurantId?: string
   memberships?: any[]
 }
@@ -25,7 +26,7 @@ const pageTitles: Record<string, string> = {
   '/account': 'Account',
 }
 
-export function TopBar({ brandName, userName, restaurantId, memberships }: TopBarProps) {
+export function TopBar({ brandName, userName, avatarUrl, restaurantId, memberships }: TopBarProps) {
   const pathname = usePathname()
 
   const hasMultiple = (memberships?.length ?? 0) > 1
@@ -73,19 +74,39 @@ export function TopBar({ brandName, userName, restaurantId, memberships }: TopBa
 
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-1.5 translate-x-1.5">
-          <NotificationBell restaurantId={restaurantId} />
-          <form action={logout}>
-            <Button
-              variant="ghost"
-              size="icon"
-              type="submit"
-              className="w-9 h-9 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded-xl"
-              title="Sign out"
-            >
-              <LogOut className="w-4 h-4" />
-            </Button>
-          </form>
+        <div className="flex items-center gap-2">
+          {/* User Identity - Navigates to Account Settings */}
+          <Link 
+            href={`/dashboard/${restaurantId}/account`}
+            className="hidden sm:flex items-center gap-3 px-3 py-1.5 rounded-full bg-violet-600/5 border border-violet-500/10 hover:bg-violet-600/10 transition-colors group cursor-pointer active:scale-95"
+          >
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] font-black text-foreground italic uppercase tracking-tighter leading-none">{userName}</span>
+              <span className="text-[8px] text-muted-foreground font-black uppercase tracking-widest mt-0.5 opacity-50">View Profile</span>
+            </div>
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-700 border border-violet-500/20 flex items-center justify-center text-[10px] font-black italic text-white shadow-lg overflow-hidden flex-shrink-0 group-hover:shadow-violet-500/10">
+               {avatarUrl ? (
+                 <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
+               ) : (
+                 (userName || '??').slice(0, 2).toUpperCase()
+               )}
+            </div>
+          </Link>
+
+          <div className="flex items-center gap-1">
+            <NotificationBell restaurantId={restaurantId} />
+            <form action={logout}>
+              <Button
+                variant="ghost"
+                size="icon"
+                type="submit"
+                className="w-9 h-9 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded-xl"
+                title="Sign out"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </form>
+          </div>
         </div>
       </div>
     </header >

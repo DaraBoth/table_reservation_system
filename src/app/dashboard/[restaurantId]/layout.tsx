@@ -33,8 +33,8 @@ export default async function DashboardLayout({
   const allMemberships = allMembershipsRaw
   if (membership.role === 'superadmin') redirect('/superadmin')
 
-  const { data: profileRaw } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
-  const profile = profileRaw as { full_name: string | null } | null
+  const { data: profileRaw } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', user.id).single()
+  const profile = profileRaw as { full_name: string | null, avatar_url: string | null } | null
 
   const isAdmin = membership.role === 'admin'
   const isSpecialAdmin = (membership as any).is_special_admin === true
@@ -53,22 +53,22 @@ export default async function DashboardLayout({
           brandName={restaurantName} 
           userName={displayName} 
           userEmail={user.email} 
+          avatarUrl={profile?.avatar_url}
           restaurantId={membership.restaurant_id ?? undefined} 
           memberships={allMemberships}
         />
         <main className="flex-1 overflow-y-auto px-4 pt-6 pb-32 md:pb-6 custom-scrollbar">
           {children}
         </main>
-        {!isNewRestaurant && (
-          <BottomNav 
-            isAdmin={isAdmin} 
-            businessType={businessType} 
-            isSpecialAdmin={isSpecialAdmin}
-            specialFeatures={specialFeatures}
-            restaurantId={restaurantId}
-            memberships={allMemberships}
-          />
-        )}
+        <BottomNav 
+          isAdmin={isAdmin} 
+          businessType={businessType} 
+          isSpecialAdmin={isSpecialAdmin}
+          specialFeatures={specialFeatures}
+          restaurantId={restaurantId}
+          memberships={allMemberships}
+          avatarUrl={profile?.avatar_url}
+        />
       </div>
     </div>
   )

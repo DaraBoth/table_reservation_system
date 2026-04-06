@@ -91,6 +91,47 @@ export async function updateOwnProfile(_: ActionState, formData: FormData): Prom
   return { success: 'Profile updated successfully.' }
 }
 
+// ─── Update Profile Avatar ──────────────────────────────────────────────────
+
+export async function updateProfileAvatar(formData: FormData): Promise<{ error?: string; url?: string }> {
+  const file = formData.get('file') as File
+  if (!file) return { error: 'No file provided' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  // Use a fixed name to overwrite previous avatar
+  const filePath = `${user.id}/avatar.jpg`
+
+  // Upload to storage
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(filePath, file, { 
+        upsert: true,
+        contentType: 'image/jpeg'
+    })
+
+  if (uploadError) return { error: uploadError.message }
+
+  // Get public URL
+  const { data: { publicUrl } } = supabase.storage
+    .from('avatars')
+    .getPublicUrl(filePath)
+
+  // Update profile
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ avatar_url: publicUrl })
+    .eq('id', user.id)
+
+  if (updateError) return { error: updateError.message }
+
+  revalidatePath('/dashboard/account')
+  revalidatePath('/dashboard')
+  return { url: publicUrl }
+}
+
 // ─── Change own password ──────────────────────────────────────────────────────
 
 const ChangePasswordSchema = z.object({

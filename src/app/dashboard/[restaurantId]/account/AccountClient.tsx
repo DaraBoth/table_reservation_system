@@ -2,11 +2,10 @@
 
 import { useActionState, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { changeOwnPassword, updateOwnProfile } from '@/app/actions/auth'
-import { updateOwnRestaurantInfo } from '@/app/actions/restaurants'
+import { changeOwnPassword, logout, updateOwnProfile, updateProfileAvatar } from '@/app/actions/auth'
+import { updateOwnRestaurantInfo, updateRestaurantLogo } from '@/app/actions/restaurants'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { logout } from '@/app/actions/auth'
 import { 
   Lock, 
   ShieldCheck, 
@@ -25,6 +24,9 @@ import {
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import { AvatarUpload } from '@/components/account/AvatarUpload'
+import { LogoUpload } from '@/components/account/LogoUpload'
+import { toast } from 'sonner'
 
 interface AccountClientProps {
   user: any
@@ -113,14 +115,25 @@ export function AccountClient({ user, membership, profile }: AccountClientProps)
                   </header>
 
                   <div className="space-y-12">
-                    <div className="flex items-center gap-6 pb-6 border-b border-border">
-                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center shadow-2xl shadow-violet-500/20">
-                        <UserCircle className="w-8 h-8 text-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-black text-foreground italic uppercase tracking-tight">{profile?.full_name}</p>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-violet-500 mt-0.5">{membership?.role}</p>
-                        <p className="text-[10px] text-muted-foreground/60 font-bold tracking-tight">{user?.email}</p>
+                    <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-border">
+                      <AvatarUpload 
+                        currentAvatarUrl={profile?.avatar_url}
+                        userName={profile?.full_name || 'User'}
+                        onUpload={async (blob) => {
+                          const formData = new FormData()
+                          formData.append('file', blob, 'avatar.jpg')
+                          const res = await updateProfileAvatar(formData)
+                          if (res.error) {
+                            toast.error(res.error)
+                            throw new Error(res.error)
+                          }
+                          toast.success('Avatar updated!')
+                        }}
+                      />
+                      <div className="text-center sm:text-left">
+                        <p className="text-xl font-black text-foreground italic uppercase tracking-tight">{profile?.full_name}</p>
+                        <p className="text-xs font-black uppercase tracking-widest text-violet-500 mt-0.5">{membership?.role}</p>
+                        <p className="text-xs text-muted-foreground/60 font-bold tracking-tight mt-1">{user?.email}</p>
                       </div>
                     </div>
 
@@ -201,6 +214,30 @@ export function AccountClient({ user, membership, profile }: AccountClientProps)
                   <div className="space-y-12">
                     <form action={businessAction} className="space-y-10">
                       <input type="hidden" name="restaurantId" value={membership?.restaurant_id || ''} />
+                      <div className="flex flex-col md:flex-row items-center gap-8 pb-10 border-b border-border/50 mb-10">
+                        <LogoUpload 
+                          currentLogoUrl={membership?.restaurants?.logo_url}
+                          businessName={membership?.restaurants?.name || 'Business'}
+                          onUpload={async (blob) => {
+                            const formData = new FormData()
+                            formData.append('file', blob, 'logo.jpg')
+                            const res = await updateRestaurantLogo(membership.restaurant_id, formData)
+                            if (res?.error) {
+                              toast.error(res.error)
+                              throw new Error(res.error)
+                            }
+                            toast.success('Business logo updated!')
+                          }}
+                        />
+                        <div className="flex-1 space-y-1 text-center md:text-left">
+                          <h3 className="text-xl font-black text-foreground italic uppercase tracking-tight">{membership?.restaurants?.name}</h3>
+                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-500/60">Brand Identity & Digital Assets</p>
+                          <p className="text-xs text-muted-foreground/60 font-bold max-w-md leading-relaxed mt-2">
+                            This logo will appear on your dashboard, digital menus, and customer receipts. Use a high-resolution square image for best results.
+                          </p>
+                        </div>
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                         <div className="space-y-3 col-span-full px-1">
                           <div className="flex items-center gap-2 mb-1">
@@ -246,18 +283,6 @@ export function AccountClient({ user, membership, profile }: AccountClientProps)
                           <Input
                             name="address"
                             defaultValue={membership?.restaurants?.address}
-                            className="h-14 bg-background border-border rounded-2xl text-lg font-bold text-foreground px-5 focus-visible:border-violet-500 focus-visible:ring-violet-500/20 transition-all shadow-sm"
-                          />
-                        </div>
-
-                        <div className="space-y-3 col-span-full px-1">
-                           <div className="flex items-center gap-2 mb-1">
-                            <ImageIcon className="w-3.5 h-3.5 text-muted-foreground/60" />
-                            <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Logo URL</Label>
-                          </div>
-                          <Input
-                            name="logoUrl"
-                            defaultValue={membership?.restaurants?.logo_url}
                             className="h-14 bg-background border-border rounded-2xl text-lg font-bold text-foreground px-5 focus-visible:border-violet-500 focus-visible:ring-violet-500/20 transition-all shadow-sm"
                           />
                         </div>

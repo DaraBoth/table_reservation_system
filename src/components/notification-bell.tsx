@@ -8,8 +8,10 @@ import { ensurePushServiceWorker, getDeviceInfo, resetPushRegistration, urlBase6
 
 export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('default')
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     if (typeof window !== 'undefined') {
       if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
         setPermission('unsupported')
@@ -117,6 +119,14 @@ export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
 
       toast.error(err instanceof Error ? err.message : 'Push subscription failed.')
     }
+  }
+
+  if (!mounted) {
+    return (
+      <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-violet-600/5 border border-violet-500/10 opacity-40">
+        <Bell className="w-4 h-4 text-muted-foreground/30" />
+      </div>
+    )
   }
 
   if (permission === 'unsupported') return null

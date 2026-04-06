@@ -19,16 +19,20 @@ export default async function SuperadminLayout({ children }: { children: React.R
 
   const { data: profileRaw } = await supabase
     .from('profiles')
-    .select('full_name')
+    .select('full_name, avatar_url')
     .eq('id', user.id)
     .single()
 
-  const profile = profileRaw as Pick<Tables<'profiles'>, 'full_name'> | null
+  const profile = profileRaw as Pick<Tables<'profiles'>, 'full_name' | 'avatar_url'> | null
   const displayName = profile?.full_name || user.email?.split('@')[0] || 'Superadmin'
 
   return (
     <div className="h-screen bg-background flex flex-col lg:flex-row overflow-hidden">
-      <SuperadminNav userName={displayName} userEmail={user.email} />
+      <SuperadminNav 
+        userName={displayName} 
+        userEmail={user.email} 
+        avatarUrl={profile?.avatar_url}
+      />
 
       {/* Main content */}
       <main className="flex-1 min-w-0 pt-14 lg:pt-0 overflow-y-auto custom-scrollbar">

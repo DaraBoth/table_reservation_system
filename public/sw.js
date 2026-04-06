@@ -53,6 +53,10 @@ const CACHE_NAME = 'bookjm-assets-v1'
 
 self.addEventListener('fetch', (event) => {
   const { request } = event
+  const url = new URL(request.url)
+
+  // Only cache http/https schemes (ignore chrome-extension, etc.)
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return
 
   if (request.destination === 'image' || request.destination === 'font') {
     event.respondWith(

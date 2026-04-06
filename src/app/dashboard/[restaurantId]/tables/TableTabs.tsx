@@ -66,7 +66,7 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
               </div>
               <div>
                 <p className="text-2xl font-black text-foreground">{freeTables}</p>
-                <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Free Today</p>
+                <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Available Today</p>
               </div>
             </div>
             <div className="flex-1 bg-card border border-rose-500/20 rounded-2xl p-4 flex items-center gap-3">
@@ -122,7 +122,7 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
                         : isBusy ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
                         : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                     )}>
-                      {isOffline ? 'Offline' : isBusy ? 'Busy' : 'Free'}
+                      {isOffline ? 'Offline' : isBusy ? 'Busy' : 'Available'}
                     </Badge>
                   </div>
 
@@ -163,7 +163,7 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
                     {t.table_name.charAt(0)}
                   </div>
                   <div>
-                    <p className={cn("text-base font-black italic tracking-tight", t.is_active ? "text-foreground" : "text-muted-foreground")}>
+                    <p className={cn("text-base font-black italic tracking-tight pr-2", t.is_active ? "text-foreground" : "text-muted-foreground")}>
                       {t.table_name}
                     </p>
                     <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">

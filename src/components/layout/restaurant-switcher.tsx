@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
 interface RestaurantSwitcherProps {
   currentRestaurantId: string
@@ -23,6 +23,7 @@ interface RestaurantSwitcherProps {
 export function RestaurantSwitcher({ currentRestaurantId, memberships }: RestaurantSwitcherProps) {
   const [open, setOpen] = React.useState(false)
   const pathname = usePathname()
+  const router = useRouter()
   const [isPending, setIsPending] = React.useState(false)
 
   const activeMembership = memberships.find(m => m.restaurant_id === currentRestaurantId)
@@ -56,7 +57,8 @@ export function RestaurantSwitcher({ currentRestaurantId, memberships }: Restaur
       // Continue navigation even if cookie persistence fails.
     } finally {
       const target = buildTargetPath(nextRestaurantId)
-      window.location.assign(target)
+      router.push(target)
+      setOpen(false)
     }
   }, [buildTargetPath, currentRestaurantId, isPending])
 
