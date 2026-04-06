@@ -33,7 +33,7 @@ const darkTheme = createTheme({
     background: { default: '#020617', paper: '#0f172a' },
     text: { primary: '#f8fafc', secondary: '#94a3b8' },
   },
-  typography: { fontFamily: 'var(--font-inter), sans-serif' },
+  typography: { fontFamily: 'var(--font-source-sans), sans-serif' },
   components: sharedComponents,
 })
 
