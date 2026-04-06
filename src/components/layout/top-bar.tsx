@@ -66,11 +66,7 @@ export function TopBar({ brandName, userName, avatarUrl, restaurantId, membershi
           )}
         </div>
 
-        {isEditing ? (
-          <h1 className="text-foreground font-bold text-base absolute left-1/2 -translate-x-1/2">
-            {title}
-          </h1>
-        ) : null}
+        {/* Center: Removed h1 title that used to overlap with profile button in New/Edit mode */}
 
 
         {/* Right: Actions */}
