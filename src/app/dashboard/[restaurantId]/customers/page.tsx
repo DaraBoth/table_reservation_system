@@ -89,8 +89,8 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
         <div className="text-center py-16 px-8 bg-card rounded-3xl border border-border">
           <Users2 className="w-14 h-14 text-violet-800 mx-auto mb-4" />
           <p className="text-foreground/70 font-bold text-base">No saved customers yet</p>
-          <p className="text-muted-foreground text-sm mt-2 leading-relaxed">
-            Add customers above, or tick &ldquo;Save to customer list&rdquo; when creating a booking.
+          <p className="text-muted-foreground text-sm mt-1 leading-relaxed max-w-xs mx-auto">
+            Returning customers will appear here automatically as soon as you create your first booking.
           </p>
         </div>
       )}

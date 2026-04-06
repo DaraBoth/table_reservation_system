@@ -11,9 +11,12 @@ import { createClient } from '@/lib/supabase/client'
 import { getTerms } from '@/lib/business-type'
 import { DateNavigator } from '@/components/dashboard/DateNavigator'
 import { Tables } from '@/lib/types/database'
+import { ViewSwitcher, type ViewStyle } from '@/components/dashboard/ViewSwitcher'
+import { motion } from 'framer-motion'
 
 interface Reservation extends Tables<'reservations'> {
   physical_tables: Pick<Tables<'physical_tables'>, 'table_name' | 'capacity'> | null
+  profiles?: { full_name: string | null } | null
   unit_name?: string | null
   checkout_date?: string | null
 }
@@ -56,6 +59,21 @@ const statusAvatarBg: Record<string, string> = {
 export function ReservationsClient({ initialBookings, restaurantId, initialDate, todayIso, businessType }: Props) {
   const [selectedDate, setSelectedDate] = useState(initialDate)
   const [bookings, setBookings] = useState<Reservation[]>(initialBookings)
+  const [viewStyle, setViewStyle] = useState<ViewStyle>('grid')
+
+  // Load view preference
+  useEffect(() => {
+    const saved = localStorage.getItem('reservationsViewStyle') as ViewStyle
+    if (saved && ['grid', 'list', 'compact'].includes(saved)) {
+      setViewStyle(saved)
+    }
+  }, [])
+
+  const handleViewChange = (style: ViewStyle) => {
+    setViewStyle(style)
+    localStorage.setItem('reservationsViewStyle', style)
+  }
+
   const supabase = createClient()
   const terms = getTerms(businessType)
   const isSelectedToday = selectedDate === todayIso
@@ -63,7 +81,7 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
   const fetchLatestData = useCallback(async () => {
     const { data } = await supabase
       .from('reservations')
-      .select('*, physical_tables(table_name, capacity)')
+      .select('*, physical_tables(table_name, capacity), profiles(full_name)')
       .eq('restaurant_id', restaurantId)
       .lte('reservation_date', selectedDate)
       .gte('checkout_date', selectedDate)
@@ -111,15 +129,19 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
             Manage your schedule
           </p>
         </div>
-        <Link
-          href={`/dashboard/${restaurantId}/reservations/new`}
-          className={cn(
-            buttonVariants({ size: 'sm' }),
-            'bg-gradient-to-r from-violet-600 to-indigo-600 border-0 rounded-xl gap-1.5 font-black text-foreground shadow-lg shadow-violet-500/20 h-10 px-4 transition-all duration-300 active:scale-95'
-          )}
-        >
-          <Plus className="w-4 h-4" /> New {terms.booking}
-        </Link>
+        <div className="flex items-center gap-2">
+          <ViewSwitcher currentStyle={viewStyle} onStyleChange={handleViewChange} />
+          <Link
+            id="new-booking-button"
+            href={`/dashboard/${restaurantId}/reservations/new`}
+            className={cn(
+              buttonVariants({ size: 'sm' }),
+              'bg-gradient-to-r from-violet-600 to-indigo-600 border-0 rounded-xl gap-1.5 font-black text-foreground shadow-lg shadow-violet-500/20 h-10 px-4 transition-all duration-300 active:scale-95'
+            )}
+          >
+            <Plus className="w-4 h-4" /> New {terms.booking}
+          </Link>
+        </div>
       </div>
 
       {/* 🗓️ Day Navigator */}
@@ -148,8 +170,119 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
         </div>
 
         {bookings.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {bookings.map(res => <BookingCard key={res.id} res={res} restaurantId={restaurantId} todayIso={todayIso} />)}
+          <div className={cn(
+            "grid gap-3",
+            viewStyle === 'grid' ? "grid-cols-2 sm:grid-cols-3" : 
+            viewStyle === 'compact' ? "grid-cols-3 sm:grid-cols-5" : 
+            "grid-cols-1"
+          )}>
+            {bookings.map((res, idx) => {
+              if (viewStyle === 'list') {
+                return (
+                  <motion.div
+                    id={`booking-list-${res.id}`}
+                    key={res.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.02 }}
+                  >
+                    <Link 
+                      id={`booking-link-list-${res.id}`}
+                      href={`/dashboard/${restaurantId}/reservations/${res.id}/edit`}
+                      className="group flex items-center gap-4 p-3 rounded-2xl bg-card/40 border border-border hover:border-violet-500/30 transition-all overflow-hidden"
+                    >
+                      <div className={cn(
+                        "w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center text-sm font-black",
+                        statusAvatarBg[res.status] ?? "from-violet-600/30 to-indigo-600/30"
+                      )}>
+                        {res.guest_name?.slice(0, 1).toUpperCase()}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0 grid grid-cols-2 sm:grid-cols-4 gap-4 items-center">
+                        <div>
+                          <p className="text-sm font-black truncate">{res.guest_name}</p>
+                          <div className="flex items-center gap-2">
+                             <p className="text-[10px] text-muted-foreground uppercase font-bold">
+                               {res.start_time?.replace(/^(\d{2}):(\d{2}):\d{2}$/, (_, h, m) => {
+                                 const hh = parseInt(h);
+                                 return `${hh % 12 || 12}:${m} ${hh >= 12 ? 'PM' : 'AM'}`;
+                               })}
+                             </p>
+                             <span className="text-[9px] text-muted-foreground/40 font-bold px-1.5 py-0.5 rounded-lg border border-border bg-card/50 truncate max-w-[100px]">
+                               Created by {res.profiles?.full_name || 'Staff Member'}
+                             </span>
+                          </div>
+                        </div>
+                        <div className="hidden sm:block">
+                          <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{terms.unit}</p>
+                          <p className="text-xs font-bold text-foreground/80 truncate">{res.unit_name || res.physical_tables?.table_name || '—'}</p>
+                        </div>
+                        <div className="hidden sm:block">
+                          <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Party</p>
+                          <p className="text-xs font-bold text-foreground/80">{res.party_size || 0} People</p>
+                        </div>
+                        <div className="flex justify-end">
+                           <Badge className={cn('text-[9px] font-black px-2 py-0.5 border rounded-lg uppercase tracking-widest', statusColors[res.status] ?? '')}>
+                            {statusLabels[res.status] ?? res.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                )
+              }
+
+              if (viewStyle === 'compact') {
+                return (
+                  <motion.div
+                    id={`booking-compact-${res.id}`}
+                    key={res.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: idx * 0.02 }}
+                  >
+                    <Link 
+                      id={`booking-link-compact-${res.id}`}
+                      href={`/dashboard/${restaurantId}/reservations/${res.id}/edit`}
+                      className="relative block h-24 p-3 rounded-2xl bg-card/40 border border-border hover:border-violet-500/30 transition-all overflow-hidden group"
+                    >
+                      <div className={cn(
+                        "absolute top-0 right-0 w-1 h-full",
+                        statusColors[res.status]?.split(' ')[0] || "bg-violet-500"
+                      )} />
+                      <p className="text-[11px] font-black truncate pr-2">{res.guest_name}</p>
+                      <div className="flex items-center justify-between gap-1 overflow-hidden">
+                        <p className="text-[10px] text-muted-foreground font-bold mt-1 uppercase tracking-tighter whitespace-nowrap">
+                          {res.start_time?.replace(/^(\d{2}):(\d{2}):\d{2}$/, (_, h, m) => {
+                            const hh = parseInt(h);
+                            return `${hh % 12 || 12}:${m} ${hh >= 12 ? 'PM' : 'AM'}`;
+                          })}
+                        </p>
+                        <p className="text-[8px] text-muted-foreground/60 font-medium truncate italic mt-1 pr-1 border-l pl-1 border-border/20">
+                          By {res.profiles?.full_name?.split(' ')[0] || 'Staff'}
+                        </p>
+                      </div>
+                      <div className="mt-auto pt-2 border-t border-border/20 flex items-center justify-between">
+                         <span className="text-[9px] font-black text-muted-foreground/60">{res.party_size}p</span>
+                         <span className="text-[9px] font-black text-violet-400 bg-violet-500/5 px-1 rounded truncate">{(res.unit_name || res.physical_tables?.table_name || '').slice(0, 3)}</span>
+                      </div>
+                    </Link>
+                  </motion.div>
+                )
+              }
+
+              return (
+                <motion.div
+                  id={`booking-grid-${res.id}`}
+                  key={res.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.02 }}
+                >
+                  <BookingCard res={res} restaurantId={restaurantId} todayIso={todayIso} />
+                </motion.div>
+              )
+            })}
           </div>
         ) : (
           <div className="py-20 text-center bg-card/30 rounded-[2.5rem] border border-border border-dashed backdrop-blur-sm">
@@ -164,7 +297,6 @@ export function ReservationsClient({ initialBookings, restaurantId, initialDate,
 }
 
 function BookingCard({ res, restaurantId, todayIso }: { res: Reservation; restaurantId: string; todayIso: string }) {
-  // Use parseISO to handle the reservation_date string correctly
   const start = res.start_time
     ? new Date(`${res.reservation_date}T${res.start_time}`)
     : null
@@ -175,12 +307,15 @@ function BookingCard({ res, restaurantId, todayIso }: { res: Reservation; restau
   const timeStr = start ? format(start, 'hh:mm a') : null
 
   const card = (
-    <div className={cn(
-      'relative flex flex-col gap-3 p-4 rounded-3xl border-2 transition-all duration-300',
-      canEdit
-        ? 'bg-card border-border hover:border-violet-500/50 active:scale-[0.97]'
-        : 'bg-card/50 border-border/50'
-    )}>
+    <div 
+      id={`booking-card-inner-${res.id}`}
+      className={cn(
+        'relative flex flex-col gap-3 p-4 rounded-3xl border-2 transition-all duration-300',
+        canEdit
+          ? 'bg-card border-border hover:border-violet-500/50 active:scale-[0.97]'
+          : 'bg-card/50 border-border/50'
+      )}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className={cn(
           'w-12 h-12 rounded-2xl bg-gradient-to-br border flex items-center justify-center text-xl font-black text-foreground flex-shrink-0 shadow-lg',
@@ -206,9 +341,14 @@ function BookingCard({ res, restaurantId, todayIso }: { res: Reservation; restau
       </div>
       {timeStr && (
         <div className="flex flex-col gap-1.5">
-          <p className="text-[11px] text-muted-foreground font-black flex items-center gap-1 uppercase tracking-tight">
-            <Calendar className="w-3 h-3 text-muted-foreground/60" /> {timeStr}
-          </p>
+          <div className="flex items-center justify-between gap-2 overflow-hidden">
+             <p className="text-[11px] text-muted-foreground font-black flex items-center gap-1 uppercase tracking-tight">
+               <Calendar className="w-3 h-3 text-muted-foreground/60" /> {timeStr}
+             </p>
+             <p className="text-[9px] text-muted-foreground/50 font-bold truncate italic">
+               Created by {res.profiles?.full_name || 'Staff'}
+             </p>
+          </div>
 
           {/* Premium Range Badge for Multi-day stays */}
           {res.reservation_date && res.checkout_date && res.reservation_date !== res.checkout_date && (
@@ -231,6 +371,6 @@ function BookingCard({ res, restaurantId, todayIso }: { res: Reservation; restau
     </div>
   )
 
-  if (canEdit) return <Link href={`/dashboard/${restaurantId}/reservations/${res.id}/edit`}>{card}</Link>
+  if (canEdit) return <Link id={`booking-link-grid-${res.id}`} href={`/dashboard/${restaurantId}/reservations/${res.id}/edit`}>{card}</Link>
   return card
 }

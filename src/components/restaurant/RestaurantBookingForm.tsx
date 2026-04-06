@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { useActionState, useState, useTransition } from 'react'
+import { format } from 'date-fns'
 import { createReservation, updateReservation } from '@/app/actions/reservations'
 import { getCommonCustomers, getOccupiedTableIds } from '@/app/actions/booking-intelligence'
 import { Button } from '@/components/ui/button'
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react'
 import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
+import { CustomerSelector } from '@/components/dashboard/CustomerSelector'
 
 interface Props {
   tables: Tables<'physical_tables'>[]
@@ -119,7 +121,7 @@ export function RestaurantBookingForm({ tables, restaurantId, initialData, preSe
         <input type="hidden" name="notes" value={notes} />
         <input type="hidden" name="guestName" value={guestName} />
         <input type="hidden" name="guestPhone" value={guestPhone} />
-        <input type="hidden" name="startTime" value={startTime.toISOString()} />
+        <input type="hidden" name="startTime" value={format(startTime, "yyyy-MM-dd'T'HH:mm:ss")} />
         {isEdit && initialData?.id && <input type="hidden" name="reservationId" value={initialData.id} />}
         {extraSlots.length > 0 && (
           <input type="hidden" name="extraSlots" value={JSON.stringify(extraSlots.map(s => ({
@@ -337,6 +339,15 @@ export function RestaurantBookingForm({ tables, restaurantId, initialData, preSe
                 <h2 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5 text-amber-400" /> Guest Details
                 </h2>
+
+                <CustomerSelector 
+                  restaurantId={restaurantId} 
+                  onSelect={({ name, phone }) => {
+                    setGuestName(name)
+                    setGuestPhone(phone)
+                  }}
+                  className="mb-2"
+                />
 
                 <div className="space-y-4">
                   <div>

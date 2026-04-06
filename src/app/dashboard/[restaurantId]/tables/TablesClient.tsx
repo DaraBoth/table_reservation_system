@@ -12,13 +12,21 @@ import { getTerms } from '@/lib/business-type'
 import type { Tables } from '@/lib/types/database'
 import { NumberTicker } from '@/components/magicui/number-ticker'
 import { DateNavigator } from '@/components/dashboard/DateNavigator'
+import { ViewSwitcher, type ViewStyle } from '@/components/dashboard/ViewSwitcher'
+import { User, Settings2 } from 'lucide-react'
+import { EditTableSheet } from './EditTableSheet'
+import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
 
 interface BusyInfo {
   guestName: string
+  guestPhone?: string
+  createdByName?: string
   status: string
   partySize: number
   reservationDate?: string
   checkoutDate?: string
+  startTime?: string
   endTime?: string
 }
 
@@ -44,6 +52,33 @@ export function TablesClient({
   const [tables, setTables] = useState(initialTables)
   const [busyRows, setBusyRows] = useState(initialBusyRows)
   const [now, setNow] = useState(() => new Date(initialNowIso))
+  const [viewStyle, setViewStyle] = useState<ViewStyle>('grid')
+  
+  // 💾 Persist View Preference
+  useEffect(() => {
+    const saved = localStorage.getItem('tables-view-style') as ViewStyle
+    if (saved && (saved === 'grid' || saved === 'list' || saved === 'compact')) {
+      setViewStyle(saved)
+    }
+  }, [])
+
+  const handleUpdateViewStyle = (s: ViewStyle) => {
+    setViewStyle(s)
+    localStorage.setItem('tables-view-style', s)
+  }
+
+  // Load view preference
+  useEffect(() => {
+    const saved = localStorage.getItem('tablesViewStyle') as ViewStyle
+    if (saved && ['grid', 'list', 'compact'].includes(saved)) {
+      setViewStyle(saved)
+    }
+  }, [])
+
+  const handleViewChange = (style: ViewStyle) => {
+    setViewStyle(style)
+    localStorage.setItem('tablesViewStyle', style)
+  }
 
   const supabase = createClient()
   const terms = getTerms(businessType)
@@ -59,7 +94,7 @@ export function TablesClient({
     const fmt = selectedDate
     const { data } = await supabase
       .from('reservations')
-      .select('table_id, guest_name, status, party_size, reservation_date, checkout_date, end_time')
+      .select('table_id, guest_name, guest_phone, status, party_size, reservation_date, checkout_date, start_time, end_time, profiles(full_name)')
       .eq('restaurant_id', restaurantId)
       .in('status', ['pending', 'confirmed', 'arrived'])
       .lte('reservation_date', fmt)
@@ -119,10 +154,13 @@ export function TablesClient({
 
       map.set(row.table_id, {
         guestName: row.guest_name,
+        guestPhone: row.guest_phone,
+        createdByName: (row as any).profiles?.full_name || 'Staff',
         status: row.status,
         partySize: row.party_size || 0,
         reservationDate: row.reservation_date,
         checkoutDate: row.checkout_date,
+        startTime: row.start_time,
         endTime: row.end_time
       })
     })
@@ -161,6 +199,7 @@ export function TablesClient({
         </div>
 
         <div className="flex items-center gap-2">
+          <ViewSwitcher currentStyle={viewStyle} onStyleChange={handleUpdateViewStyle} />
           <Link
             href="/dashboard/reports"
             className="flex items-center gap-1.5 h-10 px-4 bg-card border border-border rounded-xl text-foreground/70 text-xs font-black uppercase tracking-tight hover:border-violet-500/50 hover:text-violet-300 transition-all shadow-lg"
@@ -217,9 +256,14 @@ export function TablesClient({
         </motion.div>
       </div>
 
-      {/* Table Grid */}
+      {/* Table Display */}
       {tables.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className={cn(
+          "grid gap-4",
+          viewStyle === 'grid' ? "grid-cols-2 sm:grid-cols-3" : 
+          viewStyle === 'compact' ? "grid-cols-3 sm:grid-cols-5 md:grid-cols-6" : 
+          "grid-cols-1"
+        )}>
           {tables.map((t, idx) => {
             const busyInfo = busyMap.get(t.id)
             const isBusy = !!busyInfo
@@ -227,22 +271,182 @@ export function TablesClient({
             const isTappable = !isBusy && !isOffline
 
             return (
-              <motion.div
-                key={t.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: idx * 0.03 }}
-              >
-                <TableCard
-                  table={t}
-                  busyInfo={busyInfo}
-                  isBusy={isBusy}
-                  isOffline={isOffline}
-                  isTappable={isTappable}
-                  businessType={businessType}
-                  isAdmin={isAdmin}
-                />
-              </motion.div>
+              <React.Fragment key={t.id}>
+                {/* Compact View Render */}
+                {viewStyle === 'compact' && (
+                  <motion.div
+                    id={`table-compact-${t.id}`}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: idx * 0.02 }}
+                    className="relative group h-24 rounded-2xl border transition-all duration-300 overflow-hidden"
+                  >
+
+                    <div className={cn(
+                      "absolute inset-0 z-0 opacity-40",
+                      isOffline ? "bg-muted" : isBusy ? "bg-rose-500/10" : "bg-emerald-500/5 hover:bg-emerald-500/10"
+                    )} />
+                    <div className={cn(
+                      "relative z-10 p-3 h-full flex flex-col justify-between border-t-2",
+                      isOffline ? "border-muted" : isBusy ? "border-rose-500" : "border-emerald-500"
+                    )}>
+                      <div className="min-w-0 leading-none">
+                        <p className="text-[11px] font-black text-foreground truncate uppercase italic">{t.table_name}</p>
+                        {isBusy && busyInfo && (
+                          <div className="flex flex-col gap-0.5 min-w-0">
+                            <p className="text-[11px] font-black text-rose-400 truncate uppercase tracking-tighter">
+                              {busyInfo.guestName.split(' ')[0]} ({busyInfo.partySize}p)
+                            </p>
+                            <p className="text-[7px] text-muted-foreground/50 font-bold truncate italic leading-none">
+                              Created by {busyInfo.createdByName || 'Staff Member'}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] text-muted-foreground font-black uppercase tracking-tighter">{t.capacity}p</span>
+                        {isBusy && busyInfo && (
+                           <div className="flex items-center gap-1">
+                             <span className="text-[8px] font-black text-rose-400/50 uppercase tracking-tighter">
+                               {busyInfo.startTime?.replace(/^(\d{2}):(\d{2}):\d{2}$/, (_, h, m) => {
+                                 const hh = parseInt(h);
+                                 return `${hh % 12 || 12}:${m} ${hh >= 12 ? 'PM' : 'AM'}`;
+                               })}
+                             </span>
+                             <User className="w-2.5 h-2.5 text-rose-400" />
+                           </div>
+                        )}
+                      </div>
+                    </div>
+                    {isTappable ? (
+                      <Link id={`book-link-compact-${t.id}`} href={`/dashboard/${restaurantId}/reservations/new?tableId=${t.id}`} className="absolute inset-0 z-20" />
+                    ) : (
+                      <div className="absolute inset-0 z-20" />
+                    )}
+
+                    {/* Action Indicator - Topmost layer */}
+                    <div className="absolute top-2 right-2 z-50 flex items-center justify-center">
+                      <EditTableSheet 
+                        table={t} 
+                        businessType={businessType} 
+                        isAdmin={isAdmin}
+                        trigger={
+                          <button className="w-7 h-7 flex items-center justify-center bg-background border border-border rounded-xl text-muted-foreground hover:text-violet-400 hover:border-violet-500/50 transition-all shadow-xl active:scale-95 pointer-events-auto">
+                            <Settings2 className="w-4 h-4" />
+                          </button>
+                        }
+                      />
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* List View Render */}
+                {viewStyle === 'list' && (
+                  <motion.div
+                    id={`table-list-${t.id}`}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.02 }}
+                    className="group relative flex items-center gap-4 p-4 rounded-2xl bg-card/40 border border-border hover:border-violet-500/30 transition-all h-16 overflow-hidden"
+                  >
+                    <div className={cn(
+                      "w-2.5 h-2.5 rounded-full",
+                      isOffline ? "bg-muted" : isBusy ? "bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.4)]" : "bg-emerald-500"
+                    )} />
+                    
+                    <div className="flex-1 min-w-0 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <p className="text-base font-black italic tracking-tighter truncate">{t.table_name}</p>
+                        <span className="px-2 py-0.5 rounded-lg bg-muted text-[10px] font-black text-muted-foreground uppercase">{t.capacity} {terms.capacityUnit}</span>
+                      </div>
+
+                      <div className="hidden sm:flex flex-1 items-center gap-4 truncate">
+                        {isBusy && busyInfo?.guestName && (
+                          <div className="flex items-center gap-4 text-rose-300 px-3 py-1 rounded-xl bg-rose-500/5 border border-rose-500/10 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <User className="w-3.5 h-3.5" />
+                              <span className="text-xs font-black uppercase tracking-tight truncate">{busyInfo.guestName} ({busyInfo.partySize}p)</span>
+                            </div>
+                            <span className="w-1 h-1 rounded-full bg-rose-500/30" />
+                             <div className="flex flex-col items-start gap-0.5 min-w-0">
+                               <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-rose-300/60 truncate italic">
+                                  <span>
+                                    {busyInfo.startTime?.replace(/^(\d{2}):(\d{2}):\d{2}$/, (_, h, m) => {
+                                      const hh = parseInt(h);
+                                      return `${hh % 12 || 12}:${m} ${hh >= 12 ? 'PM' : 'AM'}`;
+                                    })}
+                                  </span>
+                                  {busyInfo.guestPhone && (
+                                    <>
+                                      <span className="opacity-40">·</span>
+                                      <span>{busyInfo.guestPhone}</span>
+                                    </>
+                                  )}
+                               </div>
+                               <p className="text-[8px] text-muted-foreground/40 font-bold uppercase tracking-widest leading-none">
+                                 Created by {busyInfo.createdByName || 'Staff'}
+                               </p>
+                             </div>
+                          </div>
+                        )}
+                        {!isBusy && !isOffline && (
+                          <span className="text-[10px] font-black text-emerald-400/60 uppercase tracking-[0.2em]">Ready For {terms.booking}</span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Badge className={cn(
+                          'text-[9px] font-black px-2 py-0.5 rounded-lg border uppercase tracking-widest',
+                          isOffline ? 'bg-muted text-muted-foreground/60 border-border'
+                            : isBusy ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                              : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        )}>
+                          {isOffline ? 'OFF' : isBusy ? 'Booked' : 'FREE'}
+                        </Badge>
+                        <div className="pointer-events-auto">
+                          <EditTableSheet 
+                            table={t} 
+                            businessType={businessType} 
+                            isAdmin={isAdmin}
+                            trigger={
+                              <button 
+                                id={`edit-table-list-${t.id}`}
+                                className="w-8 h-8 flex items-center justify-center bg-background border border-border/50 rounded-xl text-muted-foreground hover:text-violet-400 hover:border-violet-500/50 transition-all shadow-sm active:scale-90"
+                              >
+                                <Settings2 className="w-4 h-4" />
+                              </button>
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {isTappable && (
+                      <Link id={`book-link-list-${t.id}`} href={`/dashboard/${restaurantId}/reservations/new?tableId=${t.id}`} className="absolute inset-0 z-10" />
+                    )}
+                  </motion.div>
+                )}
+
+                {/* Standard Grid View */}
+                {viewStyle === 'grid' && (
+                  <motion.div
+                    id={`table-grid-${t.id}`}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: idx * 0.03 }}
+                  >
+                    <TableCard
+                      table={t}
+                      busyInfo={busyInfo}
+                      isBusy={isBusy}
+                      isOffline={isOffline}
+                      isTappable={isTappable}
+                      businessType={businessType}
+                      isAdmin={isAdmin}
+                    />
+                  </motion.div>
+                )}
+              </React.Fragment>
             )
           })}
         </div>

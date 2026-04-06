@@ -15,10 +15,12 @@ interface TableCardProps {
   table: Tables<'physical_tables'>
   busyInfo?: { 
     guestName: string; 
+    createdByName?: string;
     status: string; 
     partySize: number;
     reservationDate?: string;
     checkoutDate?: string;
+    startTime?: string;
     endTime?: string;
   }
   isBusy: boolean
@@ -96,7 +98,7 @@ export function TableCard({
       )}
 
       {/* Action Indicator - Changed to Settings2 to avoid confusion with booking-edit */}
-      <div className="absolute top-4 right-4 z-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      <div className="absolute top-4 right-4 z-30 flex items-center justify-center transition-all duration-300">
         <EditTableSheet 
           table={table} 
           businessType={businessType} 
@@ -156,9 +158,24 @@ export function TableCard({
           </div>
 
           {isBusy && busyInfo?.guestName && (
-            <p className="text-[10px] text-rose-300/80 font-black truncate drop-shadow-sm flex items-center gap-1 uppercase tracking-tighter">
-              <User className="w-3 h-3 flex-shrink-0" /> {busyInfo.guestName} {busyInfo.partySize > 0 && `(${busyInfo.partySize}p)`}
-            </p>
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] text-rose-300/80 font-black truncate flex items-center gap-1 uppercase tracking-tighter">
+                  <User className="w-3 h-3 flex-shrink-0" /> {busyInfo.guestName} {busyInfo.partySize > 0 && `(${busyInfo.partySize}p)`}
+                </p>
+                {busyInfo.startTime && (
+                  <span className="text-[9px] font-black text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded-lg border border-rose-500/20 italic">
+                    {busyInfo.startTime.replace(/^(\d{2}):(\d{2}):\d{2}$/, (_, h, m) => {
+                      const hh = parseInt(h);
+                      return `${hh % 12 || 12}:${m} ${hh >= 12 ? 'PM' : 'AM'}`;
+                    })}
+                  </span>
+                )}
+              </div>
+              <p className="text-[8px] text-muted-foreground/40 font-bold uppercase tracking-widest leading-none ml-4">
+                By {busyInfo.createdByName || 'Staff'}
+              </p>
+            </div>
           )}
         </div>
       </div>

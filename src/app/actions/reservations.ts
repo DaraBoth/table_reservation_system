@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { syncCustomerData } from './customers'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
@@ -86,12 +87,17 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
   } = parsed.data
 
   // Use provided checkout time (hotel) or default to +2 hours (restaurant)
+  // For "Wall Clock Time" (restaurants), the string is 'YYYY-MM-DDTHH:mm:ss'
+  // and we should take the hours and minutes as-is to avoid timezone shifts.
+  const hourMatch = startTime.match(/T(\d{2}):(\d{2})/)
+  const startTimeStr = hourMatch ? `${hourMatch[1]}:${hourMatch[2]}:00` : 
+                       (String(new Date(startTime).getHours()).padStart(2,'0') + ':' + String(new Date(startTime).getMinutes()).padStart(2,'0') + ':00')
+
   const startObj = new Date(startTime)
   const endObj   = providedEnd ? new Date(providedEnd) : new Date(startObj.getTime() + 2 * 60 * 60 * 1000)
   
   const reservationDate = startObj.getFullYear() + '-' + String(startObj.getMonth() + 1).padStart(2,'0') + '-' + String(startObj.getDate()).padStart(2,'0')
   const checkoutDate = endObj.getFullYear() + '-' + String(endObj.getMonth() + 1).padStart(2,'0') + '-' + String(endObj.getDate()).padStart(2,'0')
-  const startTimeStr = String(startObj.getHours()).padStart(2,'0') + ':' + String(startObj.getMinutes()).padStart(2,'0') + ':00'
   const endTimeStr = String(endObj.getHours()).padStart(2,'0') + ':' + String(endObj.getMinutes()).padStart(2,'0') + ':00'
 
   const businessType = (membership as any).restaurants?.business_type || 'restaurant'
@@ -240,15 +246,14 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
     }
   }
 
-  // Handle Common Customer saving
-  if (saveToCommon) {
-    await supabase.from('common_customers').upsert({
-      restaurant_id: membership.restaurant_id,
-      name: guestName,
-      phone: guestPhone || null,
-      // party_size optional — not required for saved customers
-    }, { onConflict: 'restaurant_id,phone' })
-  }
+  // 👤 Auto-register / Update Customer Record
+  await syncCustomerData(
+    membership.restaurant_id, 
+    guestName, 
+    guestPhone || null,
+    null, // email
+    notes || null
+  )
 
   revalidatePath(`/dashboard/${restaurantId}/reservations`)
   revalidatePath(`/dashboard/${restaurantId}/tables`)
@@ -410,6 +415,15 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
     }
     return { error: error.message }
   }
+
+  // 👤 Auto-register / Update Customer Record
+  await syncCustomerData(
+    restaurantId, 
+    guestName, 
+    guestPhone || null,
+    null, // email
+    notes || null
+  )
 
   // 🔔 Trigger Push Notification
   const { notifyBookingUpdate } = await import('@/lib/notifications')

@@ -6,7 +6,6 @@ import { logout } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { LogOut, ChevronRight } from 'lucide-react'
 import { NotificationBell } from '@/components/notification-bell'
-import { NotificationDebugButton } from '@/components/notification-debug-button'
 import { RestaurantSwitcher } from './restaurant-switcher'
 
 interface TopBarProps {
@@ -76,7 +75,6 @@ export function TopBar({ brandName, userName, restaurantId, memberships }: TopBa
         {/* Right: Actions */}
         <div className="flex items-center gap-1.5 translate-x-1.5">
           <NotificationBell restaurantId={restaurantId} />
-          <NotificationDebugButton restaurantId={restaurantId} />
           <form action={logout}>
             <Button
               variant="ghost"

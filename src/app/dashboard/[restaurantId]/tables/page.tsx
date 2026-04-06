@@ -39,7 +39,7 @@ export default async function TablesPage({ params }: { params: Promise<{ restaur
   // Initial Fetch for Busy Status: Anyone whose range covers TODAY
   const { data: busyRows } = await supabase
     .from('reservations')
-    .select('table_id, guest_name, status, party_size, reservation_date, checkout_date, end_time')
+    .select('table_id, guest_name, guest_phone, status, party_size, reservation_date, checkout_date, start_time, end_time, profiles(full_name)')
     .eq('restaurant_id', membership.restaurant_id!)
     .in('status', ['pending', 'confirmed', 'arrived', 'confirmed'])
     .lte('reservation_date', todayDate)

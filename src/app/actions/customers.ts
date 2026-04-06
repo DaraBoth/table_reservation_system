@@ -63,7 +63,7 @@ export async function addCommonCustomer(_: unknown, formData: FormData) {
     phone,
     default_party_size: partySize,
     notes,
-  }, { onConflict: 'restaurant_id,phone' })
+  }, { onConflict: 'restaurant_id,name,phone' })
 
   if (error) return { error: error.message }
   revalidatePath(`/dashboard/${restaurantId}/customers`)
@@ -96,4 +96,85 @@ export async function updateCommonCustomer(_: unknown, formData: FormData) {
   if (error) return { error: error.message }
   revalidatePath(`/dashboard/${restaurantId}/customers`)
   return { success: true }
+}
+
+export async function getTopCustomers(restaurantId: string) {
+  if (!restaurantId) return []
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('common_customers')
+    .select('*')
+    .eq('restaurant_id', restaurantId)
+    .order('total_bookings', { ascending: false })
+    .limit(3)
+  
+  return data || []
+}
+
+export async function searchCustomers(restaurantId: string, query: string) {
+  if (!restaurantId || !query) return []
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('common_customers')
+    .select('*')
+    .eq('restaurant_id', restaurantId)
+    .or(`name.ilike.%${query}%,phone.ilike.%${query}%`)
+    .order('total_bookings', { ascending: false })
+    .limit(10)
+  
+  return data || []
+}
+
+/**
+ * Automatically registers or updates a customer record
+ * Called during reservation creation to handle the "Auto-Register" requirement.
+ */
+export async function syncCustomerData(
+  restaurantId: string, 
+  name: string, 
+  phone: string | null,
+  email?: string | null,
+  notes?: string | null
+) {
+  if (!restaurantId || !name) return
+
+  const supabase = await createClient()
+  
+  // Clean inputs
+  const cleanName = name.trim()
+  const cleanPhone = phone?.trim() || null
+
+  // 1. Try to find the exact Match (Restaurant + Name + Phone)
+  const { data: existing } = await supabase
+    .from('common_customers')
+    .select('id, total_bookings')
+    .eq('restaurant_id', restaurantId)
+    .eq('name', cleanName)
+    .filter('phone', cleanPhone ? 'eq' : 'is', cleanPhone)
+    .maybeSingle()
+
+  if (existing) {
+    // 2. Exact match found -> Increment count and update last visit
+    await supabase
+      .from('common_customers')
+      .update({
+        total_bookings: (existing.total_bookings || 0) + 1,
+        last_visit: new Date().toISOString().split('T')[0],
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', existing.id)
+  } else {
+    // 3. Either new person or different details -> Create fresh record
+    await supabase
+      .from('common_customers')
+      .insert({
+        restaurant_id: restaurantId,
+        name: cleanName,
+        phone: cleanPhone,
+        email: email || null,
+        notes: notes || null,
+        total_bookings: 1,
+        last_visit: new Date().toISOString().split('T')[0]
+      })
+  }
 }

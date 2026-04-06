@@ -32,7 +32,7 @@ export default async function ReservationsPage({ params, searchParams }: { param
   // Initial Fetch: Anyone who is IN-HOUSE on the selected date
   const { data: allBookings } = await supabase
     .from('reservations')
-    .select('*, physical_tables(table_name, capacity)')
+    .select('*, physical_tables(table_name, capacity), profiles(full_name)')
     .eq('restaurant_id', membership.restaurant_id!)
     .lte('reservation_date', initialDate)
     .gte('checkout_date', initialDate)
