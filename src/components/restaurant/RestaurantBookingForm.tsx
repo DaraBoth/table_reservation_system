@@ -100,7 +100,7 @@ export function RestaurantBookingForm({ tables, restaurantId, initialData, preSe
       const details = await getOccupiedTableIds(restaurantId, startTime)
       // Filter out nulls and handle edit case (don't block the current reservation's table)
       const filtered = details.filter((d): d is { table_id: string; guest_name: string; start_time: string } => 
-        d.table_id !== null && d.table_id !== initialData?.id // If editing, allow selecting OWN table
+        d.table_id !== null && d.table_id !== initialData?.table_id // If editing, allow selecting OWN table
       )
       setOccupiedDetails(filtered)
       if (filtered.some(f => f.table_id === selectedTableId)) setSelectedTableId('')

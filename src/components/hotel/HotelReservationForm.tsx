@@ -12,9 +12,9 @@ import { Textarea } from '@/components/ui/textarea'
 import type { Tables } from '@/lib/types/database'
 import { DateTimePickerV2 } from '@/components/restaurant/date-time-picker-v2'
 import { cn } from '@/lib/utils'
-import { 
-  CheckCircle2, ChevronLeft, ChevronRight, ArrowRight, Calendar, User, 
-  Clock, Sparkles, LogOut, Building2, Home 
+import {
+  CheckCircle2, ChevronLeft, ChevronRight, ArrowRight, Calendar, User,
+  Clock, Sparkles, LogOut, Building2, Home
 } from 'lucide-react'
 import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
@@ -30,7 +30,7 @@ interface Props {
 
 type SlideDir = 'right' | 'left'
 const slideInRight = 'animate-[slideInRight_0.28s_ease-out_forwards]'
-const slideInLeft  = 'animate-[slideInLeft_0.28s_ease-out_forwards]'
+const slideInLeft = 'animate-[slideInLeft_0.28s_ease-out_forwards]'
 
 export function HotelReservationForm({ tables, restaurantId, initialData, preSelectedTableId, businessType }: Props) {
   const isEdit = !!initialData
@@ -38,7 +38,7 @@ export function HotelReservationForm({ tables, restaurantId, initialData, preSel
   const [isOccLoading, startOccupancyTransition] = useTransition()
   const terms = getTerms(businessType)
   const TermIcon = terms.Icon
-  
+
   const [step, setStep] = useState(preSelectedTableId ? 2 : 1)
   const [slideDir, setSlideDir] = useState<SlideDir>('right')
   const [renderKey, setRenderKey] = useState(0)
@@ -66,7 +66,7 @@ export function HotelReservationForm({ tables, restaurantId, initialData, preSel
 
   const [selectedTableId, setSelectedTableId] = useState<string>(initialData?.table_id || preSelectedTableId || '')
   const [occupiedIds, setOccupiedIds] = useState<string[]>([])
-  
+
   const [guestName, setGuestName] = useState(initialData?.guest_name || '')
   const [guestPhone, setGuestPhone] = useState(initialData?.guest_phone || '')
   const [partySize, setPartySize] = useState(String(initialData?.party_size || '2'))
@@ -74,9 +74,12 @@ export function HotelReservationForm({ tables, restaurantId, initialData, preSel
 
   React.useEffect(() => {
     startOccupancyTransition(async () => {
-      const ids = await getOccupiedTableIds(restaurantId, startTime)
-      // Filter out nulls and typed as string[]
-      const filtered = ids.filter((id): id is string => id !== null && id !== initialData?.table_id)
+      const data = await getOccupiedTableIds(restaurantId, startTime)
+      // Filter out nulls and current reservation's table, then typed as string[]
+      const filtered = data
+        .map(r => r.table_id)
+        .filter((id): id is string => id !== null && id !== initialData?.table_id)
+      
       setOccupiedIds(filtered)
       if (filtered.includes(selectedTableId)) setSelectedTableId('')
     })
@@ -115,7 +118,7 @@ export function HotelReservationForm({ tables, restaurantId, initialData, preSel
         {/* STEP 1: Duration & select room */}
         {step === 1 && (
           <div key={`step1-${renderKey}`} className={cn('space-y-6', slideClass)}>
-            
+
             {/* 🏨 Duration Section */}
             <section className="bg-card rounded-3xl p-4 border border-border space-y-4">
               <div className="flex items-center justify-between">
@@ -123,67 +126,67 @@ export function HotelReservationForm({ tables, restaurantId, initialData, preSel
                   <Calendar className="w-4 h-4 text-violet-400" /> Check-in & Check-out
                 </h2>
               </div>
-              
-              <div className="space-y-4">
-                 <div className="bg-background/40 border border-border/60 rounded-2xl p-4">
-                    <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                       <Clock className="w-3 h-3 text-emerald-500" /> Check-in
-                    </p>
-                    <DateTimePickerV2 value={startTime} onChange={setStartTime} />
-                 </div>
 
-                 <div className="bg-background/40 border border-border/60 rounded-2xl p-4">
-                    <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                       <LogOut className="w-3 h-3 text-rose-500" /> Check-out
-                    </p>
-                    <DateTimePickerV2 value={endTime} onChange={setEndTime} />
-                 </div>
+              <div className="space-y-4">
+                <div className="bg-background/40 border border-border/60 rounded-2xl p-4">
+                  <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                    <Clock className="w-3 h-3 text-emerald-500" /> Check-in
+                  </p>
+                  <DateTimePickerV2 value={startTime} onChange={setStartTime} />
+                </div>
+
+                <div className="bg-background/40 border border-border/60 rounded-2xl p-4">
+                  <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                    <LogOut className="w-3 h-3 text-rose-500" /> Check-out
+                  </p>
+                  <DateTimePickerV2 value={endTime} onChange={setEndTime} />
+                </div>
               </div>
             </section>
 
             {/* 🛏️ Section: Room grid */}
             <section className="bg-card rounded-3xl p-4 border border-border">
-               <div className="flex items-center justify-between mb-4">
-                 <h2 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                   <TermIcon className="w-4 h-4 text-indigo-400" /> Room Availability
-                 </h2>
-                 <div className="flex items-center gap-3">
-                   <div className="flex items-center gap-1.5">
-                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                     <span className="text-[10px] font-bold text-muted-foreground uppercase">Free</span>
-                   </div>
-                   <div className="flex items-center gap-1.5">
-                     <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                     <span className="text-[10px] font-bold text-muted-foreground uppercase">Occupied</span>
-                   </div>
-                 </div>
-               </div>
-               
-               <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                 {tables.map((table) => {
-                   const isOccupied = occupiedIds.includes(table.id)
-                   const isSelected = selectedTableId === table.id
-                   
-                   return (
-                     <button
-                       key={table.id}
-                       type="button"
-                       disabled={isOccupied}
-                       onClick={() => handleTableSelect(table)}
-                       className={cn(
-                         "h-12 rounded-xl border flex flex-col items-center justify-center transition-all active:scale-95",
-                         isOccupied 
-                           ? "bg-background/50 border-border text-muted-foreground cursor-not-allowed opacity-40" 
-                           : isSelected
-                             ? "bg-emerald-500 border-emerald-400 text-foreground shadow-lg shadow-emerald-500/20 z-10"
-                             : "bg-background border-border text-muted-foreground hover:border-border hover:text-foreground/80 shadow-xl"
-                       )}
-                     >
-                       <span className="text-[10px] font-black uppercase tracking-widest">{table.table_name}</span>
-                     </button>
-                   )
-                 })}
-               </div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                  <TermIcon className="w-4 h-4 text-indigo-400" /> Room Availability
+                </h2>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase">Free</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase">Occupied</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                {tables.map((table) => {
+                  const isOccupied = occupiedIds.includes(table.id)
+                  const isSelected = selectedTableId === table.id
+
+                  return (
+                    <button
+                      key={table.id}
+                      type="button"
+                      disabled={isOccupied}
+                      onClick={() => handleTableSelect(table)}
+                      className={cn(
+                        "h-12 rounded-xl border flex flex-col items-center justify-center transition-all active:scale-95",
+                        isOccupied
+                          ? "bg-background/50 border-border text-muted-foreground cursor-not-allowed opacity-40"
+                          : isSelected
+                            ? "bg-emerald-500 border-emerald-400 text-foreground shadow-lg shadow-emerald-500/20 z-10"
+                            : "bg-background border-border text-muted-foreground hover:border-border hover:text-foreground/80 shadow-xl"
+                      )}
+                    >
+                      <span className="text-[10px] font-black uppercase tracking-widest">{table.table_name}</span>
+                    </button>
+                  )
+                })}
+              </div>
             </section>
 
             <Button
@@ -200,166 +203,166 @@ export function HotelReservationForm({ tables, restaurantId, initialData, preSel
         {/* STEP 2: Guest Details */}
         {step === 2 && (
           <div key={`step2-${renderKey}`} className={cn('space-y-6', slideClass)}>
-             <section className="bg-card rounded-3xl p-4 border border-border space-y-4">
-                <h2 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-amber-400" /> Stay Details
-                </h2>
+            <section className="bg-card rounded-3xl p-4 border border-border space-y-4">
+              <h2 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-amber-400" /> Stay Details
+              </h2>
 
-                <CustomerSelector 
-                  restaurantId={restaurantId} 
-                  onSelect={({ name, phone }) => {
-                    setGuestName(name)
-                    setGuestPhone(phone)
-                  }}
-                  className="mb-2"
-                />
+              <CustomerSelector
+                restaurantId={restaurantId}
+                onSelect={({ name, phone }) => {
+                  setGuestName(name)
+                  setGuestPhone(phone)
+                }}
+                className="mb-2"
+              />
 
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">Primary Guest Name</Label>
-                    <div className="relative">
-                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
-                      <Input
-                        value={guestName}
-                        onChange={(e) => setGuestName(e.target.value)}
-                        placeholder="John Doe..."
-                        className="h-14 bg-background border-border text-foreground pl-10 font-bold rounded-2xl focus:border-emerald-500 transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">Phone Number</Label>
-                      <Input
-                        value={guestPhone}
-                        onChange={(e) => setGuestPhone(e.target.value)}
-                        placeholder="+123..."
-                        className="h-14 bg-background border-border text-foreground font-bold rounded-2xl"
-                      />
-                    </div>
-                    <div>
-                        <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">Total Guests</Label>
-                        <Input
-                          type="number"
-                          min={1}
-                          value={partySize}
-                          onChange={(e) => setPartySize(e.target.value)}
-                          className="h-14 bg-background border-border text-foreground font-bold rounded-2xl"
-                        />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">Reservation Notes</Label>
-                    <Textarea
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Extra pillows, late check-in..."
-                      className="bg-background border-border text-foreground font-bold rounded-2xl resize-none h-32"
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">Primary Guest Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
+                    <Input
+                      value={guestName}
+                      onChange={(e) => setGuestName(e.target.value)}
+                      placeholder="John Doe..."
+                      className="h-14 bg-background border-border text-foreground pl-10 font-bold rounded-2xl focus:border-emerald-500 transition-all"
                     />
                   </div>
                 </div>
-             </section>
 
-             <div className="flex gap-3">
-               <button type="button" onClick={() => goTo(1)} className="w-16 h-16 flex items-center justify-center bg-muted rounded-[2rem] text-foreground/80">
-                  <ChevronLeft className="w-6 h-6" />
-               </button>
-               <Button
-                 type="button"
-                 onClick={() => goTo(3)}
-                 disabled={!guestName}
-                 className="flex-1 h-16 bg-gradient-to-r from-emerald-600 to-indigo-600 text-foreground font-black text-lg rounded-[2rem] shadow-xl active:scale-[0.98] transition-all"
-               >
-                 Review Stay <ArrowRight className="w-6 h-6 ml-2" />
-               </Button>
-             </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">Phone Number</Label>
+                    <Input
+                      value={guestPhone}
+                      onChange={(e) => setGuestPhone(e.target.value)}
+                      placeholder="+123..."
+                      className="h-14 bg-background border-border text-foreground font-bold rounded-2xl"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">Total Guests</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={partySize}
+                      onChange={(e) => setPartySize(e.target.value)}
+                      className="h-14 bg-background border-border text-foreground font-bold rounded-2xl"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">Reservation Notes</Label>
+                  <Textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Extra pillows, late check-in..."
+                    className="bg-background border-border text-foreground font-bold rounded-2xl resize-none h-32"
+                  />
+                </div>
+              </div>
+            </section>
+
+            <div className="flex gap-3">
+              <button type="button" onClick={() => goTo(1)} className="w-16 h-16 flex items-center justify-center bg-muted rounded-[2rem] text-foreground/80">
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <Button
+                type="button"
+                onClick={() => goTo(3)}
+                disabled={!guestName}
+                className="flex-1 h-16 bg-gradient-to-r from-emerald-600 to-indigo-600 text-foreground font-black text-lg rounded-[2rem] shadow-xl active:scale-[0.98] transition-all"
+              >
+                Review Stay <ArrowRight className="w-6 h-6 ml-2" />
+              </Button>
+            </div>
           </div>
         )}
 
         {/* STEP 3: Confirm Stay */}
         {step === 3 && (
           <div key={`step3-${renderKey}`} className={cn('space-y-6 flex flex-col min-h-full pb-8', slideClass)}>
-            
+
             <div className="px-1 pt-2">
-               <h2 className="text-xl font-black text-foreground tracking-tight flex items-center gap-2">
-                 Ready for check-in? <Sparkles className="w-5 h-5 text-amber-400 fill-amber-400" />
-               </h2>
-               <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Review your stay details before confirming</p>
+              <h2 className="text-xl font-black text-foreground tracking-tight flex items-center gap-2">
+                Ready for check-in? <Sparkles className="w-5 h-5 text-amber-400 fill-amber-400" />
+              </h2>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Review your stay details before confirming</p>
             </div>
 
             <div className="space-y-4">
               {/* Stay Timeline Card */}
               <div className="bg-card/50 rounded-3xl p-4 border border-border/60 relative overflow-hidden backdrop-blur-xl">
-                 <div className="flex items-center gap-3 mb-6 relative z-10">
-                    <div className="w-9 h-9 rounded-xl bg-violet-600/20 flex items-center justify-center">
-                       <Clock className="w-4 h-4 text-violet-400" />
-                    </div>
-                    <p className="text-xs font-black text-foreground uppercase tracking-widest">Stay Duration</p>
-                 </div>
+                <div className="flex items-center gap-3 mb-6 relative z-10">
+                  <div className="w-9 h-9 rounded-xl bg-violet-600/20 flex items-center justify-center">
+                    <Clock className="w-4 h-4 text-violet-400" />
+                  </div>
+                  <p className="text-xs font-black text-foreground uppercase tracking-widest">Stay Duration</p>
+                </div>
 
-                 <div className="relative pl-4 space-y-8">
-                    <div className="absolute left-1 top-2 bottom-2 w-0.5 bg-gradient-to-b from-emerald-500/50 via-violet-500/30 to-rose-500/50" />
+                <div className="relative pl-4 space-y-8">
+                  <div className="absolute left-1 top-2 bottom-2 w-0.5 bg-gradient-to-b from-emerald-500/50 via-violet-500/30 to-rose-500/50" />
 
-                    {/* Check-in */}
-                    <div className="relative group">
-                       <div className="absolute -left-[18px] top-1.5 w-3 h-3 rounded-full border-2 border-border z-10 bg-emerald-500 shadow-lg shadow-emerald-500/40" />
-                       <div className="flex flex-col">
-                          <p className="text-xs text-muted-foreground font-black uppercase tracking-widest mb-1.5 opacity-60">Check-in</p>
-                          <div className="flex items-center gap-2 flex-wrap text-foreground">
-                             <span className="font-black text-base">{startTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-                             <span className="text-muted-foreground text-sm opacity-50">at</span>
-                             <span className="font-black text-base text-violet-400">{startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
-                          </div>
-                       </div>
+                  {/* Check-in */}
+                  <div className="relative group">
+                    <div className="absolute -left-[18px] top-1.5 w-3 h-3 rounded-full border-2 border-border z-10 bg-emerald-500 shadow-lg shadow-emerald-500/40" />
+                    <div className="flex flex-col">
+                      <p className="text-xs text-muted-foreground font-black uppercase tracking-widest mb-1.5 opacity-60">Check-in</p>
+                      <div className="flex items-center gap-2 flex-wrap text-foreground">
+                        <span className="font-black text-base">{startTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                        <span className="text-muted-foreground text-sm opacity-50">at</span>
+                        <span className="font-black text-base text-violet-400">{startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
                     </div>
+                  </div>
 
-                    {/* Check-out */}
-                    <div className="relative group">
-                       <div className="absolute -left-[18px] top-1.5 w-3 h-3 rounded-full border-2 border-border z-10 bg-rose-500 shadow-lg shadow-rose-500/40" />
-                       <div className="flex flex-col">
-                          <p className="text-xs text-muted-foreground font-black uppercase tracking-widest mb-1.5 opacity-60">Check-out</p>
-                          <div className="flex items-center gap-2 flex-wrap text-foreground">
-                             <span className="font-black text-base">{endTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-                             <span className="text-muted-foreground text-sm opacity-50">at</span>
-                             <span className="font-black text-base text-rose-400">{endTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
-                          </div>
-                       </div>
+                  {/* Check-out */}
+                  <div className="relative group">
+                    <div className="absolute -left-[18px] top-1.5 w-3 h-3 rounded-full border-2 border-border z-10 bg-rose-500 shadow-lg shadow-rose-500/40" />
+                    <div className="flex flex-col">
+                      <p className="text-xs text-muted-foreground font-black uppercase tracking-widest mb-1.5 opacity-60">Check-out</p>
+                      <div className="flex items-center gap-2 flex-wrap text-foreground">
+                        <span className="font-black text-base">{endTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                        <span className="text-muted-foreground text-sm opacity-50">at</span>
+                        <span className="font-black text-base text-rose-400">{endTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
                     </div>
-                 </div>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 gap-4">
-                 {selectedTable && (
-                   <div className="bg-card/50 rounded-2xl p-4 border border-border/60 flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
-                         <TermIcon className="w-6 h-6 text-indigo-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Booked {terms.unit}</p>
-                         <div className="flex items-baseline gap-2">
-                           <p className="text-foreground font-black text-lg truncate">{selectedTable.table_name}</p>
-                           <p className="text-muted-foreground text-xs font-bold whitespace-nowrap">up to {selectedTable.capacity} Beds</p>
-                         </div>
-                      </div>
-                   </div>
-                 )}
-
-                 <div className="bg-card/50 rounded-2xl p-4 border border-border/60 flex items-center gap-4 transition-all hover:bg-card">
-                    <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
-                       <User className="w-6 h-6 text-amber-400" />
+                {selectedTable && (
+                  <div className="bg-card/50 rounded-2xl p-4 border border-border/60 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
+                      <TermIcon className="w-6 h-6 text-indigo-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                       <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Guest details</p>
-                       <p className="text-foreground font-black text-lg truncate">{guestName}</p>
-                       <div className="flex items-center gap-2 mt-0.5 text-muted-foreground text-sm font-bold">
-                          <span>{partySize} guests</span>
-                          {guestPhone && <span>·</span>}
-                          {guestPhone && <span>{guestPhone}</span>}
-                       </div>
+                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Booked {terms.unit}</p>
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-foreground font-black text-lg truncate">{selectedTable.table_name}</p>
+                        <p className="text-muted-foreground text-xs font-bold whitespace-nowrap">up to {selectedTable.capacity} Beds</p>
+                      </div>
                     </div>
-                 </div>
+                  </div>
+                )}
+
+                <div className="bg-card/50 rounded-2xl p-4 border border-border/60 flex items-center gap-4 transition-all hover:bg-card">
+                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+                    <User className="w-6 h-6 text-amber-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Guest details</p>
+                    <p className="text-foreground font-black text-lg truncate">{guestName}</p>
+                    <div className="flex items-center gap-2 mt-0.5 text-muted-foreground text-sm font-bold">
+                      <span>{partySize} guests</span>
+                      {guestPhone && <span>·</span>}
+                      {guestPhone && <span>{guestPhone}</span>}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
