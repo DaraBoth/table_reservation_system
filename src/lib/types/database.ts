@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.4"
+  }
   public: {
     Tables: {
       account_memberships: {
@@ -14,8 +19,10 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          is_special_admin: boolean | null
           restaurant_id: string | null
           role: Database["public"]["Enums"]["user_role"]
+          special_features: Json | null
           updated_at: string
           user_id: string
         }
@@ -23,8 +30,10 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          is_special_admin?: boolean | null
           restaurant_id?: string | null
           role: Database["public"]["Enums"]["user_role"]
+          special_features?: Json | null
           updated_at?: string
           user_id: string
         }
@@ -32,8 +41,10 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          is_special_admin?: boolean | null
           restaurant_id?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          special_features?: Json | null
           updated_at?: string
           user_id?: string
         }
@@ -48,7 +59,7 @@ export type Database = {
           {
             foreignKeyName: "account_memberships_user_id_profiles_fkey"
             columns: ["user_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -58,31 +69,40 @@ export type Database = {
         Row: {
           created_at: string | null
           default_party_size: number | null
+          email: string | null
           id: string
+          last_visit: string | null
           name: string
           notes: string | null
           phone: string | null
           restaurant_id: string
+          total_bookings: number | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           default_party_size?: number | null
+          email?: string | null
           id?: string
+          last_visit?: string | null
           name: string
           notes?: string | null
           phone?: string | null
           restaurant_id: string
+          total_bookings?: number | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           default_party_size?: number | null
+          email?: string | null
           id?: string
+          last_visit?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
           restaurant_id?: string
+          total_bookings?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -200,8 +220,11 @@ export type Database = {
       }
       reservations: {
         Row: {
+          checkout_date: string | null
           created_at: string
           created_by: string | null
+          end_time: string
+          group_id: string | null
           guest_email: string | null
           guest_name: string
           guest_phone: string | null
@@ -209,16 +232,19 @@ export type Database = {
           notes: string | null
           party_size: number
           reservation_date: string
-          start_time: string
-          end_time: string
           restaurant_id: string
+          start_time: string
           status: Database["public"]["Enums"]["reservation_status"]
-          table_id: string
+          table_id: string | null
+          unit_name: string | null
           updated_at: string
         }
         Insert: {
+          checkout_date?: string | null
           created_at?: string
           created_by?: string | null
+          end_time: string
+          group_id?: string | null
           guest_email?: string | null
           guest_name: string
           guest_phone?: string | null
@@ -226,16 +252,19 @@ export type Database = {
           notes?: string | null
           party_size?: number
           reservation_date: string
-          start_time: string
-          end_time: string
           restaurant_id: string
+          start_time: string
           status?: Database["public"]["Enums"]["reservation_status"]
-          table_id: string
+          table_id?: string | null
+          unit_name?: string | null
           updated_at?: string
         }
         Update: {
+          checkout_date?: string | null
           created_at?: string
           created_by?: string | null
+          end_time?: string
+          group_id?: string | null
           guest_email?: string | null
           guest_name?: string
           guest_phone?: string | null
@@ -243,14 +272,21 @@ export type Database = {
           notes?: string | null
           party_size?: number
           reservation_date?: string
-          start_time?: string
-          end_time?: string
           restaurant_id?: string
+          start_time?: string
           status?: Database["public"]["Enums"]["reservation_status"]
-          table_id?: string
+          table_id?: string | null
+          unit_name?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "reservations_created_by_profiles_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reservations_restaurant_id_fkey"
             columns: ["restaurant_id"]
@@ -270,13 +306,13 @@ export type Database = {
       restaurants: {
         Row: {
           address: string | null
+          business_type: string
           contact_email: string | null
           contact_phone: string | null
           created_at: string
           id: string
           is_active: boolean
-          is_new: boolean
-          business_type: string
+          is_new: boolean | null
           logo_url: string | null
           name: string
           slug: string
@@ -285,13 +321,13 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          business_type?: string
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
-          is_new?: boolean
-          business_type?: string
+          is_new?: boolean | null
           logo_url?: string | null
           name: string
           slug: string
@@ -300,13 +336,13 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          business_type?: string
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
-          is_new?: boolean
-          business_type?: string
+          is_new?: boolean | null
           logo_url?: string | null
           name?: string
           slug?: string
@@ -334,10 +370,10 @@ export type Database = {
       reservation_status:
         | "pending"
         | "confirmed"
-        | "arrived"
         | "cancelled"
         | "completed"
         | "no_show"
+        | "arrived"
       user_role: "superadmin" | "admin" | "staff"
     }
     CompositeTypes: {
@@ -346,11 +382,135 @@ export type Database = {
   }
 }
 
-export type Tables<T extends keyof Database["public"]["Tables"]> =
-  Database["public"]["Tables"][T]["Row"]
-export type TablesInsert<T extends keyof Database["public"]["Tables"]> =
-  Database["public"]["Tables"][T]["Insert"]
-export type TablesUpdate<T extends keyof Database["public"]["Tables"]> =
-  Database["public"]["Tables"][T]["Update"]
-export type Enums<T extends keyof Database["public"]["Enums"]> =
-  Database["public"]["Enums"][T]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      reservation_status: [
+        "pending",
+        "confirmed",
+        "cancelled",
+        "completed",
+        "no_show",
+        "arrived",
+      ],
+      user_role: ["superadmin", "admin", "staff"],
+    },
+  },
+} as const
