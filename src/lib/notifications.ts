@@ -43,7 +43,7 @@ function configureWebPush(debugId: string) {
   console.log(`[push:${debugId}] web-push configured`)
 }
 
-async function getEligibleSubscriptions(restaurantId: string, debugId: string): Promise<PushSubscriptionRow[]> {
+async function getEligibleSubscriptions(restaurantId: string, debugId: string, excludeUserId?: string): Promise<PushSubscriptionRow[]> {
   const supabase = createAdminClient()
 
   const { data: subscriptionsRaw, error: subscriptionError } = await supabase
@@ -83,6 +83,8 @@ async function getEligibleSubscriptions(restaurantId: string, debugId: string): 
   }
 
   const eligibleUserIds = new Set((membershipsRaw ?? []).map((membership) => membership.user_id))
+  if (excludeUserId) eligibleUserIds.delete(excludeUserId)
+  
   const eligibleSubscriptions = subscriptions.filter((subscription) => subscription.user_id && eligibleUserIds.has(subscription.user_id))
 
   console.log(`[push:${debugId}] Eligible subscriptions`, {
@@ -100,12 +102,14 @@ export async function dispatchPushNotification({
   body,
   url,
   icon,
+  excludeUserId,
 }: {
   restaurantId: string
   title: string
   body: string
   url?: string
   icon?: string
+  excludeUserId?: string
 }): Promise<PushDispatchResult> {
   const debugId = `push_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
@@ -118,7 +122,7 @@ export async function dispatchPushNotification({
     })
 
     configureWebPush(debugId)
-    const subscriptions = await getEligibleSubscriptions(restaurantId, debugId)
+    const subscriptions = await getEligibleSubscriptions(restaurantId, debugId, excludeUserId)
 
     if (subscriptions.length === 0) {
       return {
@@ -212,6 +216,8 @@ export async function dispatchPushNotification({
  */
 export async function notifyNewBooking(reservationId: string) {
   const supabase = createAdminClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const excludeUserId = user?.id
   
   // 1. Fetch details: Guest, Table, Party Size, Creator
   const { data: res, error } = await supabase
@@ -246,6 +252,7 @@ export async function notifyNewBooking(reservationId: string) {
     title: `New Booking: ${res.guest_name}`,
     body: `${tableName} | ${res.party_size} People | By: ${creatorName}`,
     url: `/dashboard/reservations/${res.id}/edit`,
+    excludeUserId,
   })
 }
 
@@ -254,6 +261,8 @@ export async function notifyNewBooking(reservationId: string) {
  */
 export async function notifyArrival(reservationId: string) {
   const supabase = createAdminClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const excludeUserId = user?.id
   
   const { data: res, error } = await supabase
     .from('reservations')
@@ -273,6 +282,7 @@ export async function notifyArrival(reservationId: string) {
     title: `Guest Arrived: ${res.guest_name}`,
     body: `Table: ${tableName} | Party of ${res.party_size}`,
     url: `/dashboard/reservations/${res.id}/edit`,
+    excludeUserId,
   })
 }
 
@@ -281,6 +291,8 @@ export async function notifyArrival(reservationId: string) {
  */
 export async function notifyCancellation(reservationId: string) {
   const supabase = createAdminClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const excludeUserId = user?.id
   
   const { data: res, error } = await supabase
     .from('reservations')
@@ -298,6 +310,7 @@ export async function notifyCancellation(reservationId: string) {
     title: `Booking Cancelled: ${res.guest_name}`,
     body: `${res.party_size} people canceled their reservation.`,
     url: `/dashboard/reservations`,
+    excludeUserId,
   })
 }
 
@@ -306,6 +319,8 @@ export async function notifyCancellation(reservationId: string) {
  */
 export async function notifyBookingUpdate(reservationId: string) {
   const supabase = createAdminClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const excludeUserId = user?.id
   
   const { data: res, error } = await supabase
     .from('reservations')
@@ -325,5 +340,6 @@ export async function notifyBookingUpdate(reservationId: string) {
     title: `Booking Updated: ${res.guest_name}`,
     body: `${tableName} | ${res.party_size} People | Status: ${res.status.toUpperCase()}`,
     url: `/dashboard/reservations/${res.id}/edit`,
+    excludeUserId,
   })
 }

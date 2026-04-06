@@ -28,6 +28,7 @@ async function getMembershipForRestaurant(
   userId: string,
   restaurantId: string,
 ) {
+  // Try to find specific restaurant membership
   const { data: membership } = await supabase
     .from('account_memberships')
     .select('role, restaurant_id, restaurants(business_type)')
@@ -36,7 +37,18 @@ async function getMembershipForRestaurant(
     .eq('is_active', true)
     .maybeSingle()
 
-  return membership
+  if (membership) return membership
+
+  // Fallback: Check if user is a global superadmin
+  const { data: superadminRole } = await supabase
+    .from('account_memberships')
+    .select('role, restaurant_id')
+    .eq('user_id', userId)
+    .eq('role', 'superadmin')
+    .eq('is_active', true)
+    .maybeSingle()
+
+  return superadminRole
 }
 
 export async function createReservation(_: ActionState, formData: FormData): Promise<ActionState> {
@@ -267,7 +279,7 @@ export async function cancelReservation(_: ActionState, formData: FormData): Pro
     .from('reservations')
     .update({ status: 'cancelled' })
     .eq('id', reservationId)
-    .eq('restaurant_id', membership.restaurant_id) // RLS double-check
+    .eq('restaurant_id', restaurantId) // Fix: use the restaurantId from params/form instead of potentially NULL membership.restaurant_id
 
   if (error) return { error: error.message }
 
@@ -303,7 +315,7 @@ export async function updateReservationStatus(_: ActionState, formData: FormData
     .from('reservations')
     .update({ status: status as any })
     .eq('id', reservationId)
-    .eq('restaurant_id', membership.restaurant_id!)
+    .eq('restaurant_id', restaurantId)
 
   if (error) return { error: error.message }
 
@@ -390,7 +402,7 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
       end_time: endTimeStr,
     })
     .eq('id', reservationId)
-    .eq('restaurant_id', membership.restaurant_id)
+    .eq('restaurant_id', restaurantId)
 
   if (error) {
     if (error.code === '23P01') {
