@@ -56,25 +56,28 @@ export function AvatarUpload({ currentAvatarUrl, userName, onUpload, disabled }:
 
     if (!ctx) return null
 
-    canvas.width = pixelCrop.width
-    canvas.height = pixelCrop.height
+    // Set target size for avatar (e.g. 512px max for performance/storage)
+    const TARGET_SIZE = 512
+    canvas.width = TARGET_SIZE
+    canvas.height = TARGET_SIZE
 
+    ctx.imageSmoothingQuality = 'high'
     ctx.drawImage(
       image,
-      pixelCrop.x,
-      pixelCrop.y,
-      pixelCrop.width,
-      pixelCrop.height,
+      Math.floor(pixelCrop.x),
+      Math.floor(pixelCrop.y),
+      Math.floor(pixelCrop.width),
+      Math.floor(pixelCrop.height),
       0,
       0,
-      pixelCrop.width,
-      pixelCrop.height
+      TARGET_SIZE,
+      TARGET_SIZE
     )
 
     return new Promise((resolve) => {
       canvas.toBlob((blob) => {
         resolve(blob)
-      }, 'image/jpeg', 0.9)
+      }, 'image/jpeg', 0.85) // Good balance of quality/size
     })
   }
 
@@ -135,30 +138,31 @@ export function AvatarUpload({ currentAvatarUrl, userName, onUpload, disabled }:
       />
 
       <Dialog open={isDialogOpen} onOpenChange={(open) => !isUploading && setIsDialogOpen(open)}>
-        <DialogContent className="sm:max-w-[500px] bg-card border-border/50 rounded-3xl p-0 overflow-hidden shadow-2xl">
-          <DialogHeader className="p-6 pb-0">
+        <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[90vh] bg-card border-border/50 rounded-3xl p-0 overflow-hidden shadow-2xl flex flex-col">
+          <DialogHeader className="p-6 pb-0 flex-shrink-0">
             <DialogTitle className="text-xl font-black italic uppercase tracking-tighter text-foreground">
               Crop Profile Photo
             </DialogTitle>
           </DialogHeader>
 
-          <div className="relative w-full aspect-square bg-muted mt-6 border-y border-border/20">
-            {image && (
-              <Cropper
-                image={image}
-                crop={crop}
-                zoom={zoom}
-                aspect={1}
-                onCropChange={setCrop}
-                onCropComplete={onCropComplete}
-                onZoomChange={setZoom}
-                classes={{ 
-                    containerClassName: "bg-black",
-                    cropAreaClassName: "border-2 border-violet-500 rounded-full"
-                }}
-              />
-            )}
-          </div>
+          <div className="flex-1 overflow-y-auto">
+            <div className="relative w-full h-[300px] sm:aspect-square bg-black/40 mt-6 border-y border-border/20">
+              {image && (
+                <Cropper
+                  image={image}
+                  crop={crop}
+                  zoom={zoom}
+                  aspect={1}
+                  onCropChange={setCrop}
+                  onCropComplete={onCropComplete}
+                  onZoomChange={setZoom}
+                  classes={{ 
+                      containerClassName: "bg-black",
+                      cropAreaClassName: "border-2 border-violet-500 rounded-full"
+                  }}
+                />
+              )}
+            </div>
 
           <div className="p-8 space-y-8 bg-card">
             <div className="space-y-4">
@@ -194,6 +198,7 @@ export function AvatarUpload({ currentAvatarUrl, userName, onUpload, disabled }:
                 {isUploading ? 'Uploading...' : 'Apply Photo'}
               </Button>
             </DialogFooter>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
