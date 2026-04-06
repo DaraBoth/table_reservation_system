@@ -96,7 +96,8 @@ export function RestaurantBookingForm({ tables, restaurantId, initialData, preSe
   React.useEffect(() => {
     startOccupancyTransition(async () => {
       const ids = await getOccupiedTableIds(restaurantId, startTime)
-      const filtered = ids.filter(id => id !== initialData?.table_id)
+      // Filter out nulls and typed as string[]
+      const filtered = ids.filter((id): id is string => id !== null && id !== initialData?.table_id)
       setOccupiedIds(filtered)
       if (filtered.includes(selectedTableId)) setSelectedTableId('')
     })
