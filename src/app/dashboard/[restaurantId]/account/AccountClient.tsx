@@ -318,7 +318,7 @@ export function AccountClient({ user, membership, profile }: AccountClientProps)
                           </div>
                           <Input
                             name="contactEmail"
-                            defaultValue={membership?.restaurants?.contact_email}
+                            defaultValue={membership?.restaurants?.contact_email ?? ''}
                             className="h-14 bg-background border-border rounded-2xl text-lg font-bold text-foreground px-5 focus-visible:border-violet-500 focus-visible:ring-violet-500/20 transition-all shadow-sm"
                           />
                         </div>
@@ -330,7 +330,7 @@ export function AccountClient({ user, membership, profile }: AccountClientProps)
                           </div>
                           <Input
                             name="contactPhone"
-                            defaultValue={membership?.restaurants?.contact_phone}
+                            defaultValue={membership?.restaurants?.contact_phone ?? ''}
                             className="h-14 bg-background border-border rounded-2xl text-lg font-bold text-foreground px-5 focus-visible:border-violet-500 focus-visible:ring-violet-500/20 transition-all shadow-sm"
                           />
                         </div>
@@ -342,7 +342,7 @@ export function AccountClient({ user, membership, profile }: AccountClientProps)
                           </div>
                           <Input
                             name="address"
-                            defaultValue={membership?.restaurants?.address}
+                            defaultValue={membership?.restaurants?.address ?? ''}
                             className="h-14 bg-background border-border rounded-2xl text-lg font-bold text-foreground px-5 focus-visible:border-violet-500 focus-visible:ring-violet-500/20 transition-all shadow-sm"
                           />
                         </div>
