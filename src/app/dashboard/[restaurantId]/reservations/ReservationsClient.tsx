@@ -398,7 +398,7 @@ export function ReservationsClient({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.02 }}
                 >
-                  <BookingCard res={res} restaurantId={restaurantId} dashboardSlug={dashboardSlug} todayIso={todayIso} currentUserId={currentUserId} />
+                  <BookingCard res={res} dashboardSlug={dashboardSlug} todayIso={todayIso} currentUserId={currentUserId} />
                 </motion.div>
               )
             })}
