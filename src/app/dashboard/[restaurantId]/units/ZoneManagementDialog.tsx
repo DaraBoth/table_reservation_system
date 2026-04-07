@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { 
   Sheet, SheetContent, SheetHeader, SheetTitle, 
@@ -10,11 +10,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { 
-  Plus, Settings2, Trash2, GripVertical, 
-  Layers, Save, X, Loader2
+  Plus, Settings2, Trash2,
+  Layers, Save, X, ArrowUp, ArrowDown
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { motion, Reorder } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 interface Zone {
@@ -26,9 +25,10 @@ interface Zone {
 interface Props {
   restaurantId: string
   onUpdate?: () => void
+  trigger?: React.ReactNode
 }
 
-export function ZoneManagementDialog({ restaurantId, onUpdate }: Props) {
+export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [zones, setZones] = useState<Zone[]>([])
@@ -37,6 +37,8 @@ export function ZoneManagementDialog({ restaurantId, onUpdate }: Props) {
   const [editName, setEditName] = useState('')
   const [isMobile, setIsMobile] = useState(false)
   const supabase = createClient()
+  const latestZonesRef = useRef<Zone[]>([])
+  const persistedOrderRef = useRef('')
 
   React.useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -45,7 +47,7 @@ export function ZoneManagementDialog({ restaurantId, onUpdate }: Props) {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  const fetchZones = async () => {
+  const fetchZones = useCallback(async () => {
     setLoading(true)
     const { data, error } = await supabase
       .from('zones')
@@ -56,21 +58,55 @@ export function ZoneManagementDialog({ restaurantId, onUpdate }: Props) {
     if (error) {
       toast.error('Failed to load zones')
     } else {
-      setZones(data || [])
+      const nextZones = data || []
+      setZones(nextZones)
+      latestZonesRef.current = nextZones
+      persistedOrderRef.current = nextZones.map(zone => zone.id).join('|')
     }
     setLoading(false)
-  }
+  }, [restaurantId, supabase])
+
+  const persistZoneOrder = useCallback(async () => {
+    const currentZones = latestZonesRef.current
+    const nextOrder = currentZones.map(zone => zone.id).join('|')
+
+    if (!currentZones.length || nextOrder === persistedOrderRef.current) {
+      return
+    }
+
+    const updates = currentZones.map((zone, index) => ({
+      id: zone.id,
+      restaurant_id: restaurantId,
+      name: zone.name,
+      sort_order: index,
+    }))
+
+    const { error } = await supabase
+      .from('zones')
+      .upsert(updates)
+
+    if (error) {
+      toast.error('Failed to save order')
+      return
+    }
+
+    persistedOrderRef.current = nextOrder
+    onUpdate?.()
+  }, [onUpdate, restaurantId, supabase])
 
   useEffect(() => {
-    if (open) fetchZones()
-  }, [open])
+    const load = async () => {
+      if (open) await fetchZones()
+    }
+    void load()
+  }, [open, fetchZones])
 
   const handleAdd = async () => {
     if (!newName.trim()) return
     setLoading(true)
     const maxOrder = zones.length > 0 ? Math.max(...zones.map(z => z.sort_order)) : 0
     
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('zones')
       .insert({
         name: newName.trim(),
@@ -85,8 +121,8 @@ export function ZoneManagementDialog({ restaurantId, onUpdate }: Props) {
     } else {
       toast.success('Zone created')
       setNewName('')
-      fetchZones()
-      onUpdate?.()
+      await fetchZones()
+      await onUpdate?.()
     }
     setLoading(false)
   }
@@ -104,8 +140,8 @@ export function ZoneManagementDialog({ restaurantId, onUpdate }: Props) {
     } else {
       toast.success('Zone updated')
       setEditingId(null)
-      fetchZones()
-      onUpdate?.()
+      await fetchZones()
+      await onUpdate?.()
     }
     setLoading(false)
   }
@@ -119,40 +155,38 @@ export function ZoneManagementDialog({ restaurantId, onUpdate }: Props) {
       toast.error('Failed to delete zone')
     } else {
       toast.success('Zone deleted')
-      fetchZones()
-      onUpdate?.()
+      await fetchZones()
+      await onUpdate?.()
     }
     setLoading(false)
   }
 
-  const handleReorder = async (newZones: Zone[]) => {
-    setZones(newZones)
-    const updates = newZones.map((z, index) => ({
-      id: z.id,
-      restaurant_id: restaurantId,
-      name: z.name,
-      sort_order: index
-    }))
+  const moveZone = async (zoneId: string, direction: 'up' | 'down') => {
+    const currentIndex = zones.findIndex(zone => zone.id === zoneId)
+    if (currentIndex === -1) return
 
-    const { error } = await supabase
-      .from('zones')
-      .upsert(updates)
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+    if (targetIndex < 0 || targetIndex >= zones.length) return
 
-    if (error) {
-      toast.error('Failed to save order')
-    } else {
-      onUpdate?.()
-    }
+    const nextZones = [...zones]
+    const [movedZone] = nextZones.splice(currentIndex, 1)
+    nextZones.splice(targetIndex, 0, movedZone)
+
+    setZones(nextZones)
+    latestZonesRef.current = nextZones
+    await persistZoneOrder()
   }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
-        nativeButton={false}
+        nativeButton
         render={
-          <Button variant="outline" className="h-10 px-4 bg-card border border-border rounded-xl text-foreground/70 text-[10px] font-black uppercase tracking-widest hover:border-violet-500/50 hover:text-violet-300 transition-all shadow-lg gap-2">
-            <Layers className="w-4 h-4" /> Manage Zones
-          </Button>
+          (trigger as React.ReactElement) || (
+            <Button variant="outline" className="h-10 px-4 bg-card border border-border rounded-xl text-foreground/70 text-[10px] font-black uppercase tracking-widest hover:border-violet-500/50 hover:text-violet-300 transition-all shadow-lg gap-2">
+              <Layers className="w-4 h-4" /> Manage Zones
+            </Button>
+          )
         }
       />
       <SheetContent 
@@ -191,58 +225,81 @@ export function ZoneManagementDialog({ restaurantId, onUpdate }: Props) {
             </div>
 
             <div className="space-y-4">
-               <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">Active Zones (Drag to reorder)</Label>
+               <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">Active Zones</Label>
                <div className="space-y-2">
-                <Reorder.Group axis="y" values={zones} onReorder={handleReorder} className="space-y-2">
-                  {zones.map((zone) => (
-                    <Reorder.Item 
-                      key={zone.id} 
-                      value={zone}
-                      className="group flex items-center gap-3 p-4 bg-card/40 border border-border rounded-2xl hover:border-violet-500/30 transition-all cursor-grab active:cursor-grabbing"
-                    >
-                      <GripVertical className="w-4 h-4 text-muted-foreground/40 group-hover:text-violet-400" />
-                      
-                      {editingId === zone.id ? (
-                        <div className="flex-1 flex gap-2">
-                          <Input 
-                            autoFocus
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                            className="h-9 bg-background border-border rounded-lg text-sm font-bold"
-                            onKeyDown={(e) => e.key === 'Enter' && handleUpdateName(zone.id)}
-                          />
-                          <Button size="icon" variant="ghost" onClick={() => handleUpdateName(zone.id)} className="h-9 w-9 text-emerald-400">
-                            <Save className="w-4 h-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={() => setEditingId(null)} className="h-9 w-9 text-rose-400">
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <span className="flex-1 text-sm font-bold truncate italic uppercase tracking-tight">{zone.name}</span>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button 
-                              size="icon" variant="ghost" 
-                              onClick={() => { setEditingId(zone.id); setEditName(zone.name); }}
-                              className="h-8 w-8 text-muted-foreground hover:text-violet-400"
-                            >
-                              <Settings2 className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button 
-                              id={`delete-zone-${zone.id}`}
-                              size="icon" variant="ghost" 
-                              onClick={() => handleDelete(zone.id)}
-                              className="h-8 w-8 text-muted-foreground hover:text-rose-400"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        </>
-                      )}
-                    </Reorder.Item>
-                  ))}
-                </Reorder.Group>
+                 {zones.map((zone, index) => (
+                   <div 
+                     key={zone.id}
+                     className="group flex items-center gap-3 p-4 bg-card/40 border border-border rounded-2xl hover:border-violet-500/30 transition-all"
+                   >
+                     <div className="flex flex-col gap-1">
+                       <Button
+                         type="button"
+                         size="icon"
+                         variant="ghost"
+                         disabled={loading || index === 0}
+                         onClick={() => { void moveZone(zone.id, 'up') }}
+                         className="h-8 w-8 rounded-lg text-muted-foreground hover:text-violet-400 disabled:opacity-30"
+                       >
+                         <ArrowUp className="w-3.5 h-3.5" />
+                       </Button>
+                       <Button
+                         type="button"
+                         size="icon"
+                         variant="ghost"
+                         disabled={loading || index === zones.length - 1}
+                         onClick={() => { void moveZone(zone.id, 'down') }}
+                         className="h-8 w-8 rounded-lg text-muted-foreground hover:text-violet-400 disabled:opacity-30"
+                       >
+                         <ArrowDown className="w-3.5 h-3.5" />
+                       </Button>
+                     </div>
+
+                     {editingId === zone.id ? (
+                       <div className="flex-1 flex gap-2">
+                         <Input 
+                           autoFocus
+                           value={editName}
+                           onChange={(e) => setEditName(e.target.value)}
+                           className="h-9 bg-background border-border rounded-lg text-sm font-bold"
+                           onKeyDown={(e) => e.key === 'Enter' && handleUpdateName(zone.id)}
+                         />
+                         <Button size="icon" variant="ghost" onClick={() => handleUpdateName(zone.id)} className="h-9 w-9 text-emerald-400">
+                           <Save className="w-4 h-4" />
+                         </Button>
+                         <Button size="icon" variant="ghost" onClick={() => setEditingId(null)} className="h-9 w-9 text-rose-400">
+                           <X className="w-4 h-4" />
+                         </Button>
+                       </div>
+                     ) : (
+                       <>
+                         <div className="flex-1 min-w-0">
+                           <span className="block text-sm font-bold truncate italic uppercase tracking-tight">{zone.name}</span>
+                           <span className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.2em]">Position {index + 1}</span>
+                         </div>
+                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                           <Button 
+                             type="button"
+                             size="icon" variant="ghost" 
+                             onClick={() => { setEditingId(zone.id); setEditName(zone.name); }}
+                             className="h-8 w-8 text-muted-foreground hover:text-violet-400"
+                           >
+                             <Settings2 className="w-3.5 h-3.5" />
+                           </Button>
+                           <Button 
+                             type="button"
+                             id={`delete-zone-${zone.id}`}
+                             size="icon" variant="ghost" 
+                             onClick={() => handleDelete(zone.id)}
+                             className="h-8 w-8 text-muted-foreground hover:text-rose-400"
+                           >
+                             <Trash2 className="w-3.5 h-3.5" />
+                           </Button>
+                         </div>
+                       </>
+                     )}
+                   </div>
+                 ))}
                 
                 {zones.length === 0 && !loading && (
                   <div className="text-center py-20 bg-muted/10 border border-dashed border-border rounded-2xl opacity-40">

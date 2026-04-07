@@ -10,7 +10,7 @@ export interface ActionHubItem {
   icon: React.ReactNode
   color: string
   onClick?: () => void
-  component?: React.ReactNode // For Dialogs/Sheets that need a trigger
+  component?: React.ReactElement<{ trigger?: React.ReactNode }> // For Dialogs/Sheets that need a trigger
 }
 
 interface ActionHubProps {
@@ -34,50 +34,52 @@ export function ActionHub({ actions }: ActionHubProps) {
         )}
       </AnimatePresence>
 
-      <div className="flex flex-col items-end gap-3 relative z-[210]">
-        <AnimatePresence mode="popLayout">
-          {isOpen && (
-            <div className="flex flex-col items-end gap-3 mb-4">
-              {actions.map((action, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 20, scale: 0.8 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.8 }}
-                  transition={{
-                    delay: (actions.length - idx) * 0.05,
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 25
-                  }}
-                  className="flex items-center gap-4 group"
+      <div className="flex flex-col items-end relative z-[210]">
+        <div className="flex flex-col items-end mb-4">
+          {actions.map((action, idx) => (
+            <motion.div
+              key={idx}
+              initial={false}
+              animate={isOpen ? { opacity: 1, y: 0, scale: 1, height: 56, marginBottom: 12 } : { opacity: 0, y: 10, scale: 0.8, height: 0, marginBottom: 0 }}
+              transition={{
+                delay: isOpen ? (actions.length - idx) * 0.05 : idx * 0.03,
+                type: 'spring',
+                stiffness: 300,
+                damping: 25
+              }}
+              style={{ overflow: 'hidden', pointerEvents: isOpen ? 'auto' : 'none', transformOrigin: 'bottom right' }}
+              className="flex items-center justify-end gap-4 group"
+            >
+              <span className={cn(
+                'text-[10px] font-black text-foreground uppercase tracking-widest bg-card border border-border px-4 py-2 rounded-xl shadow-2xl whitespace-nowrap transition-all',
+                isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'
+              )}>
+                {action.label}
+              </span>
+              {action.component ? (
+                <div onClick={() => setIsOpen(false)}>
+                  {React.cloneElement(action.component, {
+                    trigger: (
+                      <button className={cn(
+                        'w-14 h-14 rounded-[1.25rem] flex items-center justify-center transition-all active:scale-95 shadow-2xl border border-border/50 hover:border-violet-500/50',
+                        action.color
+                      )}>
+                        {action.icon}
+                      </button>
+                    )
+                  })}
+                </div>
+              ) : (
+                <button
+                  onClick={() => { action.onClick?.(); setIsOpen(false); }}
+                  className={cn('w-14 h-14 rounded-[1.25rem] flex items-center justify-center transition-all active:scale-95 shadow-2xl border border-border/50 hover:border-violet-500/50', action.color)}
                 >
-                  <span className="text-[10px] font-black text-foreground uppercase tracking-widest bg-card border border-border px-4 py-2 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 whitespace-nowrap">
-                    {action.label}
-                  </span>
-                  {action.component ? (
-                    <div onClick={() => setIsOpen(false)}>
-                      {React.cloneElement(action.component as any, {
-                        trigger: (
-                          <button className={cn("w-14 h-14 rounded-[1.25rem] flex items-center justify-center transition-all active:scale-95 shadow-2xl border border-border/50 hover:border-violet-500/50", action.color)}>
-                            {action.icon}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => { action.onClick?.(); setIsOpen(false); }}
-                      className={cn("w-14 h-14 rounded-[1.25rem] flex items-center justify-center transition-all active:scale-95 shadow-2xl border border-border/50 hover:border-violet-500/50", action.color)}
-                    >
-                      {action.icon}
-                    </button>
-                  )}
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </AnimatePresence>
+                  {action.icon}
+                </button>
+              )}
+            </motion.div>
+          ))}
+        </div>
 
         <button
           onClick={() => setIsOpen(!isOpen)}

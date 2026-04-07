@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Search, User, Zap, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { getTopCustomers, searchCustomers } from '@/app/actions/customers'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import { getTerms } from '@/lib/business-type'
 
 interface Customer {
   id: string
@@ -18,36 +19,34 @@ interface CustomerSelectorProps {
   restaurantId: string
   onSelect: (customer: { name: string; phone: string }) => void
   className?: string
+  businessType?: string
 }
 
-export function CustomerSelector({ restaurantId, onSelect, className }: CustomerSelectorProps) {
+export function CustomerSelector({ restaurantId, onSelect, className, businessType }: CustomerSelectorProps) {
   const [query, setQuery] = useState('')
   const [topCustomers, setTopCustomers] = useState<Customer[]>([])
   const [results, setResults] = useState<Customer[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [showResults, setShowResults] = useState(false)
+  const terms = getTerms(businessType)
 
   // 1. Fetch Top 3 on mount
   useEffect(() => {
     const fetchTop = async () => {
       const top = await getTopCustomers(restaurantId)
-      setTopCustomers(top as any[])
+      setTopCustomers(top as Customer[])
     }
-    fetchTop()
+    void fetchTop()
   }, [restaurantId])
 
   // 2. Debounced search
   useEffect(() => {
-    if (!query.trim()) {
-      setResults([])
-      setIsSearching(false)
-      return
-    }
+    if (!query.trim()) return
 
     const timer = setTimeout(async () => {
       setIsSearching(true)
       const data = await searchCustomers(restaurantId, query)
-      setResults(data as any[])
+      setResults(data as Customer[])
       setIsSearching(false)
     }, 400)
 
@@ -80,7 +79,7 @@ export function CustomerSelector({ restaurantId, onSelect, className }: Customer
         {query && (
           <button 
             type="button"
-            onClick={() => { setQuery(''); setShowResults(false); }}
+            onClick={() => { setQuery(''); setResults([]); setShowResults(false); }}
             className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
             <X className="w-4 h-4" />
@@ -120,7 +119,7 @@ export function CustomerSelector({ restaurantId, onSelect, className }: Customer
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-[10px] font-black text-violet-400 uppercase tracking-tighter">{c.total_bookings} Bookings</p>
+                          <p className="text-[10px] font-black text-violet-400 uppercase tracking-tighter">{c.total_bookings} {terms.bookings}</p>
                         </div>
                       </button>
                     ))}
@@ -156,7 +155,7 @@ export function CustomerSelector({ restaurantId, onSelect, className }: Customer
                     {c.name.split(' ')[0]}
                   </span>
                   <span className="text-[8px] text-muted-foreground font-bold uppercase mt-0.5 tracking-tighter">
-                    {c.total_bookings} bookings
+                    {c.total_bookings} {terms.bookingsLower}
                   </span>
                 </div>
               </button>

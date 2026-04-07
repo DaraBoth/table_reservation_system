@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { format } from 'date-fns'
 import { createClient } from '@/lib/supabase/client'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { getTerms } from '@/lib/business-type'
 import type { Tables } from '@/lib/types/database'
 import { groupAndSortTables } from '@/lib/sorting'
@@ -11,7 +11,7 @@ import { ZoneManagementDialog } from './ZoneManagementDialog'
 import { NumberTicker } from '@/components/magicui/number-ticker'
 import { DateNavigator } from '@/components/dashboard/DateNavigator'
 import { ViewSwitcher, type ViewStyle } from '@/components/dashboard/ViewSwitcher'
-import { User, Settings2, BarChart3, CircleCheck, CircleX, Clock, Activity, Plus, Layers, LayoutList } from 'lucide-react'
+import { User, Settings2, BarChart3, CircleCheck, CircleX, Activity, Plus, LayoutList } from 'lucide-react'
 import { EditUnitSheet } from './EditUnitSheet'
 import { UnitCard } from './UnitCard'
 import { CreateUnitDialog } from './CreateUnitDialog'
@@ -32,13 +32,27 @@ interface BusyInfo {
   endTime?: string
 }
 
+interface BusyRow {
+  table_id: string | null
+  guest_name: string
+  guest_phone?: string | null
+  status: string
+  party_size: number | null
+  reservation_date?: string | null
+  checkout_date?: string | null
+  start_time?: string | null
+  end_time?: string | null
+  profiles?: { full_name?: string | null } | null
+}
+
+type TableWithZone = Tables<'physical_tables'> & { zones?: { id?: string; name: string; sort_order: number } | null }
+
 interface UnitsClientProps {
   initialTables: Tables<'physical_tables'>[]
-  initialBusyRows: any[]
+  initialBusyRows: BusyRow[]
   restaurantId: string
   businessType: string
   isAdmin: boolean
-  isStaff?: boolean
   initialDate: string
   initialNowIso: string
   mode?: 'monitoring' | 'management'
@@ -51,37 +65,32 @@ export function UnitsClient({
   restaurantId,
   businessType,
   isAdmin,
-  isStaff,
   initialDate,
   initialNowIso,
   mode = 'monitoring',
   currentSlug
 }: UnitsClientProps) {
-  const [tables, setTables] = useState(initialTables)
+  const [tables, setTables] = useState<TableWithZone[]>(initialTables as TableWithZone[])
   const [zones, setZones] = useState<{ id: string; name: string; sort_order: number }[]>([])
   const [busyRows, setBusyRows] = useState(initialBusyRows)
   const [now, setNow] = useState(() => new Date(initialNowIso))
-  const [mounted, setMounted] = useState(false)
-
-  // ✨ Hydration Guard: Ensure clean mount
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-  const [viewStyle, setViewStyle] = useState<ViewStyle>('grid')
+  const [viewStyle, setViewStyle] = useState<ViewStyle>(() => {
+    if (typeof window === 'undefined') return 'grid'
+    const saved = localStorage.getItem('units-view-style') as ViewStyle | null
+    return saved && (saved === 'grid' || saved === 'list' || saved === 'compact') ? saved : 'grid'
+  })
   const [selectedDate, setSelectedDate] = useState(initialDate)
   
   const supabase = createClient()
   const terms = getTerms(businessType)
-  const canManage = isAdmin || isStaff
   const dashboardSlug = currentSlug || restaurantId
-
-  // 💾 Persist View Preference
-  useEffect(() => {
-    const saved = localStorage.getItem('units-view-style') as ViewStyle
-    if (saved && (saved === 'grid' || saved === 'list' || saved === 'compact')) {
-      setViewStyle(saved)
-    }
-  }, [])
+  const availableLabel = 'Available'
+  const occupiedLabel = terms.hasCheckout ? 'Occupied' : 'Booked'
+  const unitGridClass = viewStyle === 'grid'
+    ? 'grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
+    : viewStyle === 'compact'
+      ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6'
+      : 'grid-cols-1'
 
   const handleUpdateViewStyle = (s: ViewStyle) => {
     setViewStyle(s)
@@ -113,7 +122,7 @@ export function UnitsClient({
       .select('*, zones(*)')
       .eq('restaurant_id', restaurantId)
 
-    if (data) setTables(data as any)
+    if (data) setTables(data as TableWithZone[])
   }, [supabase, restaurantId])
 
   const fetchZones = useCallback(async () => {
@@ -127,7 +136,10 @@ export function UnitsClient({
   }, [supabase, restaurantId])
 
   useEffect(() => {
-    fetchZones()
+    const load = async () => {
+      await fetchZones()
+    }
+    void load()
   }, [fetchZones])
 
   useEffect(() => {
@@ -144,9 +156,11 @@ export function UnitsClient({
   }, [supabase, restaurantId, fetchLatestBusyRows, fetchLatestTables, fetchZones])
 
   useEffect(() => {
-    setBusyRows([])
-    fetchLatestBusyRows()
-  }, [selectedDate, fetchLatestBusyRows])
+    const load = async () => {
+      await fetchLatestBusyRows()
+    }
+    void load()
+  }, [fetchLatestBusyRows])
 
   const isHotel = businessType === 'hotel' || businessType === 'guesthouse'
   const todayStr = format(now, 'yyyy-MM-dd')
@@ -164,7 +178,7 @@ export function UnitsClient({
       map.set(row.table_id, {
         guestName: row.guest_name,
         guestPhone: row.guest_phone,
-        createdByName: (row as any).profiles?.full_name || 'Staff',
+        createdByName: row.profiles?.full_name || 'Staff',
         status: row.status,
         partySize: row.party_size || 0,
         reservationDate: row.reservation_date,
@@ -186,7 +200,7 @@ export function UnitsClient({
   )
 
 
-  const renderTableItem = (t: any, idx: number, busyInfo: any, isBusy: boolean, isOffline: boolean, isTappable: boolean) => (
+  const renderTableItem = (t: TableWithZone, idx: number, busyInfo: BusyInfo | undefined, isBusy: boolean, isOffline: boolean, isTappable: boolean) => (
     <React.Fragment key={t.id}>
       {viewStyle === 'compact' && (
         <motion.div
@@ -223,7 +237,7 @@ export function UnitsClient({
             </div>
           </div>
           {mode === 'management' ? (
-            <EditUnitSheet table={t} businessType={businessType} isAdmin={isAdmin} zones={zones} trigger={<div className="absolute inset-0 z-20 cursor-pointer" />} />
+            <EditUnitSheet table={t} businessType={businessType} isAdmin={isAdmin} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${t.table_name}`} className="absolute inset-0 z-20 cursor-pointer w-full h-full" />} />
           ) : isTappable ? (
             <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}`} className="absolute inset-0 z-20" />
           ) : (
@@ -269,7 +283,7 @@ export function UnitsClient({
             </div>
             <div className="flex items-center gap-2 relative z-30 justify-end">
               <Badge className={cn('text-[9px] font-black px-2 py-0.5 rounded-lg border uppercase tracking-widest', isOffline ? 'bg-muted text-muted-foreground/60 border-border' : isBusy ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20')}>
-                {isOffline ? 'OFF' : isBusy ? 'Booked' : 'AVAILABLE'}
+                {isOffline ? 'OFF' : isBusy ? occupiedLabel : availableLabel.toUpperCase()}
               </Badge>
               {mode === 'management' && (
                 <div className="w-8 h-8 flex items-center justify-center bg-background border border-border/50 rounded-xl text-muted-foreground shadow-sm">
@@ -279,7 +293,7 @@ export function UnitsClient({
             </div>
           </div>
           {mode === 'management' ? (
-            <EditUnitSheet table={t} businessType={businessType} isAdmin={isAdmin} zones={zones} trigger={<div className="absolute inset-0 z-10 cursor-pointer" />} />
+            <EditUnitSheet table={t} businessType={businessType} isAdmin={isAdmin} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${t.table_name}`} className="absolute inset-0 z-10 cursor-pointer w-full h-full" />} />
           ) : isTappable ? (
             <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}`} className="absolute inset-0 z-10" />
           ) : (
@@ -313,7 +327,7 @@ export function UnitsClient({
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-20" />
       </div>
 
-      <div className="flex flex-col gap-8 pt-6 pb-2">
+      <div className="flex flex-col gap-6 lg:gap-7 pt-4 lg:pt-6 pb-2">
         {/* Tier 1: Branding & Modern Action Stack */}
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
           <div className="flex items-center gap-4 pt-2">
@@ -328,7 +342,7 @@ export function UnitsClient({
             )}
           </div>
 
-          {mounted && (
+          {(
             <div className="flex items-center gap-3">
               {mode === 'monitoring' && (
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
@@ -336,21 +350,13 @@ export function UnitsClient({
                   <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Live Sync</span>
                 </div>
               )}
-              {mode === 'monitoring' && canManage && (
-                <Link 
-                  href={`/dashboard/${dashboardSlug}/units/manage`} 
-                  className="flex items-center gap-2 h-12 px-6 bg-card border border-border/60 rounded-2xl text-foreground/80 text-[11px] font-black uppercase tracking-tight hover:border-violet-500/50 hover:text-violet-300 transition-all shadow-xl group"
-                >
-                  <Settings2 className="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" /> Settings
-                </Link>
-              )}
             </div>
           )}
         </div>
 
         {/* Tier 2: View Switcher Only */}
-        {mounted && (
-          <div className="flex justify-start pt-1">
+        {(
+          <div className="flex justify-end pt-1">
              <ViewSwitcher currentStyle={viewStyle} onStyleChange={handleUpdateViewStyle} />
           </div>
         )}
@@ -361,8 +367,8 @@ export function UnitsClient({
       )}
 
       {mode === 'monitoring' && (
-        <div className="grid grid-cols-2 gap-3">
-          {[ { label: 'Available', count: freeCount, icon: CircleCheck, color: 'emerald' }, { label: 'Booked', count: busyCount, icon: CircleX, color: 'rose' } ].map((stat, i) => (
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+          {[ { label: availableLabel, count: freeCount, icon: CircleCheck, color: 'emerald' }, { label: occupiedLabel, count: busyCount, icon: CircleX, color: 'rose' } ].map((stat, i) => (
             <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className={cn("relative overflow-hidden group bg-card/40 border rounded-3xl p-5 flex items-center gap-4 transition-all hover:bg-card/60", stat.color === 'emerald' ? "border-emerald-500/20" : "border-rose-500/20")}>
               <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner", stat.color === 'emerald' ? "bg-emerald-500/10" : "bg-rose-500/10")}>
                 <stat.icon className={cn("w-6 h-6", stat.color === 'emerald' ? "text-emerald-400" : "text-rose-400")} />
@@ -382,7 +388,7 @@ export function UnitsClient({
         <div className="space-y-12">
           {sortedZones.map((zone) => {
             const zoneTables = grouped[zone.id] || []
-            if (zoneTables.length === 0) return null
+            if (zoneTables.length === 0 && mode !== 'management') return null
             return (
               <div key={zone.id} id={`zone-${zone.id}`} className="space-y-4">
                 <div className="flex items-center gap-3 px-1">
@@ -390,86 +396,93 @@ export function UnitsClient({
                   <h2 className="text-sm font-black text-foreground uppercase tracking-[0.2em] italic">{zone.name}</h2>
                   <div className="h-px flex-1 bg-gradient-to-r from-border/50 to-transparent" />
                 </div>
-                <div className={cn("grid gap-4", viewStyle === 'grid' ? "grid-cols-2 sm:grid-cols-3" : viewStyle === 'compact' ? "grid-cols-3 sm:grid-cols-5 md:grid-cols-6" : "grid-cols-1")}>
-                  {zoneTables.map((t, idx) => (
-                    <React.Fragment key={t.id}>
-                      {viewStyle === 'compact' && (
-                        <motion.div
-                          id={`table-compact-${t.id}`}
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: idx * 0.02 }}
-                          className="relative group h-24 rounded-2xl border transition-all duration-300 overflow-hidden"
-                        >
-                          <div className={cn("absolute inset-0 z-0 opacity-40", !t.is_active ? "bg-muted" : busyMap.has(t.id) ? "bg-rose-500/10" : "bg-emerald-500/5 hover:bg-emerald-500/10")} />
-                          <div className={cn("relative z-10 p-3 h-full flex flex-col justify-between border-t-2", !t.is_active ? "border-muted" : busyMap.has(t.id) ? "border-rose-500" : "border-emerald-500")}>
-                            <div className="min-w-0 leading-none">
-                              <p className="text-[11px] font-black text-foreground truncate uppercase italic">{t.table_name}</p>
+                {zoneTables.length === 0 ? (
+                  <div className="rounded-3xl border border-dashed border-border bg-card/20 px-6 py-10 text-center">
+                    <p className="text-sm font-black italic tracking-tight text-muted-foreground">No {terms.unitsLower} assigned yet</p>
+                    <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">Use Add {terms.unit} or edit an existing one to place it in this zone</p>
+                  </div>
+                ) : (
+                  <div className={cn("grid gap-4", unitGridClass)}>
+                    {zoneTables.map((t, idx) => (
+                      <React.Fragment key={t.id}>
+                        {viewStyle === 'compact' && (
+                          <motion.div
+                            id={`table-compact-${t.id}`}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: idx * 0.02 }}
+                            className="relative group h-24 rounded-2xl border transition-all duration-300 overflow-hidden"
+                          >
+                            <div className={cn("absolute inset-0 z-0 opacity-40", !t.is_active ? "bg-muted" : busyMap.has(t.id) ? "bg-rose-500/10" : "bg-emerald-500/5 hover:bg-emerald-500/10")} />
+                            <div className={cn("relative z-10 p-3 h-full flex flex-col justify-between border-t-2", !t.is_active ? "border-muted" : busyMap.has(t.id) ? "border-rose-500" : "border-emerald-500")}>
+                              <div className="min-w-0 leading-none">
+                                <p className="text-[11px] font-black text-foreground truncate uppercase italic">{t.table_name}</p>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[9px] text-muted-foreground font-black uppercase tracking-tighter">{t.capacity}p</span>
+                              </div>
                             </div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-[9px] text-muted-foreground font-black uppercase tracking-tighter">{t.capacity}p</span>
-                            </div>
-                          </div>
-                          {mode === 'management' ? (
-                            <EditUnitSheet table={t} businessType={businessType} isAdmin={isAdmin} zones={zones} trigger={<button className="absolute inset-0 z-20 cursor-pointer w-full h-full" />} />
-                          ) : busyMap.has(t.id) || !t.is_active ? (
-                            <div className="absolute inset-0 z-20" />
-                          ) : (
-                            <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}`} className="absolute inset-0 z-20" />
-                          )}
-                        </motion.div>
-                      )}
+                            {mode === 'management' ? (
+                              <EditUnitSheet table={t} businessType={businessType} isAdmin={isAdmin} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${t.table_name}`} className="absolute inset-0 z-20 cursor-pointer w-full h-full" />} />
+                            ) : busyMap.has(t.id) || !t.is_active ? (
+                              <div className="absolute inset-0 z-20" />
+                            ) : (
+                              <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}`} className="absolute inset-0 z-20" />
+                            )}
+                          </motion.div>
+                        )}
 
-                      {viewStyle === 'list' && (
-                        <motion.div
-                          id={`table-list-${t.id}`}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: idx * 0.02 }}
-                          className="group relative flex items-center gap-4 p-4 rounded-2xl bg-card/40 border border-border hover:border-violet-500/30 transition-all h-16 overflow-hidden"
-                        >
-                          <div className={cn("w-2.5 h-2.5 rounded-full", !t.is_active ? "bg-muted" : busyMap.has(t.id) ? "bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.4)]" : "bg-emerald-500")} />
-                          <div className="flex-1 min-w-0 flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <p className="text-base font-black italic tracking-tighter truncate pr-2">{t.table_name}</p>
+                        {viewStyle === 'list' && (
+                          <motion.div
+                            id={`table-list-${t.id}`}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.02 }}
+                            className="group relative flex items-center gap-4 p-4 rounded-2xl bg-card/40 border border-border hover:border-violet-500/30 transition-all h-16 overflow-hidden"
+                          >
+                            <div className={cn("w-2.5 h-2.5 rounded-full", !t.is_active ? "bg-muted" : busyMap.has(t.id) ? "bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.4)]" : "bg-emerald-500")} />
+                            <div className="flex-1 min-w-0 flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <p className="text-base font-black italic tracking-tighter truncate pr-2">{t.table_name}</p>
+                              </div>
+                              <div className="flex items-center gap-2 relative z-30 justify-end">
+                                {mode === 'management' && (
+                                  <div className="w-8 h-8 flex items-center justify-center bg-background border border-border/50 rounded-xl text-muted-foreground shadow-sm">
+                                    <Settings2 className="w-4 h-4" />
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 relative z-30 justify-end">
-                              {mode === 'management' && (
-                                <div className="w-8 h-8 flex items-center justify-center bg-background border border-border/50 rounded-xl text-muted-foreground shadow-sm">
-                                  <Settings2 className="w-4 h-4" />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          {mode === 'management' ? (
-                            <EditUnitSheet table={t} businessType={businessType} isAdmin={isAdmin} zones={zones} trigger={<button className="absolute inset-0 z-10 cursor-pointer w-full h-full" />} />
-                          ) : busyMap.has(t.id) || !t.is_active ? (
-                            <div className="absolute inset-0 z-10" />
-                          ) : (
-                            <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}`} className="absolute inset-0 z-10" />
-                          )}
-                        </motion.div>
-                      )}
+                            {mode === 'management' ? (
+                              <EditUnitSheet table={t} businessType={businessType} isAdmin={isAdmin} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${t.table_name}`} className="absolute inset-0 z-10 cursor-pointer w-full h-full" />} />
+                            ) : busyMap.has(t.id) || !t.is_active ? (
+                              <div className="absolute inset-0 z-10" />
+                            ) : (
+                              <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}`} className="absolute inset-0 z-10" />
+                            )}
+                          </motion.div>
+                        )}
 
-                      {viewStyle === 'grid' && (
-                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.03 }}>
-                          <UnitCard 
-                            table={t} 
-                            busyInfo={busyMap.get(t.id)} 
-                            isBusy={!!busyMap.get(t.id)} 
-                            isOffline={!t.is_active} 
-                            isTappable={!busyMap.has(t.id) && t.is_active} 
-                            businessType={businessType} 
-                            isAdmin={isAdmin} 
-                            zones={zones} 
-                            mode={mode}
-                            currentSlug={dashboardSlug}
-                          />
-                        </motion.div>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
+                        {viewStyle === 'grid' && (
+                          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.03 }}>
+                            <UnitCard 
+                              table={t} 
+                              busyInfo={busyMap.get(t.id)} 
+                              isBusy={!!busyMap.get(t.id)} 
+                              isOffline={!t.is_active} 
+                              isTappable={!busyMap.has(t.id) && t.is_active} 
+                              businessType={businessType} 
+                              isAdmin={isAdmin} 
+                              zones={zones} 
+                              mode={mode}
+                              currentSlug={dashboardSlug}
+                            />
+                          </motion.div>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                )}
               </div>
             )
           })}
@@ -481,7 +494,7 @@ export function UnitsClient({
                 <h2 className="text-sm font-black text-muted-foreground uppercase tracking-[0.2em] italic">Unassigned</h2>
                 <div className="h-px flex-1 bg-gradient-to-r from-border/50 to-transparent" />
               </div>
-              <div className={cn("grid gap-4", viewStyle === 'grid' ? "grid-cols-2 sm:grid-cols-3" : viewStyle === 'compact' ? "grid-cols-3 sm:grid-cols-5 md:grid-cols-6" : "grid-cols-1")}>
+              <div className={cn("grid gap-4", unitGridClass)}>
                 {unassigned.map((t, idx) => renderTableItem(t, idx, busyMap.get(t.id), !!busyMap.get(t.id), !t.is_active, !busyMap.has(t.id) && t.is_active))}
               </div>
             </div>
@@ -501,28 +514,30 @@ export function UnitsClient({
         <p className="text-[10px] text-muted-foreground/60 font-black uppercase tracking-[0.2em] leading-relaxed px-8">Everything updates live as it happens.</p>
       </div>
 
-      <ActionHub 
-        actions={[
-          { 
-            label: `Add ${terms.unit}`, 
-            icon: <Plus className="w-6 h-6" />, 
-            color: 'bg-violet-600 text-white',
-            component: <CreateUnitDialog businessType={businessType as any} restaurantId={restaurantId} zones={zones} />
-          },
-          { 
-            label: 'Manage Zones', 
-            icon: <LayoutList className="w-5 h-5" />, 
-            color: 'bg-emerald-600 text-white',
-            component: <ZoneManagementDialog restaurantId={restaurantId} onUpdate={fetchZones} />
-          },
-          { 
-            label: 'View Reports', 
-            icon: <BarChart3 className="w-5 h-5" />, 
-            color: 'bg-blue-600 text-white',
-            onClick: () => window.location.href = `/dashboard/${dashboardSlug}/reports`
-          },
-        ]} 
-      />
+      {mode === 'management' && (
+        <ActionHub 
+          actions={[
+            { 
+              label: `Add ${terms.unit}`, 
+              icon: <Plus className="w-6 h-6" />, 
+              color: 'bg-violet-600 text-white',
+              component: <CreateUnitDialog businessType={businessType} restaurantId={restaurantId} zones={zones} />
+            },
+            { 
+              label: 'Manage Zones', 
+              icon: <LayoutList className="w-5 h-5" />, 
+              color: 'bg-emerald-600 text-white',
+              component: <ZoneManagementDialog restaurantId={restaurantId} onUpdate={fetchZones} />
+            },
+            { 
+              label: 'View Reports', 
+              icon: <BarChart3 className="w-5 h-5" />, 
+              color: 'bg-blue-600 text-white',
+              onClick: () => window.location.href = `/dashboard/${dashboardSlug}/reports`
+            },
+          ]} 
+        />
+      )}
     </div>
   )
 }

@@ -1,7 +1,6 @@
 import { getActiveRestaurant } from '@/lib/restaurant-context'
 import { createClient } from '@/lib/supabase/server'
 import { format } from 'date-fns'
-import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
 import { ReservationsClient } from './ReservationsClient'
 import type { Tables } from '@/lib/types/database'
@@ -18,16 +17,17 @@ export default async function ReservationsPage({ params, searchParams }: { param
   if (!res) return null
   const membershipRaw = res.membership
 
-  const membership = membershipRaw as any
+  const membership = membershipRaw as {
+    restaurant_id?: string | null
+    restaurants?: { business_type?: string | null } | null
+  } | null
   if (!membership?.restaurant_id) return null
 
   const businessType = (membership.restaurants?.business_type ?? 'restaurant') as BusinessType
-  const terms = getTerms(businessType)
 
   const { date } = await searchParams
   const todayIso = format(new Date(), 'yyyy-MM-dd')
   const initialDate = date || todayIso
-  const todayStr = todayIso
 
   // Fetch Tables for the Share Status report
   const { data: tableData } = await supabase
@@ -48,9 +48,9 @@ export default async function ReservationsPage({ params, searchParams }: { param
     .order('start_time', { ascending: true })
 
   return (
-    <div className="max-w-2xl mx-auto pb-24">
+    <div className="max-w-6xl mx-auto pb-24 md:pb-6">
       <ReservationsClient
-        initialBookings={(allBookings ?? []) as any}
+        initialBookings={(allBookings ?? []) as Tables<'reservations'>[]}
         restaurantId={membership.restaurant_id}
         currentSlug={res.activeSlug}
         currentUserId={user.id}

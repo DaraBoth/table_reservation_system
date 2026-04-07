@@ -7,6 +7,7 @@ import { BarChart } from '@mui/x-charts/BarChart'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { ReportFilters } from './ReportFilters'
+import { getTerms } from '@/lib/business-type'
 import {
   ChevronLeft,
   Table2,
@@ -23,14 +24,14 @@ interface Props {
   dateLabel: string
   totalCompleted: number
   totalGuests: number
-  statusTrend: any[]
-  tablePerformance: any[] // { name: string, volume: number }[]
-  topCustomers: any[]
+  statusTrend: Array<{ day: string; completed: number; cancelled: number; no_show: number; others: number; total: number }>
+  tablePerformance: Array<{ id: string; name: string; capacity: number; volume: number }>
+  topCustomers: Array<{ key: string; name: string | null; visits: number; guests: number }>
   businessType?: string
   statusColors: Record<string, string>
   statusLabels: Record<string, string>
   isAdmin: boolean
-  staffPerformance?: any[]
+  staffPerformance?: Array<{ id: string; name: string; total: number; completed: number; confirmed: number; no_show: number; cancelled: number }>
   currentSlug?: string
 }
 
@@ -40,13 +41,14 @@ export default function ReportsDashboardClient({
   tablePerformance,
   topCustomers,
   businessType = 'restaurant',
-  statusColors,
-  statusLabels,
+  statusColors: _statusColors,
+  statusLabels: _statusLabels,
   isAdmin,
   staffPerformance = [],
   currentSlug
 }: Props) {
   const { resolvedTheme } = useTheme()
+  const terms = getTerms(businessType)
   const textColor = resolvedTheme === 'dark' ? '#e2e8f0' : '#1e293b'
   const axisColor = resolvedTheme === 'dark' ? '#334155' : '#cbd5e1'
   const gridColor = resolvedTheme === 'dark' ? '#1e293b' : '#e2e8f0'
@@ -60,31 +62,6 @@ export default function ReportsDashboardClient({
     return () => clearTimeout(timer)
   }, [dateLabel])
 
-  // Dynamic Label Mapping based on Business Type
-  const labelMap: Record<string, any> = {
-    restaurant: {
-      unit: 'Table',
-      units: 'Tables',
-      performance: 'Table performance',
-      volume: 'Guests',
-      activity: 'Visits'
-    },
-    hotel: {
-      unit: 'Room',
-      units: 'Rooms',
-      performance: 'Room performance',
-      volume: 'Guests',
-      activity: 'Stays'
-    },
-    guesthouse: {
-      unit: 'Room',
-      units: 'Rooms',
-      performance: 'Room performance',
-      volume: 'Guests',
-      activity: 'Stays'
-    }
-  }
-
   // Calculate dynamic height for the trend chart based on volume
   const maxVolume = statusTrend.reduce((max, day) => {
     const total = (day.completed || 0) + (day.cancelled || 0) + (day.no_show || 0) + (day.others || 0)
@@ -94,11 +71,13 @@ export default function ReportsDashboardClient({
   // Base 320px, grow up to 450px for high volume (over 20 bookings)
   const trendHeight = Math.min(450, Math.max(320, maxVolume * 12))
 
-  // Fallback to restaurant if type unknown
-  const labels = labelMap[businessType] || labelMap.restaurant
+  const analyticsTitle = terms.hasCheckout ? 'Reservation Analytics' : 'Booking Analytics'
+  const trendTitle = terms.hasCheckout ? 'Reservation Report' : 'Booking Report'
+  const performanceTitle = `${terms.unit} Performance`
+  const activityLabel = terms.hasCheckout ? 'Stays' : 'Visits'
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto container px-2 py-6 sm:px-6 pb-24">
+    <div className="space-y-6 max-w-6xl mx-auto container px-2 py-6 sm:px-6 pb-24 md:pb-6">
       {/* Header */}
       <div className="flex items-center justify-between px-2">
         <div className="flex items-center gap-4">
@@ -110,7 +89,7 @@ export default function ReportsDashboardClient({
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black text-foreground tracking-tight leading-none">Booking Analytics</h1>
+              <h1 className="text-2xl font-black text-foreground tracking-tight leading-none">{analyticsTitle}</h1>
               {isUpdating && (
                 <div className="flex items-center gap-1.5 px-2 py-0.5 bg-violet-600 rounded-lg animate-pulse">
                   <div className="w-1.5 h-1.5 rounded-full bg-white" />
@@ -133,13 +112,13 @@ export default function ReportsDashboardClient({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
             <div className="flex items-center gap-2 bg-card/50 border border-border p-3 rounded-2xl px-4 w-fit">
               <BarChart2 className="w-4 h-4 text-violet-400" />
-              <h2 className="text-sm font-black text-foreground uppercase tracking-widest">Reservation Report</h2>
+              <h2 className="text-sm font-black text-foreground uppercase tracking-widest">{trendTitle}</h2>
             </div>
             <Badge className="bg-violet-500/10 text-violet-400 border-violet-500/20 text-[9px] font-black py-1 px-3 w-fit rounded-full">WEEKLY STATS</Badge>
           </div>
 
           {/* Custom Legend for Chart 1 - Grid for Mobile */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-2">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 px-2">
             {[
               { label: 'Done', color: '#10b981' },
               { label: 'Cancel', color: '#ef4444' },
@@ -185,7 +164,7 @@ export default function ReportsDashboardClient({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
             <div className="flex items-center gap-2 bg-card/50 border border-border p-3 rounded-2xl px-4 w-fit">
               <Table2 className="w-4 h-4 text-indigo-400" />
-              <h2 className="text-sm font-black text-foreground uppercase tracking-widest">{labels.performance}</h2>
+              <h2 className="text-sm font-black text-foreground uppercase tracking-widest">{performanceTitle}</h2>
             </div>
             <Badge className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20 text-[9px] font-black py-1 px-3 w-fit rounded-full">WEEKLY VOLUME</Badge>
           </div>
@@ -193,7 +172,7 @@ export default function ReportsDashboardClient({
           <div className="bg-card/60 border border-border rounded-[32px] p-2 sm:p-8 pt-6">
             <div className="flex items-center gap-2 px-4 text-[9px] text-muted-foreground font-black uppercase tracking-[0.2em] mb-4">
               <TrendingUp className="w-3 h-3 text-indigo-500" />
-              <span>Ranked by busiest {labels.units} this week</span>
+              <span>Ranked by busiest {terms.unitsLower} this week</span>
             </div>
 
             {/* Dynamic Height Container: 48px per table, minimum 400px */}
@@ -220,9 +199,9 @@ export default function ReportsDashboardClient({
                 }]}
                 series={[{
                   dataKey: 'volume',
-                  label: 'Total ' + labels.volume,
+                  label: 'Total ' + terms.partyUnit,
                   color: '#6366f1', // Professional Indigo
-                  valueFormatter: (v) => `${v} ${labels.volume}`
+                  valueFormatter: (v) => `${v} ${terms.partyUnit}`
                 }]}
                 grid={{ vertical: true }}
                 sx={{
@@ -287,7 +266,6 @@ export default function ReportsDashboardClient({
                 <AnimatePresence>
                   {staffPerformance.map((staff, idx) => {
                     const successCount = (staff.completed || 0) + (staff.confirmed || 0)
-                    const lossCount = (staff.no_show || 0) + (staff.cancelled || 0)
                     const successRate = staff.total > 0 ? Math.round((successCount / staff.total) * 100) : 0
                     
                     // Simple segment widths based on percentage of total
@@ -385,12 +363,12 @@ export default function ReportsDashboardClient({
                     <div className="flex items-center justify-between sm:justify-end sm:gap-10 border-t border-border/50 sm:border-t-0 pt-3 sm:pt-0">
                       <div className="text-center">
                         <p className="text-lg font-black text-foreground leading-none italic">{cust.visits}</p>
-                        <p className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-tighter mt-1.5">{labels.activity}</p>
+                        <p className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-tighter mt-1.5">{activityLabel}</p>
                       </div>
                       <div className="w-px h-6 bg-muted/50 sm:hidden mx-4" />
                       <div className="text-center">
                         <p className="text-lg font-black text-emerald-400 leading-none italic">{cust.guests}</p>
-                        <p className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-tighter mt-1.5">{labels.volume}</p>
+                        <p className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-tighter mt-1.5">{terms.partyUnit}</p>
                       </div>
                     </div>
                   </div>

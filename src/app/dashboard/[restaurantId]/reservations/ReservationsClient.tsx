@@ -24,6 +24,8 @@ interface Reservation extends Tables<'reservations'> {
   profiles?: { full_name: string | null } | null
 }
 
+type TableWithZone = Tables<'physical_tables'> & { zones?: { id?: string; name: string; sort_order: number } | null }
+
 interface Props {
   initialBookings: Reservation[]
   restaurantId: string
@@ -75,21 +77,17 @@ export function ReservationsClient({
   const dashboardSlug = currentSlug || restaurantId
   const [selectedDate, setSelectedDate] = useState(initialDate)
   const [bookings, setBookings] = useState<Reservation[]>(initialBookings)
-  const [viewStyle, setViewStyle] = useState<ViewStyle>('grid')
+  const [viewStyle, setViewStyle] = useState<ViewStyle>(() => {
+    if (typeof window === 'undefined') return 'grid'
+    const saved = localStorage.getItem('reservationsViewStyle') as ViewStyle | null
+    return saved && ['grid', 'list', 'compact'].includes(saved) ? saved : 'grid'
+  })
   const [now, setNow] = useState(new Date())
 
   // Keep clock running
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000)
     return () => clearInterval(timer)
-  }, [])
-
-  // Load view preference
-  useEffect(() => {
-    const saved = localStorage.getItem('reservationsViewStyle') as ViewStyle
-    if (saved && ['grid', 'list', 'compact'].includes(saved)) {
-      setViewStyle(saved)
-    }
   }, [])
 
   const handleViewChange = (style: ViewStyle) => {
@@ -108,16 +106,26 @@ export function ReservationsClient({
 
     // Use our sorting utility to get consistent grouping
     // We need zones, but they might be on the tables themselves
-    const uniqueZones = Array.from(new Set(tables.map(t => (t as any).zones).filter(Boolean).map(z => JSON.stringify(z)))).map(s => JSON.parse(s))
+    const uniqueZones = Array.from(
+      new Map(
+        tables
+          .map(table => (table as TableWithZone).zones)
+          .filter((zone): zone is NonNullable<TableWithZone['zones']> => Boolean(zone?.name))
+          .map(zone => [zone.id ?? zone.name, zone])
+      ).values()
+    )
     const { sortedZones, grouped, unassigned } = groupAndSortTables(tables, uniqueZones)
     
+    const availableLabel = 'Available'
+    const occupiedLabel = terms.hasCheckout ? 'Occupied' : 'Booked'
+
     let text = `Date: ${dateStr} As of ${timeStr}\n\n`
     
-    text += `AVAILABLE (${tables.filter(t => !occupiedTableIds.includes(t.id)).length}):\n`
+    text += `${availableLabel.toUpperCase()} (${tables.filter(t => !occupiedTableIds.includes(t.id)).length}):\n`
     
-    const renderTableStatus = (t: any, isAvailable: boolean) => {
+    const renderTableStatus = (t: TableWithZone, isAvailable: boolean) => {
       if (isAvailable) {
-        return `• ${t.table_name} (${t.capacity} Seats)\n`
+        return `• ${t.table_name} (${t.capacity} ${terms.capacityUnit})\n`
       } else {
         const res = occupiedRows.find(b => b.table_id === t.id)
         if (!res) return ''
@@ -144,7 +152,7 @@ export function ReservationsClient({
       unassigned.filter(t => !occupiedTableIds.includes(t.id)).forEach(t => { text += renderTableStatus(t, true) })
     }
     
-    text += `\nBOOKED (${occupiedTableIds.length}):\n`
+    text += `\n${occupiedLabel.toUpperCase()} (${occupiedTableIds.length}):\n`
     sortedZones.forEach(zone => {
       const zoneTables = grouped[zone.id] || []
       const bookedInZone = zoneTables.filter(t => occupiedTableIds.includes(t.id))
@@ -162,7 +170,7 @@ export function ReservationsClient({
     try {
       await navigator.clipboard.writeText(text.trim())
       toast.success('Status report copied!')
-    } catch (err) {
+    } catch {
       toast.error('Failed to copy status')
     }
   }
@@ -180,12 +188,15 @@ export function ReservationsClient({
       .gte('checkout_date', selectedDate)
       .order('start_time', { ascending: true })
 
-    if (data) setBookings(data as any)
+    if (data) setBookings(data as Reservation[])
   }, [supabase, restaurantId, selectedDate])
 
   useEffect(() => {
-    fetchLatestData()
-  }, [selectedDate, fetchLatestData])
+    const load = async () => {
+      await fetchLatestData()
+    }
+    void load()
+  }, [fetchLatestData])
 
   useEffect(() => {
     // Setup Realtime subscription
@@ -211,11 +222,11 @@ export function ReservationsClient({
   }, [supabase, restaurantId, fetchLatestData])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 lg:space-y-7">
       {/* Header with Live Pulse and Date/Time */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-xl font-black text-foreground italic tracking-tight uppercase">
               {terms.bookings}
             </h1>
@@ -279,8 +290,8 @@ export function ReservationsClient({
         {bookings.length > 0 ? (
           <div className={cn(
             "grid gap-3",
-            viewStyle === 'grid' ? "grid-cols-2 sm:grid-cols-3" : 
-            viewStyle === 'compact' ? "grid-cols-3 sm:grid-cols-5" : 
+            viewStyle === 'grid' ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4" : 
+            viewStyle === 'compact' ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5" : 
             "grid-cols-1"
           )}>
             {bookings.map((res, idx) => {
@@ -326,7 +337,7 @@ export function ReservationsClient({
                         </div>
                         <div className="hidden sm:block">
                           <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Party</p>
-                          <p className="text-xs font-bold text-foreground/80">{res.party_size || 0} People</p>
+                          <p className="text-xs font-bold text-foreground/80">{res.party_size || 0} {terms.partyUnit}</p>
                         </div>
                         <div className="flex justify-end">
                            <Badge className={cn('text-[9px] font-black px-2 py-0.5 border rounded-lg uppercase tracking-widest', statusColors[res.status] ?? '')}>
@@ -402,7 +413,7 @@ export function ReservationsClient({
       <ActionHub 
         actions={[
           { 
-            label: 'New Reservation', 
+            label: `New ${terms.booking}`, 
             icon: <Plus className="w-6 h-6" />, 
             color: 'bg-violet-600 text-white',
             onClick: () => window.location.href = `/dashboard/${dashboardSlug}/reservations/new`
@@ -419,7 +430,7 @@ export function ReservationsClient({
   )
 }
 
-function BookingCard({ res, restaurantId, dashboardSlug, todayIso, currentUserId }: { res: Reservation; restaurantId: string; dashboardSlug: string; todayIso: string; currentUserId?: string }) {
+function BookingCard({ res, dashboardSlug, todayIso, currentUserId }: { res: Reservation; dashboardSlug: string; todayIso: string; currentUserId?: string }) {
   const start = res.start_time
     ? new Date(`${res.reservation_date}T${res.start_time}`)
     : null

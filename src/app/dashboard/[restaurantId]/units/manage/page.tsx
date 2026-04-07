@@ -15,7 +15,14 @@ export default async function ManageUnitsPage({ params }: { params: Promise<{ re
   const res = await getActiveRestaurant(restaurantId)
   if (!res) return null
   
-  const { membership, activeSlug } = res as any
+  const { membership, activeSlug } = res as {
+    membership: {
+      role?: string | null
+      restaurant_id?: string | null
+      restaurants?: { business_type?: string | null } | null
+    }
+    activeSlug?: string
+  }
   const role = membership?.role
   const isAdmin = role === 'admin' || role === 'superadmin'
   const isStaff = role === 'staff'
@@ -46,14 +53,13 @@ export default async function ManageUnitsPage({ params }: { params: Promise<{ re
     .gte('checkout_date', todayDate)
 
   return (
-    <div className="max-w-2xl mx-auto pb-8">
+    <div className="max-w-6xl mx-auto pb-10 md:pb-6">
       <UnitsClient 
         initialTables={tables || []}
         initialBusyRows={busyRows || []}
         restaurantId={membership.restaurant_id!}
         businessType={businessType}
         isAdmin={isAdmin}
-        isStaff={isStaff}
         initialDate={todayDate}
         initialNowIso={currentTimeIso}
         mode="management"

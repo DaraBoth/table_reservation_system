@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { getTerms } from '@/lib/business-type'
 import { cn } from '@/lib/utils'
-import { Settings2, Pencil } from 'lucide-react'
+import { Settings2 } from 'lucide-react'
 import type { Tables } from '@/lib/types/database'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
@@ -31,6 +31,9 @@ export function EditUnitSheet({ table, businessType = 'restaurant', isAdmin, tri
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [selectedZone, setSelectedZone] = useState<string | null>(table.zone_id || 'none')
+  const selectedZoneLabel = selectedZone === 'none'
+    ? 'No Zone'
+    : zones.find(zone => zone.id === selectedZone)?.name || 'Select Zone'
 
   React.useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -42,10 +45,10 @@ export function EditUnitSheet({ table, businessType = 'restaurant', isAdmin, tri
   return (
     <Sheet>
       <SheetTrigger
-        nativeButton={false}
+        nativeButton
         render={
           (trigger as React.ReactElement) || (
-            <button className="w-9 h-9 flex items-center justify-center bg-muted/50 border border-border rounded-xl text-muted-foreground hover:border-violet-500/50 hover:text-violet-400 transition-all active:scale-90">
+            <button type="button" className="w-9 h-9 flex items-center justify-center bg-muted/50 border border-border rounded-xl text-muted-foreground hover:border-violet-500/50 hover:text-violet-400 transition-all active:scale-90">
               <Settings2 className="w-4 h-4" />
             </button>
           )
@@ -114,14 +117,14 @@ export function EditUnitSheet({ table, businessType = 'restaurant', isAdmin, tri
             <div className="space-y-1.5">
               <Label className="text-muted-foreground text-[10px] font-black uppercase tracking-widest px-1">Assignment Zone (Optional)</Label>
               <Select value={selectedZone} onValueChange={setSelectedZone}>
-                <input type="hidden" name="zoneId" value={selectedZone ?? 'none'} />
-                <SelectTrigger className="bg-card border-border text-foreground h-14 rounded-2xl text-base px-4">
-                  <SelectValue placeholder="No Zone (Unassigned)" />
+                <input type="hidden" name="zoneId" value={selectedZone === 'none' ? '' : (selectedZone ?? '')} />
+                <SelectTrigger className="w-full bg-card border-border text-foreground h-14 rounded-2xl text-base px-4 font-semibold shadow-sm">
+                  <SelectValue>{selectedZoneLabel}</SelectValue>
                 </SelectTrigger>
-                <SelectContent className="bg-background border-border rounded-2xl">
-                  <SelectItem value="none">No Zone</SelectItem>
+                <SelectContent className="bg-background/95 border-border rounded-2xl p-1 shadow-2xl backdrop-blur-md">
+                  <SelectItem value="none" className="min-h-11 rounded-xl px-3 font-semibold">No Zone</SelectItem>
                   {zones.map(z => (
-                    <SelectItem key={z.id} value={z.id}>{z.name}</SelectItem>
+                    <SelectItem key={z.id} value={z.id} className="min-h-11 rounded-xl px-3 font-semibold">{z.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

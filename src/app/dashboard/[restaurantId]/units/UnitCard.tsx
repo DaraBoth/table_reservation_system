@@ -7,9 +7,11 @@ import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { EditUnitSheet } from './EditUnitSheet'
 import { User, Settings2, Activity } from 'lucide-react'
-import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from 'framer-motion'
+import { motion, useMotionValue, useTransform } from 'framer-motion'
 import type { Tables } from '@/lib/types/database'
 import { getTerms } from '@/lib/business-type'
+
+type TableWithZone = Tables<'physical_tables'> & { zones?: { name?: string | null } | null }
 
 interface UnitCardProps {
   table: Tables<'physical_tables'>
@@ -45,8 +47,8 @@ export function UnitCard({
   mode = 'monitoring',
   currentSlug
 }: UnitCardProps) {
-  const isHotel = businessType === 'hotel' || businessType === 'guesthouse'
   const terms = getTerms(businessType)
+  const occupiedLabel = terms.hasCheckout ? 'Occupied' : 'Booked'
 
   // ✨ Magic UI: Mouse position for follow-glow
   const mouseX = useMotionValue(0)
@@ -111,7 +113,7 @@ export function UnitCard({
           businessType={businessType} 
           isAdmin={isAdmin}
           zones={zones}
-          trigger={<button className="absolute inset-0 z-10 w-full h-full cursor-pointer" />}
+          trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${table.table_name}`} className="absolute inset-0 z-10 w-full h-full cursor-pointer" />}
         />
       )}
 
@@ -163,12 +165,12 @@ export function UnitCard({
                   : isBusy ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
                     : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
               )}>
-                {isOffline ? 'Offline' : isBusy ? 'Booked' : 'Available'}
+                {isOffline ? 'Offline' : isBusy ? occupiedLabel : 'Available'}
               </Badge>
             ) : (
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-muted/40 border border-border/60">
                  <div className="w-1.5 h-1.5 rounded-full bg-violet-500/40" />
-                 <span className="text-[9px] font-black text-muted-foreground/60 uppercase tracking-widest">{(table as any).zones?.name || 'Unassigned'}</span>
+                 <span className="text-[9px] font-black text-muted-foreground/60 uppercase tracking-widest">{(table as TableWithZone).zones?.name || 'Unassigned'}</span>
               </div>
             )}
 

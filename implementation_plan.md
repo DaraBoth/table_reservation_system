@@ -1,21 +1,40 @@
-# Dashboard "Platform Refactor" Plan (Global Extraction)
+# Dashboard Platform Refactor
 
-Transition the dashboard into a high-end platform with a unified, global action hub and consistent UI states.
+Refactor the dashboard into a unified platform surface with one global action hub, consistent business-type terminology, and cleaner tablet behavior across monitoring and reservations views.
 
-## User Review Required
+## Final Audit Snapshot
 
-> [!IMPORTANT]
-> **Priority**: I am extracting the **Action Hub** into a global component. This ensures the "Floating Button" is consistent across **Units** and **Reservations** and resolves any layout clipping issues.
+> [!NOTE]
+> Current phase: final audit and polish.
 
-## Current Tasks
+| Area | Outcome |
+| --- | --- |
+| Global action pattern | Shared ActionHub now drives Units and Reservations actions |
+| Terminology system | Dashboard surfaces align to business-type terms for tables vs rooms and bookings vs reservations |
+| Tablet experience | Wider content rails and denser responsive grids improve iPad portrait and landscape balance |
+| Remaining work | Completed |
 
-1.  **Extract `ActionHub.tsx`**: Create a shared component at `src/components/dashboard/ActionHub.tsx`.
-2.  **Global FAB Positioning**: Use `fixed bottom-10 right-10 z-[200]` to ensure it's always on top and accessible.
-3.  **Units Integration**: Replace local Hub logic in `UnitsClient.tsx` with the shared component.
-4.  **Reservations Integration**: Add the Hub to `ReservationsClient.tsx`.
-5.  **Audit**: Ensure "Unit/Table" labeling is correct everywhere.
+## Completed Refactor Work
 
-## Verification Plan
+1. Extracted the shared ActionHub to `src/components/dashboard/ActionHub.tsx`.
+2. Moved the floating action pattern into a global bottom-right FAB flow.
+3. Integrated the hub into Units and Reservations.
+4. Simplified the utility bar so view switching stays visible without extra chrome.
+5. Removed redundant spacing and resolved the Base UI accessibility warning.
 
-- **Visibility**: Confirm FAB is visible on all platforms (iPad/Desktop).
-- **Functionality**: Confirm "Add" and "Manage" flows work perfectly through the new Hub.
+## Final Audit Focus
+
+1. Terminology audit: remove hardcoded dashboard labels where business type already provides the correct wording.
+2. Tablet polish: make iPad portrait and landscape layouts feel less compressed and better use available width.
+3. Regression check: confirm all action-hub entry points still open the correct flows.
+
+## Verification Checklist
+
+- [x] Confirm Units and Reservations render the correct labels for restaurant and hotel business types.
+- [x] Confirm tablet layouts expand cleanly on iPad landscape without oversized empty margins.
+- [x] Confirm the FAB remains reachable and visually stable while scrolling.
+- [x] Confirm Add, Manage, and Reports actions still navigate or open dialogs correctly.
+
+## Verification Result
+
+Targeted editor diagnostics are clean for the dashboard files changed by this refactor, and the targeted ESLint run for those files completes without output.

@@ -3,12 +3,13 @@
 import * as React from 'react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { LayoutGrid, Settings2, Plus, Users, ShieldCheck, CircleCheck, CircleX, User } from 'lucide-react'
+import { LayoutGrid, Settings2, ShieldCheck, CircleCheck, CircleX, User } from 'lucide-react'
 import { CreateTableDialog } from './CreateTableDialog'
 import { EditTableSheet } from './EditTableSheet'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import type { Tables } from '@/lib/types/database'
+import { getTerms } from '@/lib/business-type'
 
 interface TableTabsProps {
   tables: Tables<'physical_tables'>[]
@@ -21,6 +22,8 @@ interface TableTabsProps {
 
 export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, restaurantId }: TableTabsProps) {
   const [activeTab, setActiveTab] = useState<'status' | 'settings'>('status')
+  const terms = getTerms(businessType)
+  const occupiedLabel = terms.hasCheckout ? 'Occupied' : 'Busy'
 
   const freeTables = tables.filter(t => !busyMap.has(t.id) && t.is_active).length
   const busyTables = tables.filter(t => busyMap.has(t.id)).length
@@ -75,13 +78,13 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
               </div>
               <div>
                 <p className="text-2xl font-black text-foreground">{busyTables}</p>
-                <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Busy Today</p>
+                <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{occupiedLabel} Today</p>
               </div>
             </div>
           </div>
 
           {/* Table Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
             {tables.map(t => {
               const busyInfo = busyMap.get(t.id)
               const isBusy = !!busyInfo
@@ -112,7 +115,7 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
                   </p>
 
                   <p className={cn('text-[11px] font-bold', isOffline ? 'text-muted-foreground/60' : 'text-muted-foreground')}>
-                    {businessType === 'restaurant' ? `Up to ${t.capacity} people` : `${t.capacity} ${t.capacity === 1 ? 'Bed' : 'Beds'}`}
+                    {businessType === 'restaurant' ? `Up to ${t.capacity} ${terms.partyUnitLower}` : `${t.capacity} ${t.capacity === 1 ? 'Bed' : terms.capacityUnit}`}
                   </p>
 
                   <div className="mt-auto pt-2">
@@ -122,7 +125,7 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
                         : isBusy ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
                         : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                     )}>
-                      {isOffline ? 'Offline' : isBusy ? 'Busy' : 'Available'}
+                      {isOffline ? 'Offline' : isBusy ? occupiedLabel : 'Available'}
                     </Badge>
                   </div>
 
@@ -167,7 +170,7 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
                       {t.table_name}
                     </p>
                     <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
-                       {businessType === 'restaurant' ? `${t.capacity} Seats` : `${t.capacity} ${t.capacity === 1 ? 'Bed' : 'Beds'}`}
+                        {businessType === 'restaurant' ? `${t.capacity} ${terms.capacityUnit}` : `${t.capacity} ${t.capacity === 1 ? 'Bed' : terms.capacityUnit}`}
                        {!t.is_active && " · Offline"}
                     </p>
                   </div>

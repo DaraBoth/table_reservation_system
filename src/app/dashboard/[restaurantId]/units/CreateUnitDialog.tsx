@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { cn } from '@/lib/utils'
 import { Confetti } from '@/components/magicui/confetti'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -15,39 +14,45 @@ import { getTerms } from '@/lib/business-type'
 export function CreateUnitDialog({
   businessType = 'restaurant',
   restaurantId,
-  zones = []
+  zones = [],
+  trigger
 }: {
   businessType?: string
   restaurantId: string
   zones?: { id: string, name: string }[]
+  trigger?: React.ReactNode
 }) {
   const [state, action, pending] = useActionState(createPhysicalTable, null)
   const [open, setOpen] = useState(false)
-  const [showConfetti, setShowConfetti] = useState(false)
   const [selectedZone, setSelectedZone] = useState<string | null>('none')
   const terms = getTerms(businessType)
+  const hasSuccess = Boolean(state && 'success' in state && state.success)
+  const selectedZoneLabel = selectedZone === 'none'
+    ? 'No Zone'
+    : zones.find(zone => zone.id === selectedZone)?.name || 'Select Zone'
 
   // 🎉 Success Surprise!
   useEffect(() => {
-    if (state && 'success' in state && state.success) {
-      setShowConfetti(true)
-      setTimeout(() => {
+    if (hasSuccess) {
+      const timer = setTimeout(() => {
         setOpen(false)
-        setShowConfetti(false)
         setSelectedZone('none') // Reset
       }, 2000)
+      return () => clearTimeout(timer)
     }
-  }, [state])
+  }, [hasSuccess])
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <Confetti active={showConfetti} />
+      <Confetti active={hasSuccess} />
       <SheetTrigger
-        nativeButton={false}
+        nativeButton
         render={
-          <Button className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 shadow-lg shadow-violet-500/25 text-foreground h-12 rounded-xl text-[11px] font-black uppercase tracking-widest px-6 active:scale-95 transition-all">
-            + Add {terms.unit}
-          </Button>
+          (trigger as React.ReactElement) || (
+            <Button className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 shadow-lg shadow-violet-500/25 text-foreground h-12 rounded-xl text-[11px] font-black uppercase tracking-widest px-6 active:scale-95 transition-all">
+              + Add {terms.unit}
+            </Button>
+          )
         }
       />
       <SheetContent side="bottom" className="bg-background border-border text-foreground p-6 rounded-t-3xl h-[85vh] overflow-y-auto custom-scrollbar">
@@ -81,14 +86,14 @@ export function CreateUnitDialog({
             <div className="space-y-1.5">
               <Label className="text-muted-foreground text-[10px] font-black uppercase tracking-widest px-1">Assignment Zone (Optional)</Label>
               <Select value={selectedZone} onValueChange={setSelectedZone}>
-                <input type="hidden" name="zoneId" value={selectedZone ?? 'none'} />
-                <SelectTrigger className="bg-card border-border text-foreground h-14 rounded-2xl text-base px-4 font-bold">
-                  <SelectValue placeholder="No Zone (Unassigned)" />
+                <input type="hidden" name="zoneId" value={selectedZone === 'none' ? '' : (selectedZone ?? '')} />
+                <SelectTrigger className="w-full bg-card border-border text-foreground h-14 rounded-2xl text-base px-4 font-bold shadow-sm">
+                  <SelectValue>{selectedZoneLabel}</SelectValue>
                 </SelectTrigger>
-                <SelectContent className="bg-background border-border rounded-2xl">
-                  <SelectItem value="none">No Zone</SelectItem>
+                <SelectContent className="bg-background/95 border-border rounded-2xl p-1 shadow-2xl backdrop-blur-md">
+                  <SelectItem value="none" className="min-h-11 rounded-xl px-3 font-semibold">No Zone</SelectItem>
                   {zones.map(z => (
-                    <SelectItem key={z.id} value={z.id}>{z.name}</SelectItem>
+                    <SelectItem key={z.id} value={z.id} className="min-h-11 rounded-xl px-3 font-semibold">{z.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

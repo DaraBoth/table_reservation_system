@@ -385,6 +385,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
 
                 <CustomerSelector 
                   restaurantId={restaurantId} 
+                  businessType={businessType}
                   onSelect={({ name, phone }) => {
                     setGuestName(name)
                     setGuestPhone(phone)

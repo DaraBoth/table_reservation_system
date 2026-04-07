@@ -70,6 +70,10 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
   // ✨ Magic UI: Mouse position for follow-glow
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
+  const cardGlow = useTransform(
+    [mouseX, mouseY],
+    ([x, y]) => `radial-gradient(150px circle at ${x}px ${y}px, rgba(124,58,237,0.1), transparent 80%)`
+  )
 
   function handleMouseMove({ currentTarget, clientX, clientY }: React.MouseEvent) {
     const { left, top } = currentTarget.getBoundingClientRect()
@@ -78,7 +82,7 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
   }
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto pb-20">
+    <div className="space-y-6 max-w-5xl mx-auto pb-20 md:pb-6">
       {/* Greeting Section */}
       <motion.div 
         initial={{ opacity: 0, x: -20 }}
@@ -86,7 +90,7 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
         className="pt-2"
       >
         <p className="text-muted-foreground text-sm font-medium tracking-tight uppercase">{todayStr}</p>
-        <h1 className="text-3xl font-black text-foreground mt-1 italic tracking-tighter">Today's Overview</h1>
+        <h1 className="text-3xl font-black text-foreground mt-1 italic tracking-tighter">Today&apos;s Overview</h1>
       </motion.div>
 
       {/* Stats Row with Magic Card Glow */}
@@ -110,12 +114,7 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
               {/* 🖱️ Interactive Follow-Glow */}
               <motion.div
                 className="pointer-events-none absolute -inset-px rounded-2xl opacity-0 transition duration-300 group-hover:opacity-100"
-                style={{
-                  background: useTransform(
-                    [mouseX, mouseY],
-                    ([x, y]) => `radial-gradient(150px circle at ${x}px ${y}px, rgba(124,58,237,0.1), transparent 80%)`
-                  ),
-                }}
+                style={{ background: cardGlow }}
               />
 
               <div className={cn(
@@ -205,7 +204,7 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-foreground truncate group-hover:text-violet-200 transition-colors">{res.guest_name}</p>
                         <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tighter mt-0.5">
-                          {res.physical_tables?.table_name ?? '—'} {!terms.hasCheckout && `· ${res.party_size} People`}
+                          {res.physical_tables?.table_name ?? '—'} {!terms.hasCheckout && `· ${res.party_size} ${terms.partyUnit}`}
                         </p>
                       </div>
 
@@ -229,7 +228,7 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
                 className="text-center py-12 bg-card/30 rounded-3xl border border-border border-dashed"
               >
                 <Clock className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-50" />
-                <p className="text-muted-foreground text-xs font-black uppercase tracking-widest italic">No bookings yet Today</p>
+                <p className="text-muted-foreground text-xs font-black uppercase tracking-widest italic">No {terms.bookingsLower} yet today</p>
                 <Link
                   href={`/dashboard/${dashSlug}/reservations/new`}
                   className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-violet-600/10 text-violet-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-violet-600/20 transition-all"
