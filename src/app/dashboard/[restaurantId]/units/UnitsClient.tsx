@@ -94,7 +94,7 @@ export function UnitsClient({
 
   const handleUpdateViewStyle = (s: ViewStyle) => {
     setViewStyle(s)
-    localStorage.setItem('tables-view-style', s)
+    localStorage.setItem('units-view-style', s)
   }
 
   // Keep clock running

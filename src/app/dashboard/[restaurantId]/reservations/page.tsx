@@ -5,6 +5,11 @@ import type { BusinessType } from '@/lib/business-type'
 import { ReservationsClient } from './ReservationsClient'
 import type { Tables } from '@/lib/types/database'
 
+type Reservation = Tables<'reservations'> & {
+  physical_tables: Pick<Tables<'physical_tables'>, 'table_name' | 'capacity'> | null
+  profiles?: { full_name: string | null } | null
+}
+
 export const metadata = { title: 'Bookings — TableBook' }
 
 export default async function ReservationsPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>, searchParams: Promise<{ date?: string }> }) {
@@ -50,7 +55,7 @@ export default async function ReservationsPage({ params, searchParams }: { param
   return (
     <div className="max-w-6xl mx-auto pb-24 md:pb-6">
       <ReservationsClient
-        initialBookings={(allBookings ?? []) as Tables<'reservations'>[]}
+        initialBookings={(allBookings ?? []) as Reservation[]}
         restaurantId={membership.restaurant_id}
         currentSlug={res.activeSlug}
         currentUserId={user.id}
