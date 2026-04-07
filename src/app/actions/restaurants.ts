@@ -186,6 +186,12 @@ export async function updateOwnRestaurantInfo(_: ActionState, formData: FormData
   const restaurantId = formData.get('restaurantId') as string
   if (!restaurantId) return { error: 'Restaurant context missing' }
 
+  const slugInput = String(formData.get('slug') || '').trim().toLowerCase()
+  if (!slugInput) return { error: 'Enter a short link' }
+  if (!/^[a-z0-9-]+$/.test(slugInput)) {
+    return { error: 'Use lowercase letters, numbers, and - only' }
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
@@ -206,6 +212,7 @@ export async function updateOwnRestaurantInfo(_: ActionState, formData: FormData
     .from('restaurants')
     .update({
       name: formData.get('name') as string,
+      slug: slugInput,
       contact_email: formData.get('contactEmail') as string || null,
       contact_phone: formData.get('contactPhone') as string || null,
       address: formData.get('address') as string || null,
@@ -213,11 +220,19 @@ export async function updateOwnRestaurantInfo(_: ActionState, formData: FormData
     })
     .eq('id', restaurantId)
 
-  if (error) return { error: error.message }
+  if (error) {
+    if (error.code === '23505' || error.message.includes('restaurants_slug_key')) {
+      return { error: 'That short link is already used' }
+    }
+    return { error: error.message }
+  }
 
   revalidatePath(`/dashboard/${restaurantId}`)
   revalidatePath(`/dashboard/${restaurantId}/account`)
-  return { success: 'Business info updated.' }
+  revalidatePath(`/dashboard/${slugInput}`)
+  revalidatePath(`/dashboard/${slugInput}/account`)
+
+  redirect(`/dashboard/${slugInput}/account?tab=business`)
 }
 
 // ─── Update Restaurant Logo (Admin) ──────────────────────────────────────────

@@ -1,10 +1,10 @@
 'use client'
 
 import React, { useState, useCallback, useRef } from 'react'
-import Cropper from 'react-easy-crop'
+import Cropper, { type Area } from 'react-easy-crop'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Camera, Upload, X, Check } from 'lucide-react'
+import { Camera } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -19,13 +19,13 @@ export function AvatarUpload({ currentAvatarUrl, userName, onUpload, disabled }:
   const [image, setImage] = useState<string | null>(null)
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const onCropComplete = useCallback((_croppedArea: any, croppedAreaPixels: any) => {
-    setCroppedAreaPixels(croppedAreaPixels)
+  const onCropComplete = useCallback((_croppedArea: Area, nextCroppedAreaPixels: Area) => {
+    setCroppedAreaPixels(nextCroppedAreaPixels)
   }, [])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,7 +49,7 @@ export function AvatarUpload({ currentAvatarUrl, userName, onUpload, disabled }:
       image.src = url
     })
 
-  const getCroppedImg = async (imageSrc: string, pixelCrop: any): Promise<Blob | null> => {
+  const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<Blob | null> => {
     const image = await createImage(imageSrc)
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
@@ -94,7 +94,7 @@ export function AvatarUpload({ currentAvatarUrl, userName, onUpload, disabled }:
       }
     } catch (error) {
       console.error(error)
-      toast.error('Failed to crop image')
+      toast.error('Could not crop photo')
     } finally {
       setIsUploading(false)
     }
@@ -124,7 +124,7 @@ export function AvatarUpload({ currentAvatarUrl, userName, onUpload, disabled }:
             className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-2"
           >
             <Camera className="w-6 h-6 text-white" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-white/80">Change Photo</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-white/80">Edit Photo</span>
           </button>
         )}
       </div>
@@ -141,7 +141,7 @@ export function AvatarUpload({ currentAvatarUrl, userName, onUpload, disabled }:
         <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[90vh] bg-card border-border/50 rounded-3xl p-0 overflow-hidden shadow-2xl flex flex-col">
           <DialogHeader className="p-6 pb-0 flex-shrink-0">
             <DialogTitle className="text-xl font-black italic uppercase tracking-tighter text-foreground">
-              Crop Profile Photo
+              Edit Photo
             </DialogTitle>
           </DialogHeader>
 
@@ -167,7 +167,7 @@ export function AvatarUpload({ currentAvatarUrl, userName, onUpload, disabled }:
           <div className="p-8 space-y-8 bg-card">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Zoom Level</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Zoom</span>
                 <span className="text-[10px] font-black text-violet-500">{Math.round(zoom * 100)}%</span>
               </div>
               <input
@@ -195,7 +195,7 @@ export function AvatarUpload({ currentAvatarUrl, userName, onUpload, disabled }:
                 disabled={isUploading}
                 className="flex-1 sm:flex-none h-12 px-8 bg-violet-600 hover:bg-violet-500 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-500/20"
               >
-                {isUploading ? 'Uploading...' : 'Apply Photo'}
+                {isUploading ? 'Saving...' : 'Save Photo'}
               </Button>
             </DialogFooter>
             </div>
