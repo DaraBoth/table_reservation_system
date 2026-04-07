@@ -191,7 +191,10 @@ export function ReservationsClient({
 
   const supabase = useMemo(() => createClient(), [])
   const terms = getTerms(businessType)
-  const isSelectedToday = selectedDate === todayIso
+  // Compute today from the browser's timezone — server may run in UTC and give the wrong date
+  // at midnight-1AM in UTC+ timezones (e.g. UTC+7 at 12:51AM = April 8 local, April 7 UTC)
+  const clientTodayIso = useMemo(() => format(new Date(), 'yyyy-MM-dd'), [])
+  const isSelectedToday = selectedDate === clientTodayIso
   const mobileDateLabel = format(parseISO(selectedDate), 'MMMM d')
 
   const fetchLatestData = useCallback(async () => {
@@ -205,6 +208,15 @@ export function ReservationsClient({
 
     if (data) setBookings(data as Reservation[])
   }, [supabase, restaurantId, selectedDate])
+
+  // Correct server-side UTC date on mount: update selectedDate to client's local today if they differ
+  useEffect(() => {
+    const clientToday = format(new Date(), 'yyyy-MM-dd')
+    if (clientToday !== selectedDate) {
+      setSelectedDate(clientToday)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     const load = async () => {
@@ -334,7 +346,7 @@ export function ReservationsClient({
       <DateNavigator
         selectedDate={selectedDate}
         onChange={setSelectedDate}
-        todayDate={todayIso}
+        todayDate={clientTodayIso}
         className="w-full"
       />
 

@@ -132,6 +132,10 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
   }, [])
 
   useEffect(() => {
+    // Correct server-side UTC date: server renders with UTC "today" which may be yesterday
+    // in timezones like UTC+7/+8 after midnight. Refetch with the client's local date.
+    void fetchLatestOverview()
+
     const refreshOnFocus = () => {
       void fetchLatestOverview()
     }

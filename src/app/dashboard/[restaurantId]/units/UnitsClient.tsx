@@ -133,6 +133,17 @@ export function UnitsClient({
     setBusyRows(initialBusyRows)
   }, [initialBusyRows])
 
+  // Correct server-side UTC date on mount: the server may compute "today" in UTC,
+  // which is yesterday in UTC+ timezones after midnight.
+  const clientTodayIso = useMemo(() => format(new Date(), 'yyyy-MM-dd'), [])
+  useEffect(() => {
+    if (clientTodayIso !== selectedDate) {
+      setSelectedDate(clientTodayIso)
+      setNow(new Date())
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const fetchLatestBusyRows = useCallback(async () => {
     const fmt = selectedDate
     const { data } = await supabase
@@ -470,7 +481,7 @@ export function UnitsClient({
       </div>
 
       {mode === 'monitoring' && (
-        <DateNavigator selectedDate={selectedDate} onChange={setSelectedDate} todayDate={initialDate} className="w-full" />
+        <DateNavigator selectedDate={selectedDate} onChange={setSelectedDate} todayDate={clientTodayIso} className="w-full" />
       )}
 
       {mode === 'monitoring' && (
