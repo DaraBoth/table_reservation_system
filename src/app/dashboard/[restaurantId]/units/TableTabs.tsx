@@ -4,8 +4,8 @@ import * as React from 'react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { LayoutGrid, Settings2, ShieldCheck, CircleCheck, CircleX, User } from 'lucide-react'
-import { CreateTableDialog } from './CreateTableDialog'
-import { EditTableSheet } from './EditTableSheet'
+import { CreateUnitDialog } from './CreateUnitDialog'
+import { EditUnitSheet } from './EditUnitSheet'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import type { Tables } from '@/lib/types/database'
@@ -152,7 +152,7 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
            <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-black text-foreground italic tracking-tight">{unitsLabel} Management</h3>
-            <CreateTableDialog businessType={businessType} restaurantId={restaurantId} />
+            <CreateUnitDialog businessType={businessType} restaurantId={restaurantId} />
           </div>
 
           <div className="space-y-3">
@@ -176,7 +176,7 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
                   </div>
                 </div>
                 
-                <EditTableSheet table={t} businessType={businessType} isAdmin={isAdmin} />
+                <EditUnitSheet table={t} businessType={businessType} isAdmin={isAdmin} />
               </div>
             ))}
           </div>
