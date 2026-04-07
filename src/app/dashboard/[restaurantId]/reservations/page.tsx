@@ -4,13 +4,14 @@ import { format } from 'date-fns'
 import type { BusinessType } from '@/lib/business-type'
 import { ReservationsClient } from './ReservationsClient'
 import type { Tables } from '@/lib/types/database'
+import { createPrivateMetadata } from '@/lib/seo'
 
 type Reservation = Tables<'reservations'> & {
   physical_tables: Pick<Tables<'physical_tables'>, 'table_name' | 'capacity'> | null
   profiles?: { full_name: string | null } | null
 }
 
-export const metadata = { title: 'Bookings — TableBook' }
+export const metadata = createPrivateMetadata('Bookings', 'Manage reservations, statuses, and daily service flow.')
 
 export default async function ReservationsPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>, searchParams: Promise<{ date?: string }> }) {
   const { restaurantId } = await params

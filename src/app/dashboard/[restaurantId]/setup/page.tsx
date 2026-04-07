@@ -3,6 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { SetupForm } from './SetupForm'
 import { Sparkles } from 'lucide-react'
+import { createPrivateMetadata } from '@/lib/seo'
+
+export const metadata = createPrivateMetadata('Business Setup', 'Complete the first-time setup for your restaurant or property.')
 
 export default async function ({ params }: { params: Promise<{ restaurantId: string }> }) {
   const { restaurantId } = await params

@@ -4,8 +4,9 @@ import type { BusinessType } from '@/lib/business-type'
 import { UnitsClient } from './UnitsClient'
 
 import { getActiveRestaurant } from '@/lib/restaurant-context'
+import { createPrivateMetadata } from '@/lib/seo'
 
-export const metadata = { title: 'Live Status — TableBook' }
+export const metadata = createPrivateMetadata('Live Status', 'Track table or room availability in real time.')
 
 export default async function UnitsPage({ params }: { params: Promise<{ restaurantId: string }> }) {
   const { restaurantId } = await params

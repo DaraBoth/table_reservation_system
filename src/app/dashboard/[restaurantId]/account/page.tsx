@@ -2,6 +2,9 @@ import { getActiveRestaurant } from '@/lib/restaurant-context'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { AccountClient } from './AccountClient'
+import { createPrivateMetadata } from '@/lib/seo'
+
+export const metadata = createPrivateMetadata('Account Settings', 'Update your profile, password, store details, and short link.')
 
 export default async function ({ params }: { params: Promise<{ restaurantId: string }> }) {
   const { restaurantId } = await params

@@ -1,7 +1,21 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { SuperadminNav } from '@/components/layout/superadmin-nav'
 import type { Tables } from '@/lib/types/database'
+import { APP_NAME } from '@/lib/seo'
+
+export const metadata: Metadata = {
+  title: {
+    default: 'Superadmin',
+    template: `%s | ${APP_NAME}`,
+  },
+  description: 'Private platform administration pages for BookJM.',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 export default async function SuperadminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()

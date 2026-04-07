@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import AdminFeaturesForm from './AdminFeaturesForm'
+import { createPrivateMetadata } from '@/lib/seo'
+
+export const metadata = createPrivateMetadata('Admin Features', 'Configure special admin permissions and feature access.')
 
 export default async function AdminFeaturesPage(props: {
   params: Promise<{ id: string }>

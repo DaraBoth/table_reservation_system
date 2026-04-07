@@ -5,8 +5,9 @@ import { DeleteCustomerButton } from './DeleteCustomerButton'
 import { Phone, Users2, Plus } from 'lucide-react'
 import { EditCustomerDialog } from './EditCustomerDialog'
 import { Button } from '@/components/ui/button'
+import { createPrivateMetadata } from '@/lib/seo'
 
-export const metadata = { title: 'Saved Customers — TableBook' }
+export const metadata = createPrivateMetadata('Customers', 'Manage saved guest profiles and repeat customer details.')
 
 export default async function ({ params }: { params: Promise<{ restaurantId: string }> }) {
   const { restaurantId } = await params

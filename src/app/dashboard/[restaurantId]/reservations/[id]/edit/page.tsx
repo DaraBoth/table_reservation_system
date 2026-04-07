@@ -7,8 +7,9 @@ import type { BusinessType } from '@/lib/business-type'
 import { CancelReservationButton, UpdateStatusButton } from '../../ReservationActions'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { createPrivateMetadata } from '@/lib/seo'
 
-export const metadata = { title: 'Edit Booking — TableBook' }
+export const metadata = createPrivateMetadata('Edit Booking', 'Update guest details, timing, and assigned tables for a reservation.')
 
 interface Props {
   params: Promise<{ id: string, restaurantId: string }>

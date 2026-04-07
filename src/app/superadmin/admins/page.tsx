@@ -16,8 +16,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { buttonVariants } from '@/components/ui/button-variants'
 import { CreateUserDialog as CreateAdminDialog } from '../users/CreateUserDialog'
+import { createPrivateMetadata } from '@/lib/seo'
 
-export const metadata = { title: 'Admin Accounts — Superadmin' }
+export const metadata = createPrivateMetadata('Admin Accounts', 'Review admin access and manage elevated account settings.')
 
 export default async function AdminsPage() {
   const supabase = await createClient()

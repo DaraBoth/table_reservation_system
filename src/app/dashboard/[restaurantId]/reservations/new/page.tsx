@@ -2,8 +2,9 @@ import { getActiveRestaurant } from '@/lib/restaurant-context'
 import { createClient } from '@/lib/supabase/server'
 import { CreateReservationForm } from './CreateReservationForm'
 import type { BusinessType } from '@/lib/business-type'
+import { createPrivateMetadata } from '@/lib/seo'
 
-export const metadata = { title: 'New Booking — TableBook' }
+export const metadata = createPrivateMetadata('New Booking', 'Create a new reservation for a guest or walk-in.')
 
 export default async function NewReservationPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>, searchParams: Promise<{ tableId?: string }> }) {
   const { restaurantId: routeId } = await params

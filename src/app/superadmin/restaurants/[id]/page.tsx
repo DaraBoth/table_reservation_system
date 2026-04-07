@@ -2,6 +2,9 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { RestaurantDetailClient } from './RestaurantDetailClient'
+import { createPrivateMetadata } from '@/lib/seo'
+
+export const metadata = createPrivateMetadata('Restaurant Details', 'Review a restaurant account, slug, and assigned team members.')
 
 export default async function RestaurantDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params

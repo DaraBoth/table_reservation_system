@@ -1,8 +1,7 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { format, parseISO } from 'date-fns'
 import { createClient } from '@/lib/supabase/client'
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion'
@@ -46,26 +45,84 @@ const statusLabels: Record<string, string> = {
 }
 
 export function DashboardClient({ initialData, restaurantId, activeSlug }: DashboardClientProps) {
-  const { totalToday, pendingCount, totalTables, upcomingReservations, businessType, todayStr } = initialData
+  const [stats, setStats] = useState(initialData)
+  const { totalToday, pendingCount, totalTables, upcomingReservations, businessType, todayStr } = stats
   const terms = getTerms(businessType)
   const UnitIcon = terms.hasCheckout ? BedDouble : Table2
-  const router = useRouter()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const dashSlug = activeSlug || restaurantId
 
-  // 🛰️ Real-time subscription to keep numbers and lists in sync
+  const fetchLatestOverview = useCallback(async () => {
+    const today = new Date()
+    const todayIso = format(today, 'yyyy-MM-dd')
+
+    const [{ data: rawRows }, { data: allTableRows }] = await Promise.all([
+      supabase
+        .from('reservations')
+        .select('id, status, guest_name, start_time, party_size, reservation_date, physical_tables(table_name, capacity)')
+        .eq('restaurant_id', restaurantId)
+        .eq('reservation_date', todayIso)
+        .neq('status', 'cancelled')
+        .order('start_time', { ascending: true }),
+      supabase
+        .from('physical_tables')
+        .select('id')
+        .eq('restaurant_id', restaurantId)
+        .eq('is_active', true),
+    ])
+
+    const reservations = (rawRows as DashboardClientProps['initialData']['upcomingReservations']) || []
+
+    setStats((current) => ({
+      ...current,
+      totalToday: reservations.length,
+      pendingCount: reservations.filter((reservation) => reservation.status === 'pending').length,
+      totalTables: allTableRows?.length ?? 0,
+      upcomingReservations: reservations.slice(0, 10),
+      todayStr: format(today, 'EEEE, MMMM d'),
+    }))
+  }, [restaurantId, supabase])
+
   useEffect(() => {
     const channel = supabase
-      .channel('dashboard-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, () => {
-        router.refresh()
+      .channel(`dashboard-realtime-${restaurantId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations', filter: `restaurant_id=eq.${restaurantId}` }, () => {
+        void fetchLatestOverview()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'physical_tables', filter: `restaurant_id=eq.${restaurantId}` }, () => {
+        void fetchLatestOverview()
       })
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [supabase, router])
+  }, [fetchLatestOverview, restaurantId, supabase])
+
+  useEffect(() => {
+    const refreshOnFocus = () => {
+      void fetchLatestOverview()
+    }
+
+    const refreshOnVisible = () => {
+      if (document.visibilityState === 'visible') {
+        void fetchLatestOverview()
+      }
+    }
+
+    const interval = window.setInterval(() => {
+      void fetchLatestOverview()
+    }, 15000)
+
+    window.addEventListener('focus', refreshOnFocus)
+    document.addEventListener('visibilitychange', refreshOnVisible)
+
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('focus', refreshOnFocus)
+      document.removeEventListener('visibilitychange', refreshOnVisible)
+    }
+  }, [fetchLatestOverview])
 
   // ✨ Magic UI: Mouse position for follow-glow
   const mouseX = useMotionValue(0)

@@ -31,6 +31,29 @@ function asOptionalString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined
 }
 
+function formatReservationTime(reservationDate?: string | null, startTime?: string | null) {
+  if (!reservationDate || !startTime) return undefined
+
+  const date = new Date(`${reservationDate}T${startTime}`)
+  if (Number.isNaN(date.getTime())) return undefined
+
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date)
+}
+
+function getReservationUrl(reservation: {
+  id: string
+  restaurant_id: string
+  restaurants?: { slug?: string | null } | null
+}) {
+  const restaurantPath = reservation.restaurants?.slug || reservation.restaurant_id
+  return `/dashboard/${restaurantPath}/reservations/${reservation.id}/edit`
+}
+
 function configureWebPush(debugId: string) {
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
   const privateKey = process.env.VAPID_PRIVATE_KEY
@@ -222,7 +245,7 @@ export async function notifyNewBooking(reservationId: string) {
   // 1. Fetch details: Guest, Table, Party Size, Creator
   const { data: res, error } = await supabase
     .from('reservations')
-    .select('*, physical_tables(table_name)')
+    .select('id, restaurant_id, reservation_date, start_time, party_size, guest_name, created_by, physical_tables(table_name), restaurants(slug)')
     .eq('id', reservationId)
     .single()
 
@@ -246,12 +269,13 @@ export async function notifyNewBooking(reservationId: string) {
   }
 
   const tableName = (res.physical_tables as any)?.table_name || '—'
+  const timeLabel = formatReservationTime(res.reservation_date, res.start_time)
   
   await dispatchPushNotification({
     restaurantId: res.restaurant_id,
     title: `New Booking: ${res.guest_name}`,
-    body: `${tableName} | ${res.party_size} People | By: ${creatorName}`,
-    url: `/dashboard/reservations/${res.id}/edit`,
+    body: `${timeLabel ? `${timeLabel} | ` : ''}${tableName} | ${res.party_size} People | By: ${creatorName}`,
+    url: getReservationUrl(res),
     excludeUserId,
   })
 }
@@ -266,7 +290,7 @@ export async function notifyArrival(reservationId: string) {
   
   const { data: res, error } = await supabase
     .from('reservations')
-    .select('*, physical_tables(table_name)')
+    .select('id, restaurant_id, reservation_date, start_time, party_size, guest_name, physical_tables(table_name), restaurants(slug)')
     .eq('id', reservationId)
     .single()
 
@@ -276,12 +300,13 @@ export async function notifyArrival(reservationId: string) {
   }
 
   const tableName = (res.physical_tables as any)?.table_name || '—'
+  const timeLabel = formatReservationTime(res.reservation_date, res.start_time)
   
   await dispatchPushNotification({
     restaurantId: res.restaurant_id,
     title: `Guest Arrived: ${res.guest_name}`,
-    body: `Table: ${tableName} | Party of ${res.party_size}`,
-    url: `/dashboard/reservations/${res.id}/edit`,
+    body: `${timeLabel ? `${timeLabel} | ` : ''}Table: ${tableName} | Party of ${res.party_size}`,
+    url: getReservationUrl(res),
     excludeUserId,
   })
 }
@@ -296,7 +321,7 @@ export async function notifyCancellation(reservationId: string) {
   
   const { data: res, error } = await supabase
     .from('reservations')
-    .select('*, physical_tables(table_name)')
+    .select('id, restaurant_id, reservation_date, start_time, party_size, guest_name, restaurants(slug)')
     .eq('id', reservationId)
     .single()
 
@@ -305,11 +330,13 @@ export async function notifyCancellation(reservationId: string) {
     return
   }
 
+  const timeLabel = formatReservationTime(res.reservation_date, res.start_time)
+
   await dispatchPushNotification({
     restaurantId: res.restaurant_id,
     title: `Booking Cancelled: ${res.guest_name}`,
-    body: `${res.party_size} people canceled their reservation.`,
-    url: `/dashboard/reservations`,
+    body: `${timeLabel ? `${timeLabel} | ` : ''}${res.party_size} people canceled their reservation.`,
+    url: `/dashboard/${res.restaurants?.slug || res.restaurant_id}/reservations`,
     excludeUserId,
   })
 }
@@ -324,7 +351,7 @@ export async function notifyBookingUpdate(reservationId: string) {
   
   const { data: res, error } = await supabase
     .from('reservations')
-    .select('*, physical_tables(table_name)')
+    .select('id, restaurant_id, reservation_date, start_time, party_size, guest_name, status, physical_tables(table_name), restaurants(slug)')
     .eq('id', reservationId)
     .single()
 
@@ -334,12 +361,13 @@ export async function notifyBookingUpdate(reservationId: string) {
   }
 
   const tableName = (res.physical_tables as any)?.table_name || '—'
+  const timeLabel = formatReservationTime(res.reservation_date, res.start_time)
   
   await dispatchPushNotification({
     restaurantId: res.restaurant_id,
     title: `Booking Updated: ${res.guest_name}`,
-    body: `${tableName} | ${res.party_size} People | Status: ${res.status.toUpperCase()}`,
-    url: `/dashboard/reservations/${res.id}/edit`,
+    body: `${timeLabel ? `${timeLabel} | ` : ''}${tableName} | ${res.party_size} People | Status: ${res.status.toUpperCase()}`,
+    url: getReservationUrl(res),
     excludeUserId,
   })
 }

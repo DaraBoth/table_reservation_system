@@ -8,8 +8,9 @@ import { DashboardClient } from './DashboardClient'
 import type { Tables } from '@/lib/types/database'
 
 import { getActiveRestaurant } from '@/lib/restaurant-context'
+import { createPrivateMetadata } from '@/lib/seo'
 
-export const metadata = { title: 'Home — TableBook' }
+export const metadata = createPrivateMetadata('Overview', 'View today\'s bookings, table status, and core restaurant metrics.')
 
 const statusColors: Record<string, string> = {
   pending: 'bg-amber-500/20 text-amber-400 border-amber-500/30',

@@ -7,8 +7,9 @@ import {
   Plus, ArrowRight, Zap, UserPlus, Clock,
   Users, LayoutDashboard,
 } from 'lucide-react'
+import { createPrivateMetadata } from '@/lib/seo'
 
-export const metadata = { title: 'Superadmin — TableBook' }
+export const metadata = createPrivateMetadata('Superadmin Overview', 'Monitor platform activity, restaurants, admins, and booking volume.')
 
 export default async function SuperadminPage() {
   const supabase = await createClient()

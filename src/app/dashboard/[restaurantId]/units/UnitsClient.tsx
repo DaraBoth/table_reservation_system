@@ -77,7 +77,7 @@ export function UnitsClient({
   const [viewStyle, setViewStyle] = useState<ViewStyle>('grid')
   const [selectedDate, setSelectedDate] = useState(initialDate)
   
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const terms = getTerms(businessType)
   const dashboardSlug = currentSlug || restaurantId
   const availableLabel = 'Available'
@@ -161,15 +161,40 @@ export function UnitsClient({
   useEffect(() => {
     const channel = supabase
       .channel(`tables-realtime-${restaurantId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations', filter: `restaurant_id=eq.${restaurantId}` }, () => fetchLatestBusyRows())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'physical_tables', filter: `restaurant_id=eq.${restaurantId}` }, () => fetchLatestTables())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'zones', filter: `restaurant_id=eq.${restaurantId}` }, () => fetchZones())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations', filter: `restaurant_id=eq.${restaurantId}` }, () => { void fetchLatestBusyRows() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'physical_tables', filter: `restaurant_id=eq.${restaurantId}` }, () => { void fetchLatestTables() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'zones', filter: `restaurant_id=eq.${restaurantId}` }, () => { void fetchZones() })
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
   }, [supabase, restaurantId, fetchLatestBusyRows, fetchLatestTables, fetchZones])
+
+  useEffect(() => {
+    const refreshAll = () => {
+      void fetchLatestBusyRows()
+      void fetchLatestTables()
+      void fetchZones()
+    }
+
+    const refreshOnVisible = () => {
+      if (document.visibilityState === 'visible') {
+        refreshAll()
+      }
+    }
+
+    const interval = window.setInterval(refreshAll, 15000)
+
+    window.addEventListener('focus', refreshAll)
+    document.addEventListener('visibilitychange', refreshOnVisible)
+
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('focus', refreshAll)
+      document.removeEventListener('visibilitychange', refreshOnVisible)
+    }
+  }, [fetchLatestBusyRows, fetchLatestTables, fetchZones])
 
   useEffect(() => {
     const load = async () => {

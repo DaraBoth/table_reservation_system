@@ -3,6 +3,7 @@ import { Source_Sans_3 } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'sonner'
 import NextTopLoader from 'nextjs-toploader'
+import { APP_DESCRIPTION, APP_NAME, DEFAULT_OG_IMAGE, getSiteUrl } from '@/lib/seo'
 
 const sourceSans3 = Source_Sans_3({ 
   subsets: ['latin'],
@@ -11,17 +12,47 @@ const sourceSans3 = Source_Sans_3({
 })
 
 export const metadata: Metadata = {
-  title: 'BookJM',
-  description: 'Multi-tenant restaurant and hotel management system',
+  metadataBase: getSiteUrl(),
+  title: {
+    default: APP_NAME,
+    template: `%s | ${APP_NAME}`,
+  },
+  description: APP_DESCRIPTION,
+  applicationName: APP_NAME,
+  keywords: ['restaurant booking system', 'hotel booking system', 'table reservations', 'guesthouse operations', 'multi-tenant booking software'],
   manifest: '/manifest.webmanifest',
+  alternates: {
+    canonical: '/',
+  },
   icons: {
     icon: '/logo.png',
     apple: '/icons/maskable_icon_x192.png',
   },
+  openGraph: {
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
+    siteName: APP_NAME,
+    type: 'website',
+    url: '/',
+    images: [
+      {
+        url: DEFAULT_OG_IMAGE,
+        width: 512,
+        height: 512,
+        alt: `${APP_NAME} logo`,
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'BookJM',
+    title: APP_NAME,
   },
 }
 

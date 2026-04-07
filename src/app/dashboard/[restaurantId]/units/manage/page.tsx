@@ -3,8 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import type { BusinessType } from '@/lib/business-type'
 import { UnitsClient } from '../UnitsClient'
 import { getActiveRestaurant } from '@/lib/restaurant-context'
+import { createPrivateMetadata } from '@/lib/seo'
 
-export const metadata = { title: 'Manage Units — TableBook' }
+export const metadata = createPrivateMetadata('Manage Units', 'Edit tables, rooms, zones, and capacity settings.')
 
 export default async function ManageUnitsPage({ params }: { params: Promise<{ restaurantId: string }> }) {
   const { restaurantId } = await params

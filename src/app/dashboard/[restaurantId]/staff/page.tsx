@@ -7,8 +7,9 @@ import { StaffPasswordResetButton } from './StaffPasswordReset'
 import { StaffActions } from './StaffActions'
 import type { Tables } from '@/lib/types/database'
 import { UserCheck, UserX, Plus, Users } from 'lucide-react'
+import { createPrivateMetadata } from '@/lib/seo'
 
-export const metadata = { title: 'Staff — TableBook' }
+export const metadata = createPrivateMetadata('Staff', 'Add staff accounts, reset passwords, and control access.')
 
 export default async function ({ params }: { params: Promise<{ restaurantId: string }> }) {
   const { restaurantId } = await params

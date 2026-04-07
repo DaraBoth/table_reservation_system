@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { BottomNav } from '@/components/layout/bottom-nav'
 import { TopBar } from '@/components/layout/top-bar'
@@ -7,6 +8,19 @@ import type { BusinessType } from '@/lib/business-type'
 import { RealtimeListener } from '@/components/realtime-listener'
 import { NotificationManager } from '@/components/notification-manager'
 import { getActiveRestaurant } from '@/lib/restaurant-context'
+import { APP_NAME } from '@/lib/seo'
+
+export const metadata: Metadata = {
+  title: {
+    default: 'Dashboard',
+    template: `%s | Dashboard | ${APP_NAME}`,
+  },
+  description: 'Private restaurant operations workspace for BookJM users.',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 export default async function DashboardLayout({ 
   children,

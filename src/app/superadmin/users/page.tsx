@@ -14,8 +14,9 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { createPrivateMetadata } from '@/lib/seo'
 
-export const metadata = { title: 'User Management — Superadmin' }
+export const metadata = createPrivateMetadata('Users', 'Manage platform user accounts, roles, and access.')
 
 const ROLE_THEMES = {
   superadmin: { label: 'System', icon: ShieldAlert, color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },

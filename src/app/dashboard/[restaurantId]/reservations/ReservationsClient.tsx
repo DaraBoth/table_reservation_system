@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { format, parseISO } from 'date-fns'
 import { Plus, ChevronRight, ClipboardList, CalendarDays } from 'lucide-react'
@@ -176,7 +176,7 @@ export function ReservationsClient({
     }
   }
 
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const terms = getTerms(businessType)
   const isSelectedToday = selectedDate === todayIso
   const mobileDateLabel = format(parseISO(selectedDate), 'MMMM d')
@@ -213,7 +213,7 @@ export function ReservationsClient({
           filter: `restaurant_id=eq.${restaurantId}`
         },
         () => {
-          fetchLatestData()
+          void fetchLatestData()
         }
       )
       .subscribe()
@@ -222,6 +222,31 @@ export function ReservationsClient({
       supabase.removeChannel(channel)
     }
   }, [supabase, restaurantId, fetchLatestData])
+
+  useEffect(() => {
+    const refreshOnFocus = () => {
+      void fetchLatestData()
+    }
+
+    const refreshOnVisible = () => {
+      if (document.visibilityState === 'visible') {
+        void fetchLatestData()
+      }
+    }
+
+    const interval = window.setInterval(() => {
+      void fetchLatestData()
+    }, 15000)
+
+    window.addEventListener('focus', refreshOnFocus)
+    document.addEventListener('visibilitychange', refreshOnVisible)
+
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('focus', refreshOnFocus)
+      document.removeEventListener('visibilitychange', refreshOnVisible)
+    }
+  }, [fetchLatestData])
 
   return (
     <div className="space-y-6 lg:space-y-7">

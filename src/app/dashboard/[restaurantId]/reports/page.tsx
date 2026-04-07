@@ -4,8 +4,9 @@ import { redirect } from 'next/navigation'
 import type { Tables } from '@/lib/types/database'
 import { format, startOfWeek, endOfWeek, addDays, isSameDay, parseISO } from 'date-fns'
 import ReportsDashboardClient from './ReportsDashboardClient'
+import { createPrivateMetadata } from '@/lib/seo'
 
-export const metadata = { title: 'Business Report — BookJM' }
+export const metadata = createPrivateMetadata('Reports', 'Review booking trends, weekly performance, and service outcomes.')
 
 interface Props {
   searchParams: Promise<{ 
