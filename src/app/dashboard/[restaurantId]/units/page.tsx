@@ -58,7 +58,7 @@ export default async function UnitsPage({ params }: { params: Promise<{ restaura
         initialBusyRows={busyRows || []}
         restaurantId={membership.restaurant_id!}
         businessType={businessType}
-        isAdmin={isAdmin}
+        canManage={canManage}
         initialDate={todayDate}
         initialNowIso={currentTimeIso}
         mode="monitoring"

@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { format, parseISO } from 'date-fns'
-import { Plus, ChevronRight, ClipboardList, CalendarDays, Clock } from 'lucide-react'
+import { Plus, ChevronRight, ClipboardList, CalendarDays } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { buttonVariants } from '@/components/ui/button-variants'
@@ -78,28 +78,28 @@ export function ReservationsClient({
   const dashboardSlug = currentSlug || restaurantId
   const [selectedDate, setSelectedDate] = useState(initialDate)
   const [bookings, setBookings] = useState<Reservation[]>(initialBookings)
-  const [viewStyle, setViewStyle] = useState<ViewStyle>(() => {
-    if (typeof window === 'undefined') return 'grid'
-    const saved = localStorage.getItem('reservationsViewStyle') as ViewStyle | null
-    return saved && ['grid', 'list', 'compact'].includes(saved) ? saved : 'grid'
-  })
-  const [now, setNow] = useState(new Date())
-
-  // Keep clock running
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60000)
-    return () => clearInterval(timer)
-  }, [])
+  const [viewStyle, setViewStyle] = useState<ViewStyle>('grid')
 
   const handleViewChange = (style: ViewStyle) => {
     setViewStyle(style)
     localStorage.setItem('reservationsViewStyle', style)
   }
 
+  useEffect(() => {
+    const saved = localStorage.getItem('reservationsViewStyle') as ViewStyle | null
+    if (saved !== 'grid' && saved !== 'list' && saved !== 'compact') return
+
+    const frame = window.requestAnimationFrame(() => {
+      setViewStyle(saved)
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [])
+
   const handleShareStatus = async () => {
     const dateParsed = parseISO(selectedDate)
     const dateStr = format(dateParsed, 'EEEE, MMM d')
-    const timeStr = format(now, 'hh:mm bb')
+    const timeStr = format(new Date(), 'hh:mm bb')
     
     // Determine which tables are occupied on this specific date
     const occupiedRows = bookings.filter(b => ['confirmed', 'arrived'].includes(b.status))
@@ -179,6 +179,7 @@ export function ReservationsClient({
   const supabase = createClient()
   const terms = getTerms(businessType)
   const isSelectedToday = selectedDate === todayIso
+  const mobileDateLabel = format(parseISO(selectedDate), 'MMMM d')
 
   const fetchLatestData = useCallback(async () => {
     const { data } = await supabase
@@ -224,10 +225,9 @@ export function ReservationsClient({
 
   return (
     <div className="space-y-6 lg:space-y-7">
-      {/* Header with Live Pulse and Date/Time */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex flex-col justify-between gap-3 pt-2 sm:flex-row sm:items-center sm:gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2 sm:justify-start sm:flex-wrap">
             <h1 className="text-xl font-black text-foreground italic tracking-tight uppercase">
               {terms.bookings}
             </h1>
@@ -235,32 +235,23 @@ export function ReservationsClient({
               variant="outline"
               size="sm"
               onClick={handleShareStatus}
-              className="h-7 rounded-lg px-2 border-violet-500/20 bg-violet-600/5 text-violet-400 hover:bg-violet-600 hover:text-white transition-all gap-1 text-[9px] font-black uppercase tracking-widest"
+              className="h-9 rounded-xl px-3 border-violet-500/30 bg-violet-600/10 text-violet-300 shadow-sm shadow-violet-950/20 hover:bg-violet-600 hover:text-white hover:border-violet-500 transition-all gap-1.5 text-[9px] font-black uppercase tracking-[0.18em] active:scale-95"
             >
               Share Status
             </Button>
           </div>
-          <div className="flex items-center gap-2 text-muted-foreground/60">
-            <Clock className="w-3 h-3" />
-            <p className="text-[10px] font-black uppercase tracking-[0.2em]">
-              {format(now, 'EEEE, MMM d, yyyy • hh:mm a')}
-            </p>
-          </div>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+            {mobileDateLabel}
+          </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {isSelectedToday && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Live Sync</span>
-            </div>
-          )}
+        <div className="flex items-center gap-3 sm:justify-end">
           <Link
             id="new-booking-button"
             href={`/dashboard/${dashboardSlug}/reservations/new`}
             className={cn(
               buttonVariants({ size: 'sm' }),
-              'bg-gradient-to-r from-violet-600 to-indigo-600 border-0 rounded-xl gap-1.5 font-black text-foreground shadow-lg shadow-violet-500/20 h-10 px-4 transition-all duration-300 active:scale-95'
+              'w-full sm:w-auto bg-gradient-to-r from-violet-600 to-indigo-600 border-0 rounded-xl gap-1.5 font-black text-foreground shadow-lg shadow-violet-500/20 h-10 px-4 transition-all duration-300 active:scale-95'
             )}
           >
             <Plus className="w-4 h-4" /> New {terms.booking}
@@ -411,22 +402,24 @@ export function ReservationsClient({
           </div>
         )}
       </section>
-      <ActionHub 
-        actions={[
-          { 
-            label: `New ${terms.booking}`, 
-            icon: <Plus className="w-6 h-6" />, 
-            color: 'bg-violet-600 text-white',
-            onClick: () => window.location.href = `/dashboard/${dashboardSlug}/reservations/new`
-          },
-          { 
-            label: 'View Reports', 
-            icon: <BarChart3 className="w-5 h-5" />, 
-            color: 'bg-blue-600 text-white',
-            onClick: () => window.location.href = `/dashboard/${dashboardSlug}/reports`
-          },
-        ]} 
-      />
+      <div className="hidden md:block">
+        <ActionHub 
+          actions={[
+            { 
+              label: `New ${terms.booking}`, 
+              icon: <Plus className="w-6 h-6" />, 
+              color: 'bg-violet-600 text-white',
+              onClick: () => window.location.href = `/dashboard/${dashboardSlug}/reservations/new`
+            },
+            { 
+              label: 'View Reports', 
+              icon: <BarChart3 className="w-5 h-5" />, 
+              color: 'bg-blue-600 text-white',
+              onClick: () => window.location.href = `/dashboard/${dashboardSlug}/reports`
+            },
+          ]} 
+        />
+      </div>
     </div>
   )
 }

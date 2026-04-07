@@ -29,7 +29,7 @@ interface UnitCardProps {
   isOffline: boolean
   isTappable: boolean
   businessType: string
-  isAdmin: boolean
+  canManage: boolean
   zones?: { id: string, name: string }[]
   mode?: 'monitoring' | 'management'
   currentSlug?: string
@@ -42,7 +42,7 @@ export function UnitCard({
   isOffline, 
   isTappable, 
   businessType,
-  isAdmin,
+  canManage,
   zones = [],
   mode = 'monitoring',
   currentSlug
@@ -111,7 +111,7 @@ export function UnitCard({
         <EditUnitSheet 
           table={table} 
           businessType={businessType} 
-          isAdmin={isAdmin}
+          canManage={canManage}
           zones={zones}
           trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${table.table_name}`} className="absolute inset-0 z-10 w-full h-full cursor-pointer" />}
         />

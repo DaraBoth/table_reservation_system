@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { format, addDays, subDays, parseISO, isToday as isDateToday } from 'date-fns'
+import { format, addDays, parseISO, isToday as isDateToday } from 'date-fns'
 import { ChevronLeft, ChevronRight, CalendarDays, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -34,19 +34,20 @@ export function DateNavigator({ selectedDate, onChange, className, todayDate }: 
       <button
         type="button"
         onClick={() => shiftDate(-1)}
-        className="w-10 h-10 rounded-xl bg-background border border-border hover:border-violet-500/50 text-muted-foreground hover:text-foreground transition-all active:scale-90 flex items-center justify-center p-0"
+        className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-background border border-border hover:border-violet-500/50 text-muted-foreground hover:text-foreground transition-all active:scale-90 flex items-center justify-center p-0"
       >
         <ChevronLeft className="w-5 h-5" />
       </button>
 
       {/* 📅 Selected Date Label */}
-      <div className="flex flex-col items-center px-4 min-w-[140px]">
-        <div className="flex items-center gap-1.5 text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">
+      <div className="flex flex-col items-center px-2 sm:px-4 min-w-[120px] sm:min-w-[140px]">
+        <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">
           <CalendarDays className="w-3 h-3" />
           {isSelectedToday ? 'Showing Today' : format(date, 'EEEE')}
         </div>
-        <p className="text-sm font-black text-foreground italic tracking-tight uppercase leading-none">
-          {format(date, 'MMM dd, yyyy')}
+        <p className="text-sm sm:text-base font-black text-foreground italic tracking-tight uppercase leading-none">
+          <span className="sm:hidden">{format(date, 'MMM dd')}</span>
+          <span className="hidden sm:inline">{format(date, 'MMM dd, yyyy')}</span>
         </p>
       </div>
 
@@ -56,7 +57,7 @@ export function DateNavigator({ selectedDate, onChange, className, todayDate }: 
           <button
             type="button"
             onClick={goToToday}
-            className="flex items-center gap-1.5 px-3 h-10 rounded-xl bg-violet-600/10 border border-violet-500/20 text-violet-400 text-[10px] font-black uppercase tracking-widest hover:bg-violet-600/20 transition-all active:scale-95 whitespace-nowrap"
+            className="hidden sm:flex items-center gap-1.5 px-3 h-10 rounded-xl bg-violet-600/10 border border-violet-500/20 text-violet-400 text-[10px] font-black uppercase tracking-widest hover:bg-violet-600/20 transition-all active:scale-95 whitespace-nowrap"
           >
             <RotateCcw className="w-3 h-3" /> Today
           </button>
@@ -64,7 +65,7 @@ export function DateNavigator({ selectedDate, onChange, className, todayDate }: 
         <button
           type="button"
           onClick={() => shiftDate(1)}
-          className="w-10 h-10 rounded-xl bg-background border border-border hover:border-violet-500/50 text-muted-foreground hover:text-foreground transition-all active:scale-90 flex items-center justify-center p-0"
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-background border border-border hover:border-violet-500/50 text-muted-foreground hover:text-foreground transition-all active:scale-90 flex items-center justify-center p-0"
         >
           <ChevronRight className="w-5 h-5" />
         </button>

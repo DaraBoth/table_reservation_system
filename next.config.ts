@@ -5,8 +5,9 @@ const withPWA = withPWAInit({
   dest: "public",
   disable: false, // Enable in development for testing push notifications
   customWorkerSrc: "worker",
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
+  // Avoid serving stale route payloads/chunks across deploys.
+  cacheOnFrontEndNav: false,
+  aggressiveFrontEndNavCaching: false,
   reloadOnOnline: true,
 });
 

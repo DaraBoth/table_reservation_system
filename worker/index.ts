@@ -58,14 +58,34 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// 📦 3. AGGRESSIVE CACHING FOR ASSETS (Faster loading on mobile)
-const CACHE_NAME = 'bookjm-assets-v1';
+// Cache only passive assets. App JS/CSS chunks must stay network-driven to avoid stale deployments.
+const CACHE_NAME = 'bookjm-assets-v2';
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
+        cacheNames
+          .filter((cacheName) => cacheName !== CACHE_NAME)
+          .map((cacheName) => caches.delete(cacheName))
+      )
+    ).then(() => self.clients.claim())
+  );
+});
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // 1. Cache First for Images and Fonts
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    return;
+  }
+
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  // Cache only images/fonts and leave application chunks to the browser/network.
   if (request.destination === 'image' || request.destination === 'font') {
     event.respondWith(
       caches.match(request).then((cachedResponse) => {
@@ -82,25 +102,5 @@ self.addEventListener('fetch', (event) => {
         });
       })
     );
-    return;
-  }
-
-  // 2. Stale While Revalidate for JS and CSS
-  if (request.destination === 'script' || request.destination === 'style') {
-    event.respondWith(
-      caches.match(request).then((cachedResponse) => {
-        const fetchPromise = fetch(request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseToCache);
-            });
-          }
-          return networkResponse;
-        });
-        return cachedResponse || fetchPromise;
-      })
-    );
-    return;
   }
 });

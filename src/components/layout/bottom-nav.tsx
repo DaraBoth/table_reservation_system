@@ -53,6 +53,7 @@ export function BottomNav({
   
   const terms = getTerms(businessType)
   const dashSlug = activeSlug || restaurantId
+  const manageUnitsPath = `/dashboard/${dashSlug}/units/manage`
 
   // Use BedDouble icon for hotel/guesthouse rooms, LayoutGrid for restaurant tables
   const unitIcon = terms.hasCheckout ? BedDouble : LayoutGrid
@@ -120,9 +121,13 @@ export function BottomNav({
         className="flex items-stretch justify-around px-2 py-3"
       >
         {primaryItems.map((item) => {
+          const isUnitsItem = item.href === `/dashboard/${dashSlug}/units`
+          const isManageUnitsRoute = pathname === manageUnitsPath || pathname.startsWith(`${manageUnitsPath}/`)
           const isActive = item.exact
             ? pathname === item.href
-            : pathname.startsWith(item.href)
+            : isUnitsItem
+              ? pathname === item.href || (pathname.startsWith(`${item.href}/`) && !isManageUnitsRoute)
+              : pathname === item.href || pathname.startsWith(`${item.href}/`)
           const Icon = item.icon
 
           return (
@@ -159,19 +164,19 @@ export function BottomNav({
               <button
                 className={cn(
                   'flex flex-col items-center justify-start flex-1 gap-1.5 transition-all duration-200 relative min-w-[4rem]',
-                  isPortfolioOpen || pathname.includes(`${dashSlug}/account`) || pathname.includes(`${dashSlug}/staff`) || pathname.includes(`${dashSlug}/reports`) ? 'text-violet-400' : 'text-muted-foreground'
+                  isPortfolioOpen || pathname.includes(`${dashSlug}/account`) || pathname.includes(`${dashSlug}/staff`) || pathname.includes(`${dashSlug}/reports`) || pathname === manageUnitsPath || pathname.startsWith(`${manageUnitsPath}/`) ? 'text-violet-400' : 'text-muted-foreground'
                 )}
               >
                 <Menu
                   className={cn(
                     'w-6 h-6 transition-all duration-300',
-                    (isPortfolioOpen || pathname.includes(`${dashSlug}/account`) || pathname.includes(`${dashSlug}/staff`) || pathname.includes(`${dashSlug}/reports`)) && 'scale-110 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]'
+                    (isPortfolioOpen || pathname.includes(`${dashSlug}/account`) || pathname.includes(`${dashSlug}/staff`) || pathname.includes(`${dashSlug}/reports`) || pathname === manageUnitsPath || pathname.startsWith(`${manageUnitsPath}/`)) && 'scale-110 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]'
                   )}
-                  fill={isPortfolioOpen || pathname.includes(`${dashSlug}/account`) || pathname.includes(`${dashSlug}/staff`) || pathname.includes(`${dashSlug}/reports`) ? 'currentColor' : 'none'} 
+                  fill={isPortfolioOpen || pathname.includes(`${dashSlug}/account`) || pathname.includes(`${dashSlug}/staff`) || pathname.includes(`${dashSlug}/reports`) || pathname === manageUnitsPath || pathname.startsWith(`${manageUnitsPath}/`) ? 'currentColor' : 'none'} 
                 />
                 <span className={cn(
                   "text-[10px] font-bold tracking-wide transition-colors",
-                  (isPortfolioOpen || pathname.includes(`${dashSlug}/account`) || pathname.includes(`${dashSlug}/staff`) || pathname.includes(`${dashSlug}/reports`)) ? 'text-violet-400' : 'text-muted-foreground'
+                  (isPortfolioOpen || pathname.includes(`${dashSlug}/account`) || pathname.includes(`${dashSlug}/staff`) || pathname.includes(`${dashSlug}/reports`) || pathname === manageUnitsPath || pathname.startsWith(`${manageUnitsPath}/`)) ? 'text-violet-400' : 'text-muted-foreground'
                 )}>
                   More
                 </span>

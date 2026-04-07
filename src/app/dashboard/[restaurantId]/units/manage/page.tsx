@@ -59,7 +59,7 @@ export default async function ManageUnitsPage({ params }: { params: Promise<{ re
         initialBusyRows={busyRows || []}
         restaurantId={membership.restaurant_id!}
         businessType={businessType}
-        isAdmin={isAdmin}
+        canManage={canManage}
         initialDate={todayDate}
         initialNowIso={currentTimeIso}
         mode="management"

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { createClient } from '@/lib/supabase/client'
 import { motion } from 'framer-motion'
 import { getTerms } from '@/lib/business-type'
@@ -52,7 +52,7 @@ interface UnitsClientProps {
   initialBusyRows: BusyRow[]
   restaurantId: string
   businessType: string
-  isAdmin: boolean
+  canManage: boolean
   initialDate: string
   initialNowIso: string
   mode?: 'monitoring' | 'management'
@@ -64,7 +64,7 @@ export function UnitsClient({
   initialBusyRows,
   restaurantId,
   businessType,
-  isAdmin,
+  canManage,
   initialDate,
   initialNowIso,
   mode = 'monitoring',
@@ -74,11 +74,7 @@ export function UnitsClient({
   const [zones, setZones] = useState<{ id: string; name: string; sort_order: number }[]>([])
   const [busyRows, setBusyRows] = useState(initialBusyRows)
   const [now, setNow] = useState(() => new Date(initialNowIso))
-  const [viewStyle, setViewStyle] = useState<ViewStyle>(() => {
-    if (typeof window === 'undefined') return 'grid'
-    const saved = localStorage.getItem('units-view-style') as ViewStyle | null
-    return saved && (saved === 'grid' || saved === 'list' || saved === 'compact') ? saved : 'grid'
-  })
+  const [viewStyle, setViewStyle] = useState<ViewStyle>('grid')
   const [selectedDate, setSelectedDate] = useState(initialDate)
   
   const supabase = createClient()
@@ -86,6 +82,7 @@ export function UnitsClient({
   const dashboardSlug = currentSlug || restaurantId
   const availableLabel = 'Available'
   const occupiedLabel = terms.hasCheckout ? 'Occupied' : 'Booked'
+  const selectedDateLabel = format(parseISO(selectedDate), 'MMMM d')
   const unitGridClass = viewStyle === 'grid'
     ? 'grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
     : viewStyle === 'compact'
@@ -102,6 +99,25 @@ export function UnitsClient({
     const timer = setInterval(() => setNow(new Date()), 60000)
     return () => clearInterval(timer)
   }, [])
+
+  useEffect(() => {
+    const saved = localStorage.getItem('units-view-style') as ViewStyle | null
+    if (saved !== 'grid' && saved !== 'list' && saved !== 'compact') return
+
+    const frame = window.requestAnimationFrame(() => {
+      setViewStyle(saved)
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [])
+
+  useEffect(() => {
+    setTables(initialTables as TableWithZone[])
+  }, [initialTables])
+
+  useEffect(() => {
+    setBusyRows(initialBusyRows)
+  }, [initialBusyRows])
 
   const fetchLatestBusyRows = useCallback(async () => {
     const fmt = selectedDate
@@ -237,7 +253,7 @@ export function UnitsClient({
             </div>
           </div>
           {mode === 'management' ? (
-            <EditUnitSheet table={t} businessType={businessType} isAdmin={isAdmin} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${t.table_name}`} className="absolute inset-0 z-20 cursor-pointer w-full h-full" />} />
+            <EditUnitSheet table={t} businessType={businessType} canManage={canManage} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${t.table_name}`} className="absolute inset-0 z-20 cursor-pointer w-full h-full" />} />
           ) : isTappable ? (
             <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}`} className="absolute inset-0 z-20" />
           ) : (
@@ -293,7 +309,7 @@ export function UnitsClient({
             </div>
           </div>
           {mode === 'management' ? (
-            <EditUnitSheet table={t} businessType={businessType} isAdmin={isAdmin} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${t.table_name}`} className="absolute inset-0 z-10 cursor-pointer w-full h-full" />} />
+            <EditUnitSheet table={t} businessType={businessType} canManage={canManage} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${t.table_name}`} className="absolute inset-0 z-10 cursor-pointer w-full h-full" />} />
           ) : isTappable ? (
             <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}`} className="absolute inset-0 z-10" />
           ) : (
@@ -311,7 +327,7 @@ export function UnitsClient({
             isOffline={isOffline} 
             isTappable={isTappable} 
             businessType={businessType} 
-            isAdmin={isAdmin} 
+            canManage={canManage} 
             zones={zones} 
             mode={mode}
             currentSlug={dashboardSlug}
@@ -327,37 +343,63 @@ export function UnitsClient({
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-20" />
       </div>
 
-      <div className="flex flex-col gap-6 lg:gap-7 pt-4 lg:pt-6 pb-2">
-        {/* Tier 1: Branding & Modern Action Stack */}
-        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
-          <div className="flex items-center gap-4 pt-2">
-            <h1 className="text-3xl font-black text-foreground italic tracking-tighter uppercase leading-none">
-              {mode === 'management' ? `${terms.unit} Configuration` : `${terms.units} Status`}
+      <div className="flex flex-col gap-3 sm:gap-5 lg:gap-6 pt-2 sm:pt-4 lg:pt-6 pb-1 sm:pb-2">
+        <div className="flex flex-col gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 pt-1">
+            <h1 className="text-2xl sm:text-3xl font-black text-foreground italic tracking-tighter uppercase leading-none">
+              {mode === 'management' ? `Manage ${terms.units}` : `${terms.units} Status`}
             </h1>
-            {mode === 'management' && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted border border-border shadow-sm">
-                <Settings2 className="w-3 h-3 text-muted-foreground" />
-                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">Settings</span>
-              </div>
-            )}
           </div>
 
-          {(
-            <div className="flex items-center gap-3">
-              {mode === 'monitoring' && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Live Sync</span>
-                </div>
-              )}
-            </div>
+          {mode === 'monitoring' && (
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+              {selectedDateLabel}
+            </p>
           )}
         </div>
 
-        {/* Tier 2: View Switcher Only */}
-        {(
-          <div className="flex justify-end pt-1">
-             <ViewSwitcher currentStyle={viewStyle} onStyleChange={handleUpdateViewStyle} />
+        {mode === 'management' && (
+          <div className="hidden md:flex justify-end pt-0">
+            <ViewSwitcher currentStyle={viewStyle} onStyleChange={handleUpdateViewStyle} />
+          </div>
+        )}
+
+        {mode === 'management' && (
+          <div className="flex md:hidden gap-2">
+            <CreateUnitDialog
+              businessType={businessType}
+              restaurantId={restaurantId}
+              zones={zones}
+              trigger={(
+                <button
+                  type="button"
+                  className="flex-1 h-10 rounded-xl bg-violet-600 text-white text-[10px] font-black uppercase tracking-[0.18em] shadow-lg shadow-violet-500/20"
+                >
+                  Add {terms.unit}
+                </button>
+              )}
+            />
+            <ZoneManagementDialog
+              restaurantId={restaurantId}
+              onUpdate={fetchZones}
+              trigger={(
+                <button
+                  type="button"
+                  className="h-10 px-4 rounded-xl border border-border bg-card text-muted-foreground text-[10px] font-black uppercase tracking-[0.18em]"
+                >
+                  Zones
+                </button>
+              )}
+            />
+          </div>
+        )}
+
+        {mode === 'management' && (
+          <div className="flex md:hidden items-center justify-between gap-3 px-1">
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.18em]">
+              View
+            </span>
+            <ViewSwitcher currentStyle={viewStyle} onStyleChange={handleUpdateViewStyle} />
           </div>
         )}
       </div>
@@ -369,12 +411,12 @@ export function UnitsClient({
       {mode === 'monitoring' && (
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
           {[ { label: availableLabel, count: freeCount, icon: CircleCheck, color: 'emerald' }, { label: occupiedLabel, count: busyCount, icon: CircleX, color: 'rose' } ].map((stat, i) => (
-            <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className={cn("relative overflow-hidden group bg-card/40 border rounded-3xl p-5 flex items-center gap-4 transition-all hover:bg-card/60", stat.color === 'emerald' ? "border-emerald-500/20" : "border-rose-500/20")}>
-              <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner", stat.color === 'emerald' ? "bg-emerald-500/10" : "bg-rose-500/10")}>
-                <stat.icon className={cn("w-6 h-6", stat.color === 'emerald' ? "text-emerald-400" : "text-rose-400")} />
+            <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className={cn("relative overflow-hidden group bg-card/40 border rounded-3xl p-4 sm:p-5 flex items-center gap-3 sm:gap-4 transition-all hover:bg-card/60", stat.color === 'emerald' ? "border-emerald-500/20" : "border-rose-500/20")}>
+              <div className={cn("w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shadow-inner", stat.color === 'emerald' ? "bg-emerald-500/10" : "bg-rose-500/10")}>
+                <stat.icon className={cn("w-5 h-5 sm:w-6 sm:h-6", stat.color === 'emerald' ? "text-emerald-400" : "text-rose-400")} />
               </div>
               <div>
-                <p className="text-3xl font-black text-foreground leading-tight"><NumberTicker value={stat.count} /></p>
+                <p className="text-2xl sm:text-3xl font-black text-foreground leading-tight"><NumberTicker value={stat.count} /></p>
                 <p className="text-[10px] text-muted-foreground font-extrabold uppercase tracking-widest mt-0.5">{stat.label}</p>
               </div>
             </motion.div>
@@ -386,6 +428,18 @@ export function UnitsClient({
       <div className="w-full">
         {/* Main Content Area */}
         <div className="space-y-12">
+          {mode === 'monitoring' && (
+            <div className="flex items-center justify-between gap-3 px-1">
+              <div className="flex items-center gap-2 min-w-0">
+                <Activity className="w-3.5 h-3.5 text-muted-foreground" />
+                <h2 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest truncate">
+                  {selectedDate === initialDate ? `${terms.units} For Today` : `${terms.units} For ${format(parseISO(selectedDate), 'MMM dd')}`}
+                </h2>
+              </div>
+              <ViewSwitcher currentStyle={viewStyle} onStyleChange={handleUpdateViewStyle} />
+            </div>
+          )}
+
           {sortedZones.map((zone) => {
             const zoneTables = grouped[zone.id] || []
             if (zoneTables.length === 0 && mode !== 'management') return null
@@ -423,7 +477,7 @@ export function UnitsClient({
                               </div>
                             </div>
                             {mode === 'management' ? (
-                              <EditUnitSheet table={t} businessType={businessType} isAdmin={isAdmin} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${t.table_name}`} className="absolute inset-0 z-20 cursor-pointer w-full h-full" />} />
+                              <EditUnitSheet table={t} businessType={businessType} canManage={canManage} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${t.table_name}`} className="absolute inset-0 z-20 cursor-pointer w-full h-full" />} />
                             ) : busyMap.has(t.id) || !t.is_active ? (
                               <div className="absolute inset-0 z-20" />
                             ) : (
@@ -454,7 +508,7 @@ export function UnitsClient({
                               </div>
                             </div>
                             {mode === 'management' ? (
-                              <EditUnitSheet table={t} businessType={businessType} isAdmin={isAdmin} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${t.table_name}`} className="absolute inset-0 z-10 cursor-pointer w-full h-full" />} />
+                              <EditUnitSheet table={t} businessType={businessType} canManage={canManage} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${t.table_name}`} className="absolute inset-0 z-10 cursor-pointer w-full h-full" />} />
                             ) : busyMap.has(t.id) || !t.is_active ? (
                               <div className="absolute inset-0 z-10" />
                             ) : (
@@ -472,7 +526,7 @@ export function UnitsClient({
                               isOffline={!t.is_active} 
                               isTappable={!busyMap.has(t.id) && t.is_active} 
                               businessType={businessType} 
-                              isAdmin={isAdmin} 
+                              canManage={canManage} 
                               zones={zones} 
                               mode={mode}
                               currentSlug={dashboardSlug}
@@ -509,12 +563,13 @@ export function UnitsClient({
         </div>
       </div>
 
-      <div className="text-center space-y-2 pt-8 pb-4 opacity-50 flex flex-col items-center">
+      <div className="hidden sm:flex text-center space-y-2 pt-8 pb-4 opacity-50 flex-col items-center">
         <Activity className="w-4 h-4 text-emerald-500 animate-pulse mb-1" />
         <p className="text-[10px] text-muted-foreground/60 font-black uppercase tracking-[0.2em] leading-relaxed px-8">Everything updates live as it happens.</p>
       </div>
 
       {mode === 'management' && (
+        <div className="hidden md:block">
         <ActionHub 
           actions={[
             { 
@@ -537,6 +592,7 @@ export function UnitsClient({
             },
           ]} 
         />
+        </div>
       )}
     </div>
   )

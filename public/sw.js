@@ -49,7 +49,19 @@ self.addEventListener('message', (event) => {
   }
 })
 
-const CACHE_NAME = 'bookjm-assets-v1'
+const CACHE_NAME = 'bookjm-assets-v2'
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
+        cacheNames
+          .filter((cacheName) => cacheName !== CACHE_NAME)
+          .map((cacheName) => caches.delete(cacheName))
+      )
+    ).then(() => self.clients.claim())
+  )
+})
 
 self.addEventListener('fetch', (event) => {
   const { request } = event
@@ -57,6 +69,8 @@ self.addEventListener('fetch', (event) => {
 
   // Only cache http/https schemes (ignore chrome-extension, etc.)
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return
+
+  if (request.method !== 'GET') return
 
   if (request.destination === 'image' || request.destination === 'font') {
     event.respondWith(
@@ -72,24 +86,6 @@ self.addEventListener('fetch', (event) => {
           })
           return networkResponse
         })
-      })
-    )
-    return
-  }
-
-  if (request.destination === 'script' || request.destination === 'style') {
-    event.respondWith(
-      caches.match(request).then((cachedResponse) => {
-        const fetchPromise = fetch(request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const responseToCache = networkResponse.clone()
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseToCache)
-            })
-          }
-          return networkResponse
-        })
-        return cachedResponse || fetchPromise
       })
     )
   }

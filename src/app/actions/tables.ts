@@ -119,8 +119,8 @@ export async function deletePhysicalTable(_: ActionState, formData: FormData): P
 
   const membership = await getMembershipForRestaurant(supabase, user.id, restaurantId)
 
-  const isAdmin = membership?.role === 'admin' || membership?.role === 'superadmin'
-  if (!isAdmin) return { error: 'Unauthorized — Admin only' }
+  const canDelete = membership?.role === 'admin' || membership?.role === 'superadmin' || membership?.role === 'staff'
+  if (!canDelete) return { error: 'Unauthorized' }
 
   const tableId = formData.get('tableId') as string
   if (!tableId) return { error: 'Table ID missing' }

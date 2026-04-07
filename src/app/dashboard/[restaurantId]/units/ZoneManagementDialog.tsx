@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { 
   Sheet, SheetContent, SheetHeader, SheetTitle, 
@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { 
   Plus, Settings2, Trash2,
-  Layers, Save, X, ArrowUp, ArrowDown
+  Layers, Save, X, ArrowUp, ArrowDown, Search
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -33,6 +33,7 @@ export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props)
   const [loading, setLoading] = useState(false)
   const [zones, setZones] = useState<Zone[]>([])
   const [newName, setNewName] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [isMobile, setIsMobile] = useState(false)
@@ -74,25 +75,27 @@ export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props)
       return
     }
 
-    const updates = currentZones.map((zone, index) => ({
-      id: zone.id,
-      restaurant_id: restaurantId,
-      name: zone.name,
-      sort_order: index,
-    }))
+    const updateResults = await Promise.all(
+      currentZones.map((zone, index) =>
+        supabase
+          .from('zones')
+          .update({ sort_order: index })
+          .eq('id', zone.id)
+          .eq('restaurant_id', restaurantId)
+      )
+    )
 
-    const { error } = await supabase
-      .from('zones')
-      .upsert(updates)
+    const firstError = updateResults.find((result) => result.error)?.error
 
-    if (error) {
-      toast.error('Failed to save order')
+    if (firstError) {
+      toast.error(firstError.message || 'Failed to save order')
+      await fetchZones()
       return
     }
 
     persistedOrderRef.current = nextOrder
     onUpdate?.()
-  }, [onUpdate, restaurantId, supabase])
+  }, [fetchZones, onUpdate, restaurantId, supabase])
 
   useEffect(() => {
     const load = async () => {
@@ -177,6 +180,12 @@ export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props)
     await persistZoneOrder()
   }
 
+  const filteredZones = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) return zones
+    return zones.filter((zone) => zone.name.toLowerCase().includes(query))
+  }, [searchQuery, zones])
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
@@ -193,65 +202,91 @@ export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props)
         side={isMobile ? "bottom" : "right"} 
         className={cn(
           "bg-background border-border text-foreground p-0 overflow-hidden",
-          isMobile ? "rounded-t-[2.5rem] h-[85vh]" : "sm:max-w-md h-full border-l"
+          isMobile ? "rounded-t-[2rem] h-[82vh]" : "sm:max-w-md h-full border-l"
         )}
       >
         <div className="flex flex-col h-full bg-background/40">
-          <SheetHeader className="p-8 pb-4 text-left border-b border-border/50">
-            <SheetTitle className="text-xl font-black uppercase italic tracking-tighter">Zone Management</SheetTitle>
+          <SheetHeader className={cn("text-left border-b border-border/50", isMobile ? "p-5 pb-3" : "p-8 pb-4")}>
+            <SheetTitle className="text-lg sm:text-xl font-black uppercase italic tracking-tighter">Zones</SheetTitle>
             <SheetDescription className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-relaxed mt-1">
-              Organize your infrastructure into logical areas (VIP, Outdoor, Floor 1)
+              Group your tables by area.
             </SheetDescription>
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
-            <div className="space-y-3">
-              <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">Quick Add</Label>
+          <div className={cn("flex-1 overflow-y-auto overscroll-contain custom-scrollbar space-y-6", isMobile ? "p-4" : "p-8")}>
+            <div className="space-y-2.5">
+              <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">Add Zone</Label>
               <div className="flex gap-2">
                 <Input 
-                  placeholder="New Zone Name..." 
+                  placeholder="Zone name" 
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  className="h-12 bg-card border-border rounded-xl font-bold px-4"
+                  className="h-11 bg-card/70 border-border rounded-2xl font-semibold px-4 text-sm"
                 />
                 <Button 
+                  type="button"
                   onClick={handleAdd} 
                   disabled={loading || !newName.trim()}
-                  className="h-12 w-12 rounded-xl bg-violet-600 hover:bg-violet-500 p-0 shadow-lg shadow-violet-500/20"
+                  className="h-11 px-4 rounded-2xl bg-violet-600 hover:bg-violet-500 shadow-lg shadow-violet-500/20 text-[10px] font-black uppercase tracking-[0.18em]"
                 >
-                  <Plus className="w-6 h-6" />
+                  <Plus className="w-4 h-4 mr-1" /> Add
                 </Button>
               </div>
             </div>
 
-            <div className="space-y-4">
-               <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">Active Zones</Label>
-               <div className="space-y-2">
-                 {zones.map((zone, index) => (
+            <div className="space-y-3">
+               <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">Zones</Label>
+               {zones.length > 4 && (
+                 <div className="relative">
+                   <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50" />
+                   <Input
+                     value={searchQuery}
+                     onChange={(e) => setSearchQuery(e.target.value)}
+                     placeholder="Search zones"
+                     className="h-10 rounded-2xl border-border bg-card/50 pl-9 pr-4 text-sm font-medium"
+                   />
+                 </div>
+               )}
+               <div className="flex items-center justify-between px-1">
+                 <span className="text-[9px] font-black uppercase tracking-[0.18em] text-muted-foreground/50">
+                   {filteredZones.length === zones.length ? `${zones.length} total` : `${filteredZones.length} of ${zones.length}`}
+                 </span>
+                 {searchQuery && (
+                   <button
+                     type="button"
+                     onClick={() => setSearchQuery('')}
+                     className="text-[9px] font-black uppercase tracking-[0.18em] text-violet-400"
+                   >
+                     Clear
+                   </button>
+                 )}
+               </div>
+               <div className="space-y-2.5">
+                 {filteredZones.map((zone) => {
+                   const index = zones.findIndex((item) => item.id === zone.id)
+                   return (
                    <div 
                      key={zone.id}
-                     className="group flex items-center gap-3 p-4 bg-card/40 border border-border rounded-2xl hover:border-violet-500/30 transition-all"
+                     className="group flex items-center gap-2 p-2.5 bg-card/40 border border-border rounded-2xl hover:border-violet-500/30 transition-all"
                    >
-                     <div className="flex flex-col gap-1">
+                     <div className="flex flex-col items-center gap-1.5">
                        <Button
                          type="button"
-                         size="icon"
                          variant="ghost"
                          disabled={loading || index === 0}
                          onClick={() => { void moveZone(zone.id, 'up') }}
-                         className="h-8 w-8 rounded-lg text-muted-foreground hover:text-violet-400 disabled:opacity-30"
+                         className="h-7 w-7 rounded-lg border border-border bg-background/70 p-0 text-muted-foreground hover:border-violet-500/50 hover:text-violet-400 disabled:opacity-30 disabled:hover:border-border"
                        >
-                         <ArrowUp className="w-3.5 h-3.5" />
+                         <ArrowUp className="w-3 h-3" />
                        </Button>
                        <Button
                          type="button"
-                         size="icon"
                          variant="ghost"
                          disabled={loading || index === zones.length - 1}
                          onClick={() => { void moveZone(zone.id, 'down') }}
-                         className="h-8 w-8 rounded-lg text-muted-foreground hover:text-violet-400 disabled:opacity-30"
+                         className="h-7 w-7 rounded-lg border border-border bg-background/70 p-0 text-muted-foreground hover:border-violet-500/50 hover:text-violet-400 disabled:opacity-30 disabled:hover:border-border"
                        >
-                         <ArrowDown className="w-3.5 h-3.5" />
+                         <ArrowDown className="w-3 h-3" />
                        </Button>
                      </div>
 
@@ -261,13 +296,13 @@ export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props)
                            autoFocus
                            value={editName}
                            onChange={(e) => setEditName(e.target.value)}
-                           className="h-9 bg-background border-border rounded-lg text-sm font-bold"
+                           className="h-8 bg-background border-border rounded-xl text-sm font-semibold"
                            onKeyDown={(e) => e.key === 'Enter' && handleUpdateName(zone.id)}
                          />
-                         <Button size="icon" variant="ghost" onClick={() => handleUpdateName(zone.id)} className="h-9 w-9 text-emerald-400">
+                         <Button type="button" size="icon" variant="ghost" onClick={() => handleUpdateName(zone.id)} className="h-8 w-8 text-emerald-400">
                            <Save className="w-4 h-4" />
                          </Button>
-                         <Button size="icon" variant="ghost" onClick={() => setEditingId(null)} className="h-9 w-9 text-rose-400">
+                         <Button type="button" size="icon" variant="ghost" onClick={() => setEditingId(null)} className="h-8 w-8 text-rose-400">
                            <X className="w-4 h-4" />
                          </Button>
                        </div>
@@ -275,44 +310,49 @@ export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props)
                        <>
                          <div className="flex-1 min-w-0">
                            <span className="block text-sm font-bold truncate italic uppercase tracking-tight">{zone.name}</span>
-                           <span className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.2em]">Position {index + 1}</span>
+                           <span className="block mt-0.5 text-[8px] font-black text-muted-foreground/50 uppercase tracking-[0.18em]">Position {index + 1}</span>
                          </div>
-                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <div className="flex items-center gap-0.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                            <Button 
                              type="button"
                              size="icon" variant="ghost" 
                              onClick={() => { setEditingId(zone.id); setEditName(zone.name); }}
-                             className="h-8 w-8 text-muted-foreground hover:text-violet-400"
+                             className="h-7 w-7 rounded-lg border border-border bg-background/60 text-muted-foreground hover:border-violet-500/50 hover:text-violet-400"
                            >
-                             <Settings2 className="w-3.5 h-3.5" />
+                             <Settings2 className="w-3 h-3" />
                            </Button>
                            <Button 
                              type="button"
                              id={`delete-zone-${zone.id}`}
                              size="icon" variant="ghost" 
                              onClick={() => handleDelete(zone.id)}
-                             className="h-8 w-8 text-muted-foreground hover:text-rose-400"
+                             className="h-7 w-7 rounded-lg border border-border bg-background/60 text-muted-foreground hover:border-rose-500/40 hover:text-rose-400"
                            >
-                             <Trash2 className="w-3.5 h-3.5" />
+                             <Trash2 className="w-3 h-3" />
                            </Button>
                          </div>
                        </>
                      )}
                    </div>
-                 ))}
+                 )})}
                 
                 {zones.length === 0 && !loading && (
-                  <div className="text-center py-20 bg-muted/10 border border-dashed border-border rounded-2xl opacity-40">
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] italic">Architecture Empty</p>
+                  <div className="text-center py-14 bg-muted/10 border border-dashed border-border rounded-2xl opacity-50">
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] italic">No zones yet</p>
+                  </div>
+                )}
+                {zones.length > 0 && filteredZones.length === 0 && !loading && (
+                  <div className="text-center py-14 bg-muted/10 border border-dashed border-border rounded-2xl opacity-60">
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] italic">No matches</p>
                   </div>
                 )}
                </div>
             </div>
           </div>
           
-          <SheetFooter className="p-8 bg-card/5 border-t border-border/50 mt-auto">
-             <Button variant="ghost" className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
-                Done Managing
+          <SheetFooter className={cn("bg-card/5 border-t border-border/50 mt-auto", isMobile ? "p-4" : "p-8")}>
+             <Button variant="ghost" className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground rounded-2xl" onClick={() => setOpen(false)}>
+                Done
              </Button>
           </SheetFooter>
         </div>
