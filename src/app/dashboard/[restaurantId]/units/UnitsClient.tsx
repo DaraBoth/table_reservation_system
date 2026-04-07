@@ -177,14 +177,14 @@ export function UnitsClient({
       }
       map.set(row.table_id, {
         guestName: row.guest_name,
-        guestPhone: row.guest_phone,
+        guestPhone: row.guest_phone ?? undefined,
         createdByName: row.profiles?.full_name || 'Staff',
         status: row.status,
         partySize: row.party_size || 0,
-        reservationDate: row.reservation_date,
-        checkoutDate: row.checkout_date,
-        startTime: row.start_time,
-        endTime: row.end_time
+        reservationDate: row.reservation_date ?? undefined,
+        checkoutDate: row.checkout_date ?? undefined,
+        startTime: row.start_time ?? undefined,
+        endTime: row.end_time ?? undefined
       })
     })
     return map
