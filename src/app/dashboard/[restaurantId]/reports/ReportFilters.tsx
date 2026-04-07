@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { format, subDays, addDays, parseISO, startOfWeek } from "date-fns"
-import { ChevronLeft, ChevronRight, Calendar } from "lucide-react"
+import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react"
 import { TopLoadingBar } from "@/components/dashboard/top-loading-bar"
 
 import { Button } from "@/components/ui/button"
@@ -51,7 +51,7 @@ export function ReportFilters() {
           <div className="flex-1 flex flex-col items-center">
             <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-0.5">Business Week</span>
             <div className="flex items-center gap-2">
-              <Calendar className="w-3 h-3 text-violet-400" />
+              <CalendarDays className="w-3 h-3 text-violet-400" />
               <span className="text-xs font-black text-foreground tracking-tight">
                 {format(monday, "MMM dd")} — {format(addDays(monday, 6), "MMM dd")}
               </span>

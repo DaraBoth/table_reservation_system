@@ -83,6 +83,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ rest
   return (
     <DashboardClient 
       restaurantId={rid}
+      activeSlug={res.activeSlug}
       initialData={{
         totalToday,
         pendingCount,

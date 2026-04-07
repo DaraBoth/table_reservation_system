@@ -275,9 +275,9 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
   )
 
   revalidatePath(`/dashboard/${restaurantId}/reservations`)
-  revalidatePath(`/dashboard/${restaurantId}/tables`)
+  revalidatePath(`/dashboard/${restaurantId}/units`)
   revalidatePath(`/dashboard/${restaurantId}`)
-  redirect(`/dashboard/${restaurantId}/tables`)
+  redirect(`/dashboard/${restaurantId}/units`)
 }
 
 // ─── Cancel reservation ───────────────────────────────────────────────────────
@@ -356,7 +356,7 @@ export async function updateReservationStatus(_: ActionState, formData: FormData
 
   revalidatePath(`/dashboard/${restaurantId}/reservations`)
   revalidatePath(`/dashboard/${restaurantId}/reservations/${reservationId}`)
-  revalidatePath(`/dashboard/${restaurantId}/tables`)
+  revalidatePath(`/dashboard/${restaurantId}/units`)
   revalidatePath(`/dashboard/${restaurantId}`)
   return { success: 'Status updated.' }
 }
@@ -450,6 +450,6 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
 
   revalidatePath(`/dashboard/${restaurantId}/reservations`)
   revalidatePath(`/dashboard/${restaurantId}/reservations/${reservationId}`)
-  revalidatePath(`/dashboard/${restaurantId}/tables`)
-  redirect(`/dashboard/${restaurantId}/tables`)
+  revalidatePath(`/dashboard/${restaurantId}/units`)
+  redirect(`/dashboard/${restaurantId}/units`)
 }

@@ -1,0 +1,528 @@
+'use client'
+
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { format } from 'date-fns'
+import { createClient } from '@/lib/supabase/client'
+import { motion, AnimatePresence } from 'framer-motion'
+import { getTerms } from '@/lib/business-type'
+import type { Tables } from '@/lib/types/database'
+import { groupAndSortTables } from '@/lib/sorting'
+import { ZoneManagementDialog } from './ZoneManagementDialog'
+import { NumberTicker } from '@/components/magicui/number-ticker'
+import { DateNavigator } from '@/components/dashboard/DateNavigator'
+import { ViewSwitcher, type ViewStyle } from '@/components/dashboard/ViewSwitcher'
+import { User, Settings2, BarChart3, CircleCheck, CircleX, Clock, Activity, Plus, Layers, LayoutList } from 'lucide-react'
+import { EditUnitSheet } from './EditUnitSheet'
+import { UnitCard } from './UnitCard'
+import { CreateUnitDialog } from './CreateUnitDialog'
+import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
+import { ActionHub } from '@/components/dashboard/ActionHub'
+
+interface BusyInfo {
+  guestName: string
+  guestPhone?: string
+  createdByName?: string
+  status: string
+  partySize: number
+  reservationDate?: string
+  checkoutDate?: string
+  startTime?: string
+  endTime?: string
+}
+
+interface UnitsClientProps {
+  initialTables: Tables<'physical_tables'>[]
+  initialBusyRows: any[]
+  restaurantId: string
+  businessType: string
+  isAdmin: boolean
+  isStaff?: boolean
+  initialDate: string
+  initialNowIso: string
+  mode?: 'monitoring' | 'management'
+  currentSlug?: string
+}
+
+export function UnitsClient({
+  initialTables,
+  initialBusyRows,
+  restaurantId,
+  businessType,
+  isAdmin,
+  isStaff,
+  initialDate,
+  initialNowIso,
+  mode = 'monitoring',
+  currentSlug
+}: UnitsClientProps) {
+  const [tables, setTables] = useState(initialTables)
+  const [zones, setZones] = useState<{ id: string; name: string; sort_order: number }[]>([])
+  const [busyRows, setBusyRows] = useState(initialBusyRows)
+  const [now, setNow] = useState(() => new Date(initialNowIso))
+  const [mounted, setMounted] = useState(false)
+
+  // ✨ Hydration Guard: Ensure clean mount
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  const [viewStyle, setViewStyle] = useState<ViewStyle>('grid')
+  const [selectedDate, setSelectedDate] = useState(initialDate)
+  
+  const supabase = createClient()
+  const terms = getTerms(businessType)
+  const canManage = isAdmin || isStaff
+  const dashboardSlug = currentSlug || restaurantId
+
+  // 💾 Persist View Preference
+  useEffect(() => {
+    const saved = localStorage.getItem('units-view-style') as ViewStyle
+    if (saved && (saved === 'grid' || saved === 'list' || saved === 'compact')) {
+      setViewStyle(saved)
+    }
+  }, [])
+
+  const handleUpdateViewStyle = (s: ViewStyle) => {
+    setViewStyle(s)
+    localStorage.setItem('tables-view-style', s)
+  }
+
+  // Keep clock running
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const fetchLatestBusyRows = useCallback(async () => {
+    const fmt = selectedDate
+    const { data } = await supabase
+      .from('reservations')
+      .select('table_id, guest_name, guest_phone, status, party_size, reservation_date, checkout_date, start_time, end_time, profiles(full_name)')
+      .eq('restaurant_id', restaurantId)
+      .in('status', ['pending', 'confirmed', 'arrived'])
+      .lte('reservation_date', fmt)
+      .gte('checkout_date', fmt)
+
+    if (data) setBusyRows(data)
+  }, [supabase, restaurantId, selectedDate])
+
+  const fetchLatestTables = useCallback(async () => {
+    const { data } = await supabase
+      .from('physical_tables')
+      .select('*, zones(*)')
+      .eq('restaurant_id', restaurantId)
+
+    if (data) setTables(data as any)
+  }, [supabase, restaurantId])
+
+  const fetchZones = useCallback(async () => {
+    const { data } = await supabase
+      .from('zones')
+      .select('*')
+      .eq('restaurant_id', restaurantId)
+      .order('sort_order', { ascending: true })
+
+    if (data) setZones(data)
+  }, [supabase, restaurantId])
+
+  useEffect(() => {
+    fetchZones()
+  }, [fetchZones])
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`tables-realtime-${restaurantId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations', filter: `restaurant_id=eq.${restaurantId}` }, () => fetchLatestBusyRows())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'physical_tables', filter: `restaurant_id=eq.${restaurantId}` }, () => fetchLatestTables())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'zones', filter: `restaurant_id=eq.${restaurantId}` }, () => fetchZones())
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [supabase, restaurantId, fetchLatestBusyRows, fetchLatestTables, fetchZones])
+
+  useEffect(() => {
+    setBusyRows([])
+    fetchLatestBusyRows()
+  }, [selectedDate, fetchLatestBusyRows])
+
+  const isHotel = businessType === 'hotel' || businessType === 'guesthouse'
+  const todayStr = format(now, 'yyyy-MM-dd')
+
+  const busyMap = useMemo(() => {
+    const map = new Map<string, BusyInfo>()
+    busyRows.forEach(row => {
+      if (!row.table_id) return
+      if (isHotel && row.checkout_date === todayStr && row.end_time) {
+        const [h, m] = row.end_time.split(':').map(Number)
+        const checkOut = new Date(now)
+        checkOut.setHours(h, m, 0, 0)
+        if (now >= checkOut) return
+      }
+      map.set(row.table_id, {
+        guestName: row.guest_name,
+        guestPhone: row.guest_phone,
+        createdByName: (row as any).profiles?.full_name || 'Staff',
+        status: row.status,
+        partySize: row.party_size || 0,
+        reservationDate: row.reservation_date,
+        checkoutDate: row.checkout_date,
+        startTime: row.start_time,
+        endTime: row.end_time
+      })
+    })
+    return map
+  }, [busyRows, todayStr, now, isHotel])
+
+  const activeTables = tables.filter(t => t.is_active)
+  const freeCount = activeTables.filter(t => !busyMap.has(t.id)).length
+  const busyCount = activeTables.filter(t => busyMap.has(t.id)).length
+
+  const { sortedZones, grouped, unassigned } = useMemo(() => 
+    groupAndSortTables(tables, zones), 
+    [tables, zones]
+  )
+
+
+  const renderTableItem = (t: any, idx: number, busyInfo: any, isBusy: boolean, isOffline: boolean, isTappable: boolean) => (
+    <React.Fragment key={t.id}>
+      {viewStyle === 'compact' && (
+        <motion.div
+          id={`table-compact-${t.id}`}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: idx * 0.02 }}
+          className="relative group h-24 rounded-2xl border transition-all duration-300 overflow-hidden"
+        >
+          <div className={cn("absolute inset-0 z-0 opacity-40", isOffline ? "bg-muted" : isBusy ? "bg-rose-500/10" : "bg-emerald-500/5 hover:bg-emerald-500/10")} />
+          <div className={cn("relative z-10 p-3 h-full flex flex-col justify-between border-t-2", isOffline ? "border-muted" : isBusy ? "border-rose-500" : "border-emerald-500")}>
+            <div className="min-w-0 leading-none">
+              <p className="text-[11px] font-black text-foreground truncate uppercase italic">{t.table_name}</p>
+              {isBusy && busyInfo && (
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <p className="text-[11px] font-black text-rose-400 truncate uppercase tracking-tighter">{busyInfo.guestName?.split(' ')[0]} ({busyInfo.partySize}p)</p>
+                  <p className="text-[7px] text-muted-foreground/50 font-bold truncate italic leading-none">Created by {busyInfo.createdByName}</p>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] text-muted-foreground font-black uppercase tracking-tighter">{t.capacity}p</span>
+              {isBusy && busyInfo && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-[8px] font-black text-rose-400/50 uppercase tracking-tighter">
+                      {busyInfo.startTime?.replace(/^(\d{2}):(\d{2}):\d{2}$/, (_: string, h: string, m: string) => {
+                        const hh = parseInt(h);
+                        return `${hh % 12 || 12}:${m} ${hh >= 12 ? 'PM' : 'AM'}`;
+                      })}
+                    </span>
+                    <User className="w-2.5 h-2.5 text-rose-400" />
+                  </div>
+              )}
+            </div>
+          </div>
+          {mode === 'management' ? (
+            <EditUnitSheet table={t} businessType={businessType} isAdmin={isAdmin} zones={zones} trigger={<div className="absolute inset-0 z-20 cursor-pointer" />} />
+          ) : isTappable ? (
+            <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}`} className="absolute inset-0 z-20" />
+          ) : (
+            <div className="absolute inset-0 z-20" />
+          )}
+          {mode === 'management' && (
+            <div className="absolute top-2 right-2 z-50 flex items-center justify-center pointer-events-none">
+              <div className="w-7 h-7 flex items-center justify-center bg-background border border-border rounded-xl text-muted-foreground shadow-xl">
+                <Settings2 className="w-4 h-4" />
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {viewStyle === 'list' && (
+        <motion.div
+          id={`table-list-${t.id}`}
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: idx * 0.02 }}
+          className="group relative flex items-center gap-4 p-4 rounded-2xl bg-card/40 border border-border hover:border-violet-500/30 transition-all h-16 overflow-hidden"
+        >
+          <div className={cn("w-2.5 h-2.5 rounded-full", isOffline ? "bg-muted" : isBusy ? "bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.4)]" : "bg-emerald-500")} />
+          <div className="flex-1 min-w-0 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <p className="text-base font-black italic tracking-tighter truncate pr-2">{t.table_name}</p>
+              <span className="px-2 py-0.5 rounded-lg bg-muted text-[10px] font-black text-muted-foreground uppercase">{t.capacity} {terms.capacityUnit}</span>
+            </div>
+            <div className="hidden sm:flex flex-1 items-center gap-4 truncate">
+              {isBusy && busyInfo?.guestName && (
+                <div className="flex items-center gap-4 text-rose-300 px-3 py-1 rounded-xl bg-rose-500/5 border border-rose-500/10 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <User className="w-3.5 h-3.5" />
+                    <span className="text-xs font-black uppercase tracking-tight truncate">{busyInfo.guestName} ({busyInfo.partySize}p)</span>
+                  </div>
+                  <span className="w-1 h-1 rounded-full bg-rose-500/30" />
+                  <div className="flex flex-col items-start gap-0.5 min-w-0 text-[10px] uppercase font-black tracking-widest text-rose-300/60 italic">
+                    <span>{busyInfo.startTime?.replace(/^(\d{2}):(\d{2}):\d{2}$/, (_: string, h: string, m: string) => (parseInt(h) % 12 || 12) + ':' + m + (parseInt(h) >= 12 ? ' PM' : ' AM'))}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2 relative z-30 justify-end">
+              <Badge className={cn('text-[9px] font-black px-2 py-0.5 rounded-lg border uppercase tracking-widest', isOffline ? 'bg-muted text-muted-foreground/60 border-border' : isBusy ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20')}>
+                {isOffline ? 'OFF' : isBusy ? 'Booked' : 'AVAILABLE'}
+              </Badge>
+              {mode === 'management' && (
+                <div className="w-8 h-8 flex items-center justify-center bg-background border border-border/50 rounded-xl text-muted-foreground shadow-sm">
+                  <Settings2 className="w-4 h-4" />
+                </div>
+              )}
+            </div>
+          </div>
+          {mode === 'management' ? (
+            <EditUnitSheet table={t} businessType={businessType} isAdmin={isAdmin} zones={zones} trigger={<div className="absolute inset-0 z-10 cursor-pointer" />} />
+          ) : isTappable ? (
+            <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}`} className="absolute inset-0 z-10" />
+          ) : (
+            <div className="absolute inset-0 z-10" />
+          )}
+        </motion.div>
+      )}
+
+      {viewStyle === 'grid' && (
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.03 }}>
+          <UnitCard 
+            table={t} 
+            busyInfo={busyInfo} 
+            isBusy={isBusy} 
+            isOffline={isOffline} 
+            isTappable={isTappable} 
+            businessType={businessType} 
+            isAdmin={isAdmin} 
+            zones={zones} 
+            mode={mode}
+            currentSlug={dashboardSlug}
+          />
+        </motion.div>
+      )}
+    </React.Fragment>
+  )
+
+  return (
+    <div className="relative space-y-2">
+      <div className="absolute inset-0 -top-20 -z-10 h-[1000px] w-full bg-background hidden dark:block [background:radial-gradient(125%_125%_at_50%_10%,#020617_40%,#1e1b4b_100%)]">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-20" />
+      </div>
+
+      <div className="flex flex-col gap-8 pt-6 pb-2">
+        {/* Tier 1: Branding & Modern Action Stack */}
+        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+          <div className="flex items-center gap-4 pt-2">
+            <h1 className="text-3xl font-black text-foreground italic tracking-tighter uppercase leading-none">
+              {mode === 'management' ? `${terms.unit} Configuration` : `${terms.units} Status`}
+            </h1>
+            {mode === 'management' && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted border border-border shadow-sm">
+                <Settings2 className="w-3 h-3 text-muted-foreground" />
+                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">Settings</span>
+              </div>
+            )}
+          </div>
+
+          {mounted && (
+            <div className="flex items-center gap-3">
+              {mode === 'monitoring' && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Live Sync</span>
+                </div>
+              )}
+              {mode === 'monitoring' && canManage && (
+                <Link 
+                  href={`/dashboard/${dashboardSlug}/units/manage`} 
+                  className="flex items-center gap-2 h-12 px-6 bg-card border border-border/60 rounded-2xl text-foreground/80 text-[11px] font-black uppercase tracking-tight hover:border-violet-500/50 hover:text-violet-300 transition-all shadow-xl group"
+                >
+                  <Settings2 className="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" /> Settings
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Tier 2: View Switcher Only */}
+        {mounted && (
+          <div className="flex justify-start pt-1">
+             <ViewSwitcher currentStyle={viewStyle} onStyleChange={handleUpdateViewStyle} />
+          </div>
+        )}
+      </div>
+
+      {mode === 'monitoring' && (
+        <DateNavigator selectedDate={selectedDate} onChange={setSelectedDate} todayDate={initialDate} className="w-full" />
+      )}
+
+      {mode === 'monitoring' && (
+        <div className="grid grid-cols-2 gap-3">
+          {[ { label: 'Available', count: freeCount, icon: CircleCheck, color: 'emerald' }, { label: 'Booked', count: busyCount, icon: CircleX, color: 'rose' } ].map((stat, i) => (
+            <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className={cn("relative overflow-hidden group bg-card/40 border rounded-3xl p-5 flex items-center gap-4 transition-all hover:bg-card/60", stat.color === 'emerald' ? "border-emerald-500/20" : "border-rose-500/20")}>
+              <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner", stat.color === 'emerald' ? "bg-emerald-500/10" : "bg-rose-500/10")}>
+                <stat.icon className={cn("w-6 h-6", stat.color === 'emerald' ? "text-emerald-400" : "text-rose-400")} />
+              </div>
+              <div>
+                <p className="text-3xl font-black text-foreground leading-tight"><NumberTicker value={stat.count} /></p>
+                <p className="text-[10px] text-muted-foreground font-extrabold uppercase tracking-widest mt-0.5">{stat.label}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Full-Width Grid Structure for Settings UI */}
+      <div className="w-full">
+        {/* Main Content Area */}
+        <div className="space-y-12">
+          {sortedZones.map((zone) => {
+            const zoneTables = grouped[zone.id] || []
+            if (zoneTables.length === 0) return null
+            return (
+              <div key={zone.id} id={`zone-${zone.id}`} className="space-y-4">
+                <div className="flex items-center gap-3 px-1">
+                  <div className="h-6 w-1 rounded-full bg-violet-500/50" />
+                  <h2 className="text-sm font-black text-foreground uppercase tracking-[0.2em] italic">{zone.name}</h2>
+                  <div className="h-px flex-1 bg-gradient-to-r from-border/50 to-transparent" />
+                </div>
+                <div className={cn("grid gap-4", viewStyle === 'grid' ? "grid-cols-2 sm:grid-cols-3" : viewStyle === 'compact' ? "grid-cols-3 sm:grid-cols-5 md:grid-cols-6" : "grid-cols-1")}>
+                  {zoneTables.map((t, idx) => (
+                    <React.Fragment key={t.id}>
+                      {viewStyle === 'compact' && (
+                        <motion.div
+                          id={`table-compact-${t.id}`}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: idx * 0.02 }}
+                          className="relative group h-24 rounded-2xl border transition-all duration-300 overflow-hidden"
+                        >
+                          <div className={cn("absolute inset-0 z-0 opacity-40", !t.is_active ? "bg-muted" : busyMap.has(t.id) ? "bg-rose-500/10" : "bg-emerald-500/5 hover:bg-emerald-500/10")} />
+                          <div className={cn("relative z-10 p-3 h-full flex flex-col justify-between border-t-2", !t.is_active ? "border-muted" : busyMap.has(t.id) ? "border-rose-500" : "border-emerald-500")}>
+                            <div className="min-w-0 leading-none">
+                              <p className="text-[11px] font-black text-foreground truncate uppercase italic">{t.table_name}</p>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[9px] text-muted-foreground font-black uppercase tracking-tighter">{t.capacity}p</span>
+                            </div>
+                          </div>
+                          {mode === 'management' ? (
+                            <EditUnitSheet table={t} businessType={businessType} isAdmin={isAdmin} zones={zones} trigger={<button className="absolute inset-0 z-20 cursor-pointer w-full h-full" />} />
+                          ) : busyMap.has(t.id) || !t.is_active ? (
+                            <div className="absolute inset-0 z-20" />
+                          ) : (
+                            <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}`} className="absolute inset-0 z-20" />
+                          )}
+                        </motion.div>
+                      )}
+
+                      {viewStyle === 'list' && (
+                        <motion.div
+                          id={`table-list-${t.id}`}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: idx * 0.02 }}
+                          className="group relative flex items-center gap-4 p-4 rounded-2xl bg-card/40 border border-border hover:border-violet-500/30 transition-all h-16 overflow-hidden"
+                        >
+                          <div className={cn("w-2.5 h-2.5 rounded-full", !t.is_active ? "bg-muted" : busyMap.has(t.id) ? "bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.4)]" : "bg-emerald-500")} />
+                          <div className="flex-1 min-w-0 flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <p className="text-base font-black italic tracking-tighter truncate pr-2">{t.table_name}</p>
+                            </div>
+                            <div className="flex items-center gap-2 relative z-30 justify-end">
+                              {mode === 'management' && (
+                                <div className="w-8 h-8 flex items-center justify-center bg-background border border-border/50 rounded-xl text-muted-foreground shadow-sm">
+                                  <Settings2 className="w-4 h-4" />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          {mode === 'management' ? (
+                            <EditUnitSheet table={t} businessType={businessType} isAdmin={isAdmin} zones={zones} trigger={<button className="absolute inset-0 z-10 cursor-pointer w-full h-full" />} />
+                          ) : busyMap.has(t.id) || !t.is_active ? (
+                            <div className="absolute inset-0 z-10" />
+                          ) : (
+                            <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}`} className="absolute inset-0 z-10" />
+                          )}
+                        </motion.div>
+                      )}
+
+                      {viewStyle === 'grid' && (
+                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.03 }}>
+                          <UnitCard 
+                            table={t} 
+                            busyInfo={busyMap.get(t.id)} 
+                            isBusy={!!busyMap.get(t.id)} 
+                            isOffline={!t.is_active} 
+                            isTappable={!busyMap.has(t.id) && t.is_active} 
+                            businessType={businessType} 
+                            isAdmin={isAdmin} 
+                            zones={zones} 
+                            mode={mode}
+                            currentSlug={dashboardSlug}
+                          />
+                        </motion.div>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+
+          {unassigned.length > 0 && (
+            <div id="zone-unassigned" className="space-y-4">
+              <div className="flex items-center gap-3 px-1">
+                <div className="h-6 w-1 rounded-full bg-muted" />
+                <h2 className="text-sm font-black text-muted-foreground uppercase tracking-[0.2em] italic">Unassigned</h2>
+                <div className="h-px flex-1 bg-gradient-to-r from-border/50 to-transparent" />
+              </div>
+              <div className={cn("grid gap-4", viewStyle === 'grid' ? "grid-cols-2 sm:grid-cols-3" : viewStyle === 'compact' ? "grid-cols-3 sm:grid-cols-5 md:grid-cols-6" : "grid-cols-1")}>
+                {unassigned.map((t, idx) => renderTableItem(t, idx, busyMap.get(t.id), !!busyMap.get(t.id), !t.is_active, !busyMap.has(t.id) && t.is_active))}
+              </div>
+            </div>
+          )}
+
+          {tables.length === 0 && (
+            <div className="text-center py-20 bg-card/30 rounded-[2.5rem] border border-border border-dashed backdrop-blur-sm">
+              <p className="text-muted-foreground font-black text-lg italic tracking-tight">No {terms.unitsLower} yet</p>
+              <p className="text-muted-foreground/60 text-xs mt-1 mb-8 font-bold uppercase tracking-widest">Add your first {terms.unitLower} to start live operations</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="text-center space-y-2 pt-8 pb-4 opacity-50 flex flex-col items-center">
+        <Activity className="w-4 h-4 text-emerald-500 animate-pulse mb-1" />
+        <p className="text-[10px] text-muted-foreground/60 font-black uppercase tracking-[0.2em] leading-relaxed px-8">Everything updates live as it happens.</p>
+      </div>
+
+      <ActionHub 
+        actions={[
+          { 
+            label: `Add ${terms.unit}`, 
+            icon: <Plus className="w-6 h-6" />, 
+            color: 'bg-violet-600 text-white',
+            component: <CreateUnitDialog businessType={businessType as any} restaurantId={restaurantId} zones={zones} />
+          },
+          { 
+            label: 'Manage Zones', 
+            icon: <LayoutList className="w-5 h-5" />, 
+            color: 'bg-emerald-600 text-white',
+            component: <ZoneManagementDialog restaurantId={restaurantId} onUpdate={fetchZones} />
+          },
+          { 
+            label: 'View Reports', 
+            icon: <BarChart3 className="w-5 h-5" />, 
+            color: 'bg-blue-600 text-white',
+            onClick: () => window.location.href = `/dashboard/${dashboardSlug}/reports`
+          },
+        ]} 
+      />
+    </div>
+  )
+}

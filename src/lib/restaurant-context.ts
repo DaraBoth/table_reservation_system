@@ -11,7 +11,7 @@ export async function getActiveRestaurant(routeId?: string) {
   // 1. Get all memberships for the user
   const { data: memberships } = await supabase
     .from('account_memberships')
-    .select('role, restaurant_id, is_special_admin, special_features, restaurants(name, business_type, is_new)')
+    .select('role, restaurant_id, is_special_admin, special_features, restaurants(id, name, slug, business_type, is_new)')
     .eq('user_id', user.id)
     .eq('is_active', true) as any
 
@@ -21,9 +21,12 @@ export async function getActiveRestaurant(routeId?: string) {
   const cookieStore = await cookies()
   const cookieId = cookieStore.get(ACTIVE_RESTAURANT_COOKIE)?.value
   
-  // Ensure the routeId provided is actually one of the user's memberships
-  const isRouteIdValid = memberships.some((m: any) => m.restaurant_id === routeId)
-  const activeId = (isRouteIdValid ? routeId : null) || cookieId || memberships[0].restaurant_id
+  // Ensure the routeId provided is actually one of the user's memberships (either by real ID or slug)
+  const matchingMembership = memberships.find((m: any) => 
+    m.restaurant_id === routeId || m.restaurants?.slug === routeId
+  )
+  
+  const activeId = (matchingMembership ? matchingMembership.restaurant_id : null) || cookieId || memberships[0].restaurant_id
 
   // 3. Find the membership matching the active ID, or fallback to the first one
   const activeMembership = memberships.find((m: any) => m.restaurant_id === activeId) || memberships[0]
@@ -39,6 +42,7 @@ export async function getActiveRestaurant(routeId?: string) {
     membership: activeMembership,
     allMemberships: memberships,
     activeId: activeMembership.restaurant_id,
+    activeSlug: activeMembership.restaurants?.slug || activeMembership.restaurant_id,
     profile: profile || null,
   }
 }

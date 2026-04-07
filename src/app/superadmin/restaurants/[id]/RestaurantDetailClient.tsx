@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import type { Tables } from '@/lib/types/database'
-import { Calendar, Infinity } from 'lucide-react'
+import { CalendarDays, Infinity } from 'lucide-react'
 
 interface Props {
   restaurant: Tables<'restaurants'>
@@ -47,7 +47,7 @@ export function RestaurantDetailClient({ restaurant, members }: Props) {
       <Card className="bg-card/50 border-border">
         <CardHeader>
           <CardTitle className="text-foreground flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-violet-400" /> Subscription
+            <CalendarDays className="w-5 h-5 text-violet-400" /> Subscription
           </CardTitle>
           <CardDescription>Control access and billing period for this restaurant</CardDescription>
         </CardHeader>

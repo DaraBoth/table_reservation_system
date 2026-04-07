@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import {
-  Store, ShieldCheck, Calendar, Activity,
+  Store, ShieldCheck, CalendarDays, Activity,
   Plus, ArrowRight, Zap, UserPlus, Clock,
   Users, LayoutDashboard,
 } from 'lucide-react'
@@ -37,7 +37,7 @@ export default async function SuperadminPage() {
     { label: 'Restaurants', value: list.length,          icon: Store,      color: 'from-violet-600 to-indigo-600', bg: 'bg-violet-500/10',  text: 'text-violet-400' },
     { label: 'Active Sites', value: activeCount,          icon: Activity,   color: 'from-emerald-600 to-teal-600',  bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
     { label: 'Admins',       value: totalAdmins ?? 0,     icon: ShieldCheck,color: 'from-amber-600 to-orange-600',  bg: 'bg-amber-500/10',   text: 'text-amber-400' },
-    { label: 'Bookings',     value: totalReservations ?? 0,icon: Calendar,  color: 'from-blue-600 to-cyan-600',     bg: 'bg-blue-500/10',    text: 'text-blue-400' },
+    { label: 'Bookings',     value: totalReservations ?? 0,icon: CalendarDays,  color: 'from-blue-600 to-cyan-600',     bg: 'bg-blue-500/10',    text: 'text-blue-400' },
   ]
 
   return (

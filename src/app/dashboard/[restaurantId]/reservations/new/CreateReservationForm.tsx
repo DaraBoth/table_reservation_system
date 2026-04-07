@@ -6,15 +6,17 @@ import type { BusinessType } from '@/lib/business-type'
 
 interface Props {
   tables: Tables<'physical_tables'>[]
+  zones: { id: string, name: string, sort_order: number }[]
   restaurantId: string
   preSelectedTableId?: string
   businessType?: BusinessType
 }
 
-export function CreateReservationForm({ tables, restaurantId, preSelectedTableId, businessType = 'restaurant' }: Props) {
+export function CreateReservationForm({ tables, zones, restaurantId, preSelectedTableId, businessType = 'restaurant' }: Props) {
   return (
     <ReservationForm
       tables={tables}
+      zones={zones}
       restaurantId={restaurantId}
       preSelectedTableId={preSelectedTableId}
       businessType={businessType}

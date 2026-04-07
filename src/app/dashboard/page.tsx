@@ -8,6 +8,6 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  // Redirect to the active restaurant context
-  redirect(`/dashboard/${res.activeId}`)
+  // Redirect to the active restaurant context (branded slug or fallback to ID)
+  redirect(`/dashboard/${res.activeSlug}`)
 }

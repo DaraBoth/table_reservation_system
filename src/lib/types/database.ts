@@ -125,6 +125,7 @@ export type Database = {
           restaurant_id: string
           table_name: string
           updated_at: string
+          zone_id: string | null
         }
         Insert: {
           capacity?: number
@@ -135,6 +136,7 @@ export type Database = {
           restaurant_id: string
           table_name: string
           updated_at?: string
+          zone_id?: string | null
         }
         Update: {
           capacity?: number
@@ -145,6 +147,7 @@ export type Database = {
           restaurant_id?: string
           table_name?: string
           updated_at?: string
+          zone_id?: string | null
         }
         Relationships: [
           {
@@ -152,6 +155,13 @@ export type Database = {
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "physical_tables_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zones"
             referencedColumns: ["id"]
           },
         ]
@@ -350,6 +360,38 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      zones: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          restaurant_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          restaurant_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          restaurant_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zones_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

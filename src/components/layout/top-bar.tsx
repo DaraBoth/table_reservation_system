@@ -14,11 +14,13 @@ interface TopBarProps {
   userEmail?: string
   avatarUrl?: string | null
   restaurantId?: string
+  activeSlug?: string
   memberships?: any[]
 }
 
 
-export function TopBar({ brandName, userName, avatarUrl, restaurantId, memberships }: TopBarProps) {
+export function TopBar({ brandName, userName, avatarUrl, restaurantId, activeSlug, memberships }: TopBarProps) {
+  const dashSlug = activeSlug || restaurantId
   const pathname = usePathname()
 
   const hasMultiple = (memberships?.length ?? 0) > 1
@@ -33,7 +35,7 @@ export function TopBar({ brandName, userName, avatarUrl, restaurantId, membershi
         <div className="flex items-center gap-2">
           {isEditing ? (
             <Link
-              href={pathname.includes('reservations') ? `/dashboard/${restaurantId}/reservations` : `/dashboard/${restaurantId}`}
+              href={pathname.includes('reservations') ? `/dashboard/${dashSlug}/reservations` : `/dashboard/${dashSlug}`}
               className="flex items-center gap-1 text-violet-400 text-sm font-semibold"
             >
               <ChevronRight className="w-4 h-4 rotate-180" />
@@ -61,7 +63,7 @@ export function TopBar({ brandName, userName, avatarUrl, restaurantId, membershi
         <div className="flex items-center gap-2">
           {/* User Identity - Navigates to Account Settings */}
           <Link 
-            href={`/dashboard/${restaurantId}/account`}
+            href={`/dashboard/${dashSlug}/account`}
             className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-violet-600/5 border border-violet-500/10 hover:bg-violet-600/10 transition-all group cursor-pointer active:scale-95 shadow-sm"
           >
             <div className="flex flex-col items-end min-w-0 max-w-[80px] xs:max-w-none">

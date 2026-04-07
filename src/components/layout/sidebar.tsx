@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -13,10 +12,13 @@ import {
   LayoutDashboard, 
   Utensils, 
   Users, 
-  Calendar, 
-  Table as TableIcon,
-  Settings,
-  ShieldCheck
+  Grid2X2,
+  CalendarDays, 
+  Settings2,
+  ShieldCheck,
+  BookUser,
+  BarChart3,
+  UserCircle
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 
@@ -29,7 +31,9 @@ interface SidebarProps {
   brandName: string
   type: 'superadmin' | 'dashboard'
   isAdmin?: boolean
+  isStaff?: boolean
   restaurantId?: string
+  activeSlug?: string
   memberships?: any[]
   isSpecialAdmin?: boolean
   specialFeatures?: Record<string, any>
@@ -41,7 +45,9 @@ export function Sidebar({
   brandName, 
   type, 
   isAdmin,
+  isStaff,
   restaurantId,
+  activeSlug,
   memberships = [],
   isSpecialAdmin = false,
   specialFeatures = {}
@@ -49,23 +55,50 @@ export function Sidebar({
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
+  
+  const dashSlug = activeSlug || restaurantId
 
-  // Define nav items locally to avoid serialization issues
-  const navItems = type === 'superadmin' 
+  // Grouped Navigation Items
+  const navGroups = type === 'superadmin' 
     ? [
-        { href: '/superadmin', label: 'Overview', icon: LayoutDashboard },
-        { href: '/superadmin/restaurants', label: 'Restaurants', icon: Utensils },
-        { href: '/superadmin/users', label: 'User Management', icon: Users },
-        { href: '/superadmin/admins', label: 'Admin Accounts', icon: ShieldCheck },
+        {
+          label: 'System',
+          items: [
+            { href: '/superadmin', label: 'Overview', icon: LayoutDashboard },
+            { href: '/superadmin/restaurants', label: 'Restaurants', icon: Utensils },
+            { href: '/superadmin/users', label: 'User Management', icon: Users },
+            { href: '/superadmin/admins', label: 'Admin Accounts', icon: ShieldCheck },
+          ]
+        }
       ]
     : [
-        { href: `/dashboard/${restaurantId}`, label: 'Overview', icon: LayoutDashboard },
-        { href: `/dashboard/${restaurantId}/reservations`, label: 'Reservations', icon: Calendar },
-        { href: `/dashboard/${restaurantId}/tables`, label: 'Tables', icon: TableIcon },
-        ...(isAdmin ? [
-          { href: `/dashboard/${restaurantId}/staff`, label: 'Staff', icon: Users },
+        {
+          label: 'Operations',
+          items: [
+            { href: `/dashboard/${dashSlug}`, label: 'Overview', icon: LayoutDashboard },
+            { href: `/dashboard/${dashSlug}/units`, label: 'Units Status', icon: Grid2X2 },
+            { href: `/dashboard/${dashSlug}/reservations`, label: 'Reservations', icon: CalendarDays },
+            { href: `/dashboard/${dashSlug}/customers`, label: 'Customers', icon: BookUser },
+            { href: `/dashboard/${dashSlug}/reports`, label: 'Analytics', icon: BarChart3 },
+          ]
+        },
+        ...(isAdmin || isStaff ? [
+          {
+            label: 'Configuration',
+            items: [
+              { href: `/dashboard/${dashSlug}/units/manage`, label: 'Unit Config', icon: Settings2 },
+              ...(isAdmin ? [
+                { href: `/dashboard/${dashSlug}/staff`, label: 'Staff Management', icon: Users },
+              ] : []),
+            ]
+          }
         ] : []),
-        { href: `/dashboard/${restaurantId}/account`, label: 'Account', icon: Settings },
+        {
+          label: 'System',
+          items: [
+            { href: `/dashboard/${dashSlug}/account`, label: 'Account Settings', icon: UserCircle },
+          ]
+        }
       ]
 
   // Persist state to localStorage
@@ -86,7 +119,7 @@ export function Sidebar({
   return (
     <aside 
       className={cn(
-        "relative flex flex-col bg-card/40 backdrop-blur-xl border-r border-border/60 transition-all duration-300 ease-in-out group z-40",
+        "relative flex flex-col bg-card/40 backdrop-blur-xl border-r border-border/60 transition-all duration-300 ease-in-out group z-40 hidden md:flex h-full",
         isCollapsed ? "w-20" : "w-66"
       )}
     >
@@ -123,23 +156,26 @@ export function Sidebar({
             <div className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-1 px-1">Portfolio</div>
             
             {/* Filtered memberships to show other brands */}
-            {memberships.filter(m => m.restaurant_id !== restaurantId).map((m: any) => (
-              <Link 
-                key={m.restaurant_id}
-                href={`/dashboard/${m.restaurant_id}`}
-                className="flex items-center gap-2 p-2 rounded-lg bg-muted/20 hover:bg-muted/50 border border-border/30 transition-all group/brand"
-              >
-                <div className="w-6 h-6 rounded-md bg-muted border border-border flex items-center justify-center text-[10px] text-muted-foreground group-hover/brand:text-foreground group-hover/brand:bg-violet-600/20 transition-colors uppercase font-black">
-                  {m.restaurants?.name?.slice(0, 2) || 'RT'}
-                </div>
-                <span className="text-[10px] font-bold text-muted-foreground group-hover/brand:text-foreground/70 truncate">{m.restaurants?.name}</span>
-              </Link>
-            ))}
+            {memberships.filter(m => m.restaurant_id !== restaurantId).map((m: any) => {
+              const targetSlug = m.restaurants?.slug || m.restaurant_id
+              return (
+                <Link 
+                  key={m.restaurant_id}
+                  href={`/dashboard/${targetSlug}`}
+                  className="flex items-center gap-2 p-2 rounded-lg bg-muted/20 hover:bg-muted/50 border border-border/30 transition-all group/brand"
+                >
+                  <div className="w-6 h-6 rounded-md bg-muted border border-border flex items-center justify-center text-[10px] text-muted-foreground group-hover/brand:text-foreground group-hover/brand:bg-violet-600/20 transition-colors uppercase font-black">
+                    {m.restaurants?.name?.slice(0, 2) || 'RT'}
+                  </div>
+                  <span className="text-[10px] font-bold text-muted-foreground group-hover/brand:text-foreground/70 truncate">{m.restaurants?.name}</span>
+                </Link>
+              )
+            })}
 
             {/* Create Brand Trigger for Special Admins */}
             {isSpecialAdmin && !!specialFeatures['create_restaurant'] && (
               <Link 
-                href={`/dashboard/${restaurantId}/setup/new`}
+                href={`/dashboard/${dashSlug}/setup/new`}
                 className="flex items-center gap-2 p-2 rounded-lg bg-violet-600/5 hover:bg-violet-600/10 border border-violet-500/20 transition-all border-dashed group/new mt-1"
               >
                 <div className="w-6 h-6 rounded-md bg-violet-600 text-foreground flex items-center justify-center text-[10px] font-black">
@@ -152,40 +188,61 @@ export function Sidebar({
         )}
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 space-y-1 mt-4">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== '/superadmin' && item.href !== '/dashboard' && pathname.startsWith(item.href))
-          const Icon = item.icon
-          
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group/nav text-nowrap",
-                isActive 
-                  ? "bg-violet-600/10 text-violet-400 border border-violet-500/20 shadow-[inset_0_0_12px_rgba(139,92,246,0.05)]" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/40 border border-transparent"
-              )}
-            >
-              <Icon 
-                className={cn(
-                  "h-5 w-5 transition-transform duration-300 group-hover/nav:scale-110 flex-shrink-0",
-                  isActive ? "text-violet-400" : "text-muted-foreground group-hover/nav:text-foreground/70"
-                )} 
-              />
-              {!isCollapsed && (
-                <span className="text-sm font-semibold tracking-wide animate-in fade-in slide-in-from-left-2 duration-300">
-                  {item.label}
+      {/* Grouped Navigation */}
+      <nav className="flex-1 px-3 space-y-6 mt-4 overflow-y-auto custom-scrollbar">
+        {navGroups.map((group) => (
+          <div key={group.label} className="space-y-1">
+            {!isCollapsed && (
+              <div className="px-3 mb-2 animate-in fade-in slide-in-from-left-1 duration-400">
+                <span className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
+                  {group.label}
                 </span>
-              )}
-              {isActive && !isCollapsed && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-500 shadow-[0_0_12px_rgba(139,92,246,0.6)]" />
-              )}
-            </Link>
-          )
-        })}
+              </div>
+            )}
+            
+            <div className="space-y-1">
+              {(() => {
+                const allHrefs = navGroups.flatMap(g => g.items.map(i => i.href))
+                return group.items.map((item) => {
+                  // Active if path starts with href AND no other more specific menu item matches
+                  const isActive = pathname === item.href || (
+                    pathname.startsWith(item.href) && 
+                    !allHrefs.some(h => h !== item.href && h.startsWith(item.href) && pathname.startsWith(h))
+                  )
+                  const Icon = item.icon
+                  
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group/nav text-nowrap",
+                        isActive 
+                          ? "bg-violet-600/10 text-violet-400 border border-violet-500/20 shadow-[inset_0_0_12px_rgba(139,92,246,0.05)]" 
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/40 border border-transparent"
+                      )}
+                    >
+                      <Icon 
+                        className={cn(
+                          "h-5 w-5 transition-transform duration-300 group-hover/nav:scale-110 flex-shrink-0",
+                          isActive ? "text-violet-400" : "text-muted-foreground group-hover/nav:text-foreground/70"
+                        )} 
+                      />
+                      {!isCollapsed && (
+                        <span className="text-sm font-semibold tracking-wide animate-in fade-in slide-in-from-left-2 duration-300">
+                          {item.label}
+                        </span>
+                      )}
+                      {isActive && !isCollapsed && (
+                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-500 shadow-[0_0_12px_rgba(139,92,246,0.6)]" />
+                      )}
+                    </Link>
+                  )
+                })
+              })()}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* User & Sign Out */}

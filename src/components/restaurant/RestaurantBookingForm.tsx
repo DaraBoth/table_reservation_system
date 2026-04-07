@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useActionState, useState, useTransition } from 'react'
+import { useActionState, useState, useTransition, useMemo } from 'react'
 import { format } from 'date-fns'
 import { createReservation, updateReservation } from '@/app/actions/reservations'
 import { getCommonCustomers, getOccupiedTableIds } from '@/app/actions/booking-intelligence'
@@ -14,16 +14,18 @@ import { DateTimePickerV2 } from '@/components/restaurant/date-time-picker-v2'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { 
-  CheckCircle2, ChevronLeft, ChevronRight, Star, ArrowRight, Calendar, User, 
-  Clock, Activity, PlusCircle, CalendarDays, Sparkles, CircleX, UtensilsCrossed,
+  CheckCircle2, ChevronLeft, ChevronRight, Star, ArrowRight, CalendarDays, User, 
+  Clock, Activity, PlusCircle, Sparkles, CircleX, UtensilsCrossed,
   Check, Copy, Image as ImageIcon
 } from 'lucide-react'
 import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
 import { CustomerSelector } from '@/components/dashboard/CustomerSelector'
+import { groupAndSortTables } from '@/lib/sorting'
 
 interface Props {
   tables: Tables<'physical_tables'>[]
+  zones: { id: string, name: string, sort_order: number }[]
   restaurantId: string
   initialData?: Omit<Tables<'reservations'>, 'start_time' | 'end_time'> & { start_time: Date; end_time?: Date }
   preSelectedTableId?: string
@@ -34,7 +36,7 @@ type SlideDir = 'right' | 'left'
 const slideInRight = 'animate-[slideInRight_0.28s_ease-out_forwards]'
 const slideInLeft  = 'animate-[slideInLeft_0.28s_ease-out_forwards]'
 
-export function RestaurantBookingForm({ tables, restaurantId, initialData, preSelectedTableId, businessType }: Props) {
+export function RestaurantBookingForm({ tables, zones, restaurantId, initialData, preSelectedTableId, businessType }: Props) {
   const isEdit = !!initialData
   const [state, action, pending] = useActionState(isEdit ? updateReservation : createReservation, null)
   const [isOccLoading, startOccupancyTransition] = useTransition()
@@ -116,8 +118,42 @@ export function RestaurantBookingForm({ tables, restaurantId, initialData, preSe
   const selectedTable = tables.find(t => t.id === selectedTableId)
   const slideClass = slideDir === 'right' ? slideInRight : slideInLeft
 
-  const availableTables = tables.filter(t => !occupiedDetails.some(o => o.table_id === t.id))
-  const bookedTables = tables.filter(t => occupiedDetails.some(o => o.table_id === t.id))
+  const { sortedZones, grouped, unassigned } = useMemo(() => 
+    groupAndSortTables(tables, zones), 
+    [tables, zones]
+  )
+
+  const renderTableGrid = (tablesList: Tables<'physical_tables'>[]) => (
+    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+      {tablesList.map((table) => {
+        const isOccupied = occupiedDetails.some(o => o.table_id === table.id)
+        const isSelected = selectedTableId === table.id
+        const isDisabled = isOccupied && bookingStatus === 'confirmed'
+
+        return (
+          <button
+            key={table.id}
+            type="button"
+            disabled={isDisabled}
+            onClick={() => setSelectedTableId(table.id)}
+            className={cn(
+              "relative group flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all duration-300",
+              isSelected 
+                ? "bg-emerald-500 border-emerald-400 text-foreground ring-4 ring-emerald-500/20 z-10 scale-[1.05]" 
+                : isOccupied 
+                  ? "bg-rose-500/5 border-rose-500/20 text-rose-400/60 opacity-60" 
+                  : "bg-background border-border hover:border-violet-500/40 text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <span className="text-[10px] font-black uppercase tracking-widest mb-1">{table.table_name}</span>
+            <div className="flex items-center gap-1">
+              <span className="text-[9px] font-bold">{table.capacity} Seats</span>
+            </div>
+          </button>
+        )
+      })}
+    </div>
+  )
 
 
   return (
@@ -148,7 +184,7 @@ export function RestaurantBookingForm({ tables, restaurantId, initialData, preSe
             <section className="bg-card rounded-3xl p-4 border border-border space-y-4 shadow-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-violet-400" /> When are you dining?
+                  <CalendarDays className="w-4 h-4 text-violet-400" /> When are you dining?
                 </h2>
               </div>
               
@@ -301,35 +337,30 @@ export function RestaurantBookingForm({ tables, restaurantId, initialData, preSe
                  </div>
                </div>
                
-               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-                 {tables.map((table) => {
-                   const isOccupied = occupiedDetails.some(o => o.table_id === table.id)
-                   const isSelected = selectedTableId === table.id
-                   // Disable selection ONLY if busy and status is NOT "Wait" (pending)
-                   const isDisabled = isOccupied && bookingStatus === 'confirmed'
-
+               <div className="space-y-8">
+                 {sortedZones.map((zone: { id: string; name: string }) => {
+                   const zoneTables = grouped[zone.id] || []
+                   if (zoneTables.length === 0) return null
                    return (
-                     <button
-                       key={table.id}
-                       type="button"
-                       disabled={isDisabled}
-                       onClick={() => setSelectedTableId(table.id)}
-                       className={cn(
-                         "relative group flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all duration-300",
-                         isSelected 
-                           ? "bg-emerald-500 border-emerald-400 text-foreground ring-4 ring-emerald-500/20 z-10 scale-[1.05]" 
-                           : isOccupied 
-                             ? "bg-rose-500/5 border-rose-500/20 text-rose-400/60 opacity-60" 
-                             : "bg-background border-border hover:border-violet-500/40 text-muted-foreground hover:text-foreground"
-                       )}
-                     >
-                        <span className="text-[10px] font-black uppercase tracking-widest mb-1">{table.table_name}</span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-[9px] font-bold">{table.capacity} Seats</span>
+                     <div key={zone.id} className="space-y-3">
+                        <div className="flex items-center gap-2 px-1">
+                          <div className="h-4 w-1 rounded-full bg-violet-500/50" />
+                          <h3 className="text-xs font-black text-foreground uppercase tracking-widest italic">{zone.name}</h3>
                         </div>
-                     </button>
+                        {renderTableGrid(zoneTables)}
+                     </div>
                    )
                  })}
+
+                 {unassigned.length > 0 && (
+                   <div className="space-y-3">
+                      <div className="flex items-center gap-2 px-1">
+                        <div className="h-4 w-1 rounded-full bg-muted" />
+                        <h3 className="text-xs font-black text-muted-foreground uppercase tracking-widest italic">Unassigned</h3>
+                      </div>
+                      {renderTableGrid(unassigned)}
+                   </div>
+                 )}
                </div>
             </section>
 

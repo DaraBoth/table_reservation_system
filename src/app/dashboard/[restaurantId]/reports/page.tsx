@@ -200,6 +200,7 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
       statusLabels={statusLabels}
       isAdmin={isAdmin}
       staffPerformance={staffPerformance}
+      currentSlug={res.activeSlug}
     />
   )
 }

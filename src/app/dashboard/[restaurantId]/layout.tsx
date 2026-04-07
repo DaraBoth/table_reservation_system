@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { BottomNav } from '@/components/layout/bottom-nav'
 import { TopBar } from '@/components/layout/top-bar'
+import { Sidebar } from '@/components/layout/sidebar'
 import { redirect } from 'next/navigation'
 import type { BusinessType } from '@/lib/business-type'
 import { RealtimeListener } from '@/components/realtime-listener'
@@ -22,10 +23,16 @@ export default async function DashboardLayout({
   const res = await getActiveRestaurant(restaurantId)
   if (!res) redirect('/login')
 
-  // URL-to-State Parity Check: If the URL ID (e.g., 'setup') is invalid, redirect to the real ID
-  if (restaurantId !== res.activeId) {
-    // Preserve the sub-path if possible (optional, but safer to just hit root)
-    redirect(`/dashboard/${res.activeId}`)
+  // URL-to-State Parity Check: 
+  // 1. If the route parameter is the actual UUID, but a slug exists, redirect to the user-friendly slug URL
+  // 2. If the active ID (from context) doesn't match the routeId (slug or UUID), redirect to the active slug
+  const { activeId, activeSlug } = res as any
+  if (restaurantId === activeId && activeSlug && activeSlug !== activeId) {
+    // Current URL is the long UUID, but a slug exists. Redirect to slug version.
+    redirect(`/dashboard/${activeSlug}`)
+  } else if (restaurantId !== activeId && restaurantId !== activeSlug) {
+    // Current URL matches neither. Redirect to the source of truth's slug.
+    redirect(`/dashboard/${activeSlug}`)
   }
 
   const { membership: membershipRaw, allMemberships: allMembershipsRaw } = res as any
@@ -46,7 +53,22 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex bg-background h-screen overflow-hidden">
-      <div className="flex-1 flex flex-col min-w-0 w-full">
+      {/* Desktop/Tablet Sidebar */}
+      <Sidebar 
+        user={{ email: user.email, name: displayName }}
+        role={membership.role}
+        brandName={restaurantName}
+        type="dashboard"
+        isAdmin={isAdmin}
+        isStaff={membership.role === 'staff'}
+        restaurantId={membership.restaurant_id}
+        activeSlug={activeSlug}
+        memberships={allMemberships}
+        isSpecialAdmin={isSpecialAdmin}
+        specialFeatures={specialFeatures}
+      />
+
+      <div className="flex-1 flex flex-col min-w-0 w-full overflow-hidden">
         <RealtimeListener restaurantId={membership.restaurant_id ?? undefined} />
         <NotificationManager restaurantId={membership.restaurant_id ?? undefined} />
         <TopBar 
@@ -55,17 +77,22 @@ export default async function DashboardLayout({
           userEmail={user.email} 
           avatarUrl={profile?.avatar_url}
           restaurantId={membership.restaurant_id ?? undefined} 
+          activeSlug={activeSlug}
           memberships={allMemberships}
         />
         <main className="flex-1 overflow-y-auto px-4 pt-6 pb-32 md:pb-6 custom-scrollbar">
           {children}
         </main>
+        
+        {/* Mobile Bottom Navigation */}
         <BottomNav 
           isAdmin={isAdmin} 
+          isStaff={membership.role === 'staff'}
           businessType={businessType} 
           isSpecialAdmin={isSpecialAdmin}
           specialFeatures={specialFeatures}
-          restaurantId={restaurantId}
+          restaurantId={membership.restaurant_id ?? undefined}
+          activeSlug={activeSlug}
           memberships={allMemberships}
           avatarUrl={profile?.avatar_url}
         />

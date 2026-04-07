@@ -59,7 +59,12 @@ export default async function EditReservationPage({ params }: Props) {
     .select('*')
     .eq('restaurant_id', membership.restaurant_id)
     .eq('is_active', true)
-    .order('table_name')
+
+  const { data: zones } = await supabase
+    .from('zones')
+    .select('*')
+    .eq('restaurant_id', membership.restaurant_id)
+    .order('sort_order', { ascending: true })
 
   const start = new Date(`${reservation.reservation_date}T${reservation.start_time}`)
   const end = new Date(`${reservation.reservation_date}T${reservation.end_time}`)
@@ -115,6 +120,7 @@ export default async function EditReservationPage({ params }: Props) {
       {/* Edit Form */}
       <ReservationForm
         tables={tables || []}
+        zones={zones || []}
         restaurantId={membership.restaurant_id}
         initialData={{ ...reservation, start_time: start, end_time: end || undefined }}
         businessType={businessType}

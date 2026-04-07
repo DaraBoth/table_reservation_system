@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { ShieldAlert, Users, User as UserIcon, Calendar, Mail, Trash2, ShieldCheck, Fingerprint } from 'lucide-react'
+import { ShieldAlert, Users, User as UserIcon, CalendarDays, Mail, Trash2, ShieldCheck, Fingerprint } from 'lucide-react'
 import { CreateUserDialog } from './CreateUserDialog'
 import { DeleteUserButton } from './DeleteUserButton'
 import type { Tables } from '@/lib/types/database'

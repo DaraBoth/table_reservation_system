@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import React, { useActionState, useState } from 'react'
 import { updatePhysicalTable, deletePhysicalTable } from '@/app/actions/tables'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,15 +11,17 @@ import { getTerms } from '@/lib/business-type'
 import { cn } from '@/lib/utils'
 import { Settings2, Pencil } from 'lucide-react'
 import type { Tables } from '@/lib/types/database'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-interface EditTableSheetProps {
+interface EditUnitSheetProps {
   table: Tables<'physical_tables'>
   businessType?: string
   isAdmin: boolean
   trigger?: React.ReactNode
+  zones?: { id: string, name: string }[]
 }
 
-export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, trigger }: EditTableSheetProps) {
+export function EditUnitSheet({ table, businessType = 'restaurant', isAdmin, trigger, zones = [] }: EditUnitSheetProps) {
   const [state, action, pending] = useActionState(updatePhysicalTable, null)
   const [deleteState, deleteAction, deletePending] = useActionState(deletePhysicalTable, null)
   const terms = getTerms(businessType)
@@ -27,6 +29,15 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
   const [beds, setBeds] = useState(table.capacity)
   const [isActive, setIsActive] = useState(table.is_active)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const [selectedZone, setSelectedZone] = useState<string | null>(table.zone_id || 'none')
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   return (
     <Sheet>
@@ -39,9 +50,15 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
           )
         }
       />
-      <SheetContent side="bottom" className="bg-background border-border text-foreground p-6 rounded-t-3xl h-[85vh] overflow-y-auto">
-        <SheetHeader className="p-0 mb-4">
-          <SheetTitle className="text-foreground text-lg font-black italic tracking-tight">Edit {terms.unit}: {table.table_name}</SheetTitle>
+      <SheetContent 
+        side={isMobile ? "bottom" : "right"} 
+        className={cn(
+          "bg-background border-border text-foreground p-6 overflow-y-auto custom-scrollbar",
+          isMobile ? "rounded-t-[2.5rem] h-[85vh]" : "sm:max-w-md h-full border-l"
+        )}
+      >
+        <SheetHeader className="p-0 mb-6 font-black italic tracking-tighter uppercase">
+          <SheetTitle className="text-foreground text-xl">Edit {terms.unit}: {table.table_name}</SheetTitle>
         </SheetHeader>
 
         <div className="space-y-6 pb-12">
@@ -91,6 +108,22 @@ export function EditTableSheet({ table, businessType = 'restaurant', isAdmin, tr
               <Label className="text-muted-foreground text-[10px] font-black uppercase tracking-widest px-1">Description</Label>
               <Textarea name="description" defaultValue={table.description || ''}
                 className="bg-card border-border text-foreground focus:border-violet-500 resize-none rounded-2xl text-base p-4 min-h-[100px]" rows={3} />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-muted-foreground text-[10px] font-black uppercase tracking-widest px-1">Assignment Zone (Optional)</Label>
+              <Select value={selectedZone} onValueChange={setSelectedZone}>
+                <input type="hidden" name="zoneId" value={selectedZone ?? 'none'} />
+                <SelectTrigger className="bg-card border-border text-foreground h-14 rounded-2xl text-base px-4">
+                  <SelectValue placeholder="No Zone (Unassigned)" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border-border rounded-2xl">
+                  <SelectItem value="none">No Zone</SelectItem>
+                  {zones.map(z => (
+                    <SelectItem key={z.id} value={z.id}>{z.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Active Status Toggle */}

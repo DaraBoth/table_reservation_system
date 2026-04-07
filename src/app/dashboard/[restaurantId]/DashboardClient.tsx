@@ -16,6 +16,7 @@ import type { Tables } from '@/lib/types/database'
 
 interface DashboardClientProps {
   restaurantId: string
+  activeSlug?: string
   initialData: {
     totalToday: number | null
     pendingCount: number | null
@@ -44,12 +45,13 @@ const statusLabels: Record<string, string> = {
   no_show: 'No Show',
 }
 
-export function DashboardClient({ initialData, restaurantId }: DashboardClientProps) {
+export function DashboardClient({ initialData, restaurantId, activeSlug }: DashboardClientProps) {
   const { totalToday, pendingCount, totalTables, upcomingReservations, businessType, todayStr } = initialData
   const terms = getTerms(businessType)
   const UnitIcon = terms.hasCheckout ? BedDouble : Table2
   const router = useRouter()
   const supabase = createClient()
+  const dashSlug = activeSlug || restaurantId
 
   // 🛰️ Real-time subscription to keep numbers and lists in sync
   useEffect(() => {
@@ -90,9 +92,9 @@ export function DashboardClient({ initialData, restaurantId }: DashboardClientPr
       {/* Stats Row with Magic Card Glow */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: `Total ${terms.bookings}`, count: totalToday, icon: CalendarDays, color: 'violet', href: `/dashboard/${restaurantId}/reservations` },
-          { label: 'Waiting', count: pendingCount, icon: Clock, color: 'amber', href: `/dashboard/${restaurantId}/reservations` },
-          { label: terms.units, count: totalTables, icon: UnitIcon, color: 'emerald', href: `/dashboard/${restaurantId}/tables` }
+          { label: `Total ${terms.bookings}`, count: totalToday, icon: CalendarDays, color: 'violet', href: `/dashboard/${dashSlug}/reservations` },
+          { label: 'Waiting', count: pendingCount, icon: Clock, color: 'amber', href: `/dashboard/${dashSlug}/reservations` },
+          { label: terms.units, count: totalTables, icon: UnitIcon, color: 'emerald', href: `/dashboard/${dashSlug}/units` }
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
@@ -143,7 +145,7 @@ export function DashboardClient({ initialData, restaurantId }: DashboardClientPr
         transition={{ delay: 0.3 }}
       >
         <Link
-          href={`/dashboard/${restaurantId}/reservations/new`}
+          href={`/dashboard/${dashSlug}/reservations/new`}
           className="relative group flex items-center justify-between w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-foreground rounded-2xl p-4 shadow-lg shadow-violet-500/25 transition-all active:scale-[0.98] overflow-hidden"
         >
           {/* Animated Shine Layer */}
@@ -170,7 +172,7 @@ export function DashboardClient({ initialData, restaurantId }: DashboardClientPr
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-black text-foreground uppercase tracking-widest italic">Upcoming {terms.bookings}</h2>
-          <Link href={`/dashboard/${restaurantId}/reservations`} className="text-[10px] text-violet-400 font-black uppercase tracking-widest hover:text-violet-300 transition-colors">
+          <Link href={`/dashboard/${dashSlug}/reservations`} className="text-[10px] text-violet-400 font-black uppercase tracking-widest hover:text-violet-300 transition-colors">
             See all →
           </Link>
         </div>
@@ -191,7 +193,7 @@ export function DashboardClient({ initialData, restaurantId }: DashboardClientPr
                     transition={{ delay: 0.4 + i * 0.05 }}
                   >
                     <Link
-                      href={`/dashboard/${restaurantId}/reservations/${res.id}/edit`}
+                      href={`/dashboard/${dashSlug}/reservations/${res.id}/edit`}
                       className="flex items-center gap-4 p-4 rounded-2xl bg-card/40 border border-border/60 hover:border-border/80 hover:bg-card/60 active:scale-[0.99] transition-all group"
                     >
                       {/* Avatar */}
@@ -229,7 +231,7 @@ export function DashboardClient({ initialData, restaurantId }: DashboardClientPr
                 <Clock className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-50" />
                 <p className="text-muted-foreground text-xs font-black uppercase tracking-widest italic">No bookings yet Today</p>
                 <Link
-                  href={`/dashboard/${restaurantId}/reservations/new`}
+                  href={`/dashboard/${dashSlug}/reservations/new`}
                   className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-violet-600/10 text-violet-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-violet-600/20 transition-all"
                 >
                   Create One <ChevronRight className="w-3 h-3" />

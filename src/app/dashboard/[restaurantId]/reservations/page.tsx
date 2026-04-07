@@ -32,17 +32,16 @@ export default async function ReservationsPage({ params, searchParams }: { param
   // Fetch Tables for the Share Status report
   const { data: tableData } = await supabase
     .from('physical_tables')
-    .select('*')
+    .select('*, zones(*)')
     .eq('restaurant_id', membership.restaurant_id)
     .eq('is_active', true)
-    .order('table_name')
 
   const tables = tableData || []
 
   // Initial Fetch: Anyone who is IN-HOUSE on the selected date
   const { data: allBookings } = await supabase
     .from('reservations')
-    .select('*, physical_tables(table_name, capacity), profiles(full_name)')
+    .select('*, physical_tables(table_name, capacity, zones(name)), profiles(full_name)')
     .eq('restaurant_id', membership.restaurant_id!)
     .lte('reservation_date', initialDate)
     .gte('checkout_date', initialDate)
@@ -53,6 +52,7 @@ export default async function ReservationsPage({ params, searchParams }: { param
       <ReservationsClient
         initialBookings={(allBookings ?? []) as any}
         restaurantId={membership.restaurant_id}
+        currentSlug={res.activeSlug}
         currentUserId={user.id}
         initialDate={initialDate}
         todayIso={todayIso}

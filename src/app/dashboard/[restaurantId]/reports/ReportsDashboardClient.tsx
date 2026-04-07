@@ -31,6 +31,7 @@ interface Props {
   statusLabels: Record<string, string>
   isAdmin: boolean
   staffPerformance?: any[]
+  currentSlug?: string
 }
 
 export default function ReportsDashboardClient({
@@ -42,7 +43,8 @@ export default function ReportsDashboardClient({
   statusColors,
   statusLabels,
   isAdmin,
-  staffPerformance = []
+  staffPerformance = [],
+  currentSlug
 }: Props) {
   const { resolvedTheme } = useTheme()
   const textColor = resolvedTheme === 'dark' ? '#e2e8f0' : '#1e293b'
@@ -101,7 +103,7 @@ export default function ReportsDashboardClient({
       <div className="flex items-center justify-between px-2">
         <div className="flex items-center gap-4">
           <Link
-            href="/dashboard/tables"
+            href={`/dashboard/${currentSlug}/units`}
             className="w-12 h-12 rounded-2xl bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-all shadow-xl hover:shadow-violet-500/10 flex-shrink-0"
           >
             <ChevronLeft className="w-6 h-6" />

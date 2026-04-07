@@ -13,15 +13,18 @@ import type { Tables } from '@/lib/types/database'
 import { DateTimePickerV2 } from '@/components/restaurant/date-time-picker-v2'
 import { cn } from '@/lib/utils'
 import {
-  CheckCircle2, ChevronLeft, ChevronRight, ArrowRight, Calendar, User,
+  CheckCircle2, ChevronLeft, ChevronRight, ArrowRight, CalendarDays, User,
   Clock, Sparkles, LogOut, Building2, Home
 } from 'lucide-react'
 import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
 import { CustomerSelector } from '@/components/dashboard/CustomerSelector'
+import { groupAndSortTables } from '@/lib/sorting'
+import { useMemo } from 'react'
 
 interface Props {
   tables: Tables<'physical_tables'>[]
+  zones: { id: string, name: string, sort_order: number }[]
   restaurantId: string
   initialData?: Omit<Tables<'reservations'>, 'start_time' | 'end_time'> & { start_time: Date; end_time?: Date }
   preSelectedTableId?: string
@@ -32,7 +35,7 @@ type SlideDir = 'right' | 'left'
 const slideInRight = 'animate-[slideInRight_0.28s_ease-out_forwards]'
 const slideInLeft = 'animate-[slideInLeft_0.28s_ease-out_forwards]'
 
-export function HotelReservationForm({ tables, restaurantId, initialData, preSelectedTableId, businessType }: Props) {
+export function HotelReservationForm({ tables, zones, restaurantId, initialData, preSelectedTableId, businessType }: Props) {
   const isEdit = !!initialData
   const [state, action, pending] = useActionState(isEdit ? updateReservation : createReservation, null)
   const [isOccLoading, startOccupancyTransition] = useTransition()
@@ -101,6 +104,39 @@ export function HotelReservationForm({ tables, restaurantId, initialData, preSel
   const selectedTable = tables.find(t => t.id === selectedTableId)
   const slideClass = slideDir === 'right' ? slideInRight : slideInLeft
 
+  const { sortedZones, grouped, unassigned } = useMemo(() => 
+    groupAndSortTables(tables, zones), 
+    [tables, zones]
+  )
+
+  const renderRoomGrid = (rooms: Tables<'physical_tables'>[]) => (
+    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+      {rooms.map((table) => {
+        const isOccupied = occupiedIds.includes(table.id)
+        const isSelected = selectedTableId === table.id
+
+        return (
+          <button
+            key={table.id}
+            type="button"
+            disabled={isOccupied}
+            onClick={() => handleTableSelect(table)}
+            className={cn(
+              "h-12 rounded-xl border flex flex-col items-center justify-center transition-all active:scale-95",
+              isOccupied
+                ? "bg-background/50 border-border text-muted-foreground cursor-not-allowed opacity-40"
+                : isSelected
+                  ? "bg-emerald-500 border-emerald-400 text-foreground shadow-lg shadow-emerald-500/20 z-10"
+                  : "bg-background border-border text-muted-foreground hover:border-border hover:text-foreground/80 shadow-xl"
+            )}
+          >
+            <span className="text-[10px] font-black uppercase tracking-widest">{table.table_name}</span>
+          </button>
+        )
+      })}
+    </div>
+  )
+
   return (
     <div className="relative">
       <form action={action} className="space-y-6">
@@ -123,7 +159,7 @@ export function HotelReservationForm({ tables, restaurantId, initialData, preSel
             <section className="bg-card rounded-3xl p-4 border border-border space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-violet-400" /> Check-in & Check-out
+                  <CalendarDays className="w-4 h-4 text-violet-400" /> Check-in & Check-out
                 </h2>
               </div>
 
@@ -162,31 +198,31 @@ export function HotelReservationForm({ tables, restaurantId, initialData, preSel
                 </div>
               </div>
 
-              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                {tables.map((table) => {
-                  const isOccupied = occupiedIds.includes(table.id)
-                  const isSelected = selectedTableId === table.id
+              <div className="space-y-6">
+                 {sortedZones.map(zone => {
+                   const zoneRooms = grouped[zone.id] || []
+                   if (zoneRooms.length === 0) return null
+                   return (
+                     <div key={zone.id} className="space-y-3">
+                        <div className="flex items-center gap-2 px-1">
+                          <div className="h-4 w-1 rounded-full bg-violet-500/50" />
+                          <h3 className="text-xs font-black text-foreground uppercase tracking-widest italic">{zone.name}</h3>
+                        </div>
+                        {renderRoomGrid(zoneRooms)}
+                     </div>
+                   )
+                 })}
 
-                  return (
-                    <button
-                      key={table.id}
-                      type="button"
-                      disabled={isOccupied}
-                      onClick={() => handleTableSelect(table)}
-                      className={cn(
-                        "h-12 rounded-xl border flex flex-col items-center justify-center transition-all active:scale-95",
-                        isOccupied
-                          ? "bg-background/50 border-border text-muted-foreground cursor-not-allowed opacity-40"
-                          : isSelected
-                            ? "bg-emerald-500 border-emerald-400 text-foreground shadow-lg shadow-emerald-500/20 z-10"
-                            : "bg-background border-border text-muted-foreground hover:border-border hover:text-foreground/80 shadow-xl"
-                      )}
-                    >
-                      <span className="text-[10px] font-black uppercase tracking-widest">{table.table_name}</span>
-                    </button>
-                  )
-                })}
-              </div>
+                 {unassigned.length > 0 && (
+                   <div className="space-y-3">
+                      <div className="flex items-center gap-2 px-1">
+                        <div className="h-4 w-1 rounded-full bg-muted" />
+                        <h3 className="text-xs font-black text-muted-foreground uppercase tracking-widest italic">Unassigned</h3>
+                      </div>
+                      {renderRoomGrid(unassigned)}
+                   </div>
+                 )}
+               </div>
             </section>
 
             <Button

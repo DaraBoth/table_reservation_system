@@ -23,20 +23,24 @@ import { Search, ChevronDown, ChevronUp, Check } from 'lucide-react'
 
 interface BottomNavProps {
   isAdmin?: boolean
+  isStaff?: boolean
   businessType?: BusinessType
   isSpecialAdmin?: boolean
   specialFeatures?: Record<string, any>
   restaurantId: string
+  activeSlug?: string
   memberships?: any[]
   avatarUrl?: string | null
 }
 
 export function BottomNav({ 
   isAdmin, 
+  isStaff,
   businessType = 'restaurant', 
   isSpecialAdmin = false, 
   specialFeatures = {},
   restaurantId,
+  activeSlug,
   memberships = [],
   avatarUrl
 }: BottomNavProps) {
@@ -48,15 +52,16 @@ export function BottomNav({
   const [isSwitchingRestaurant, setIsSwitchingRestaurant] = useState(false)
   
   const terms = getTerms(businessType)
+  const dashSlug = activeSlug || restaurantId
 
   // Use BedDouble icon for hotel/guesthouse rooms, LayoutGrid for restaurant tables
   const unitIcon = terms.hasCheckout ? BedDouble : LayoutGrid
 
   const primaryItems = [
-    { href: `/dashboard/${restaurantId}`, label: 'Dashboard', icon: Home, exact: true },
-    { href: `/dashboard/${restaurantId}/tables`, label: terms.units, icon: unitIcon, exact: false },
-    { href: `/dashboard/${restaurantId}/reservations`, label: terms.bookings, icon: CalendarDays, exact: false },
-    { href: `/dashboard/${restaurantId}/customers`, label: 'Customers', icon: BookUser, exact: false },
+    { href: `/dashboard/${dashSlug}`, label: 'Dashboard', icon: Home, exact: true },
+    { href: `/dashboard/${dashSlug}/units`, label: terms.units, icon: unitIcon, exact: false },
+    { href: `/dashboard/${dashSlug}/reservations`, label: terms.bookings, icon: CalendarDays, exact: false },
+    { href: `/dashboard/${dashSlug}/customers`, label: 'Customers', icon: BookUser, exact: false },
   ]
 
   const currentMembership = memberships.find(m => m.restaurant_id === restaurantId)
@@ -72,18 +77,22 @@ export function BottomNav({
   const maxBrands = specialFeatures['create_restaurant']?.max_brands || 1
   const canEstablishMore = memberships.length < maxBrands || isAdmin // Superadmins can always establish
 
-  const buildTargetPath = (nextRestaurantId: string) => {
+  const buildTargetPath = (nextRestaurantId: string, nextSlug?: string) => {
+    const targetId = nextSlug || nextRestaurantId
     const segments = pathname.split('/').filter(Boolean)
     if (segments[0] === 'dashboard' && segments[1]) {
       const suffix = segments.slice(2).join('/')
       return suffix
-        ? `/dashboard/${nextRestaurantId}/${suffix}`
-        : `/dashboard/${nextRestaurantId}`
+        ? `/dashboard/${targetId}/${suffix}`
+        : `/dashboard/${targetId}`
     }
-    return `/dashboard/${nextRestaurantId}`
+    return `/dashboard/${targetId}`
   }
 
-  const handleRestaurantSwitch = async (nextRestaurantId: string) => {
+  const handleRestaurantSwitch = async (m: any) => {
+    const nextRestaurantId = m.restaurant_id
+    const nextSlug = m.restaurants?.slug
+
     if (isSwitchingRestaurant || nextRestaurantId === restaurantId) {
       setOpen(false)
       return
@@ -99,14 +108,14 @@ export function BottomNav({
     } catch {
       // Navigate anyway; page route still works even if cookie write fails.
     } finally {
-      const target = buildTargetPath(nextRestaurantId)
+      const target = buildTargetPath(nextRestaurantId, nextSlug)
       router.push(target)
       setOpen(false)
     }
   }
 
   return (
-    <nav className="fixed bottom-6 left-6 right-6 z-50 bg-card/80 backdrop-blur-2xl border border-border/50 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <nav className="fixed bottom-6 left-6 right-6 z-50 bg-card/80 backdrop-blur-2xl border border-border/50 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.6)] animate-in fade-in slide-in-from-bottom-4 duration-500 md:hidden">
       <div
         className="flex items-stretch justify-around px-2 py-3"
       >
@@ -150,19 +159,19 @@ export function BottomNav({
               <button
                 className={cn(
                   'flex flex-col items-center justify-start flex-1 gap-1.5 transition-all duration-200 relative min-w-[4rem]',
-                  isPortfolioOpen || pathname === '/dashboard/account' || pathname === '/dashboard/staff' || pathname.startsWith('/dashboard/reports') ? 'text-violet-400' : 'text-muted-foreground'
+                  isPortfolioOpen || pathname.includes(`${dashSlug}/account`) || pathname.includes(`${dashSlug}/staff`) || pathname.includes(`${dashSlug}/reports`) ? 'text-violet-400' : 'text-muted-foreground'
                 )}
               >
                 <Menu
                   className={cn(
                     'w-6 h-6 transition-all duration-300',
-                    (isPortfolioOpen || pathname === `/dashboard/${restaurantId}/account` || pathname === `/dashboard/${restaurantId}/staff` || pathname.startsWith(`/dashboard/${restaurantId}/reports`)) && 'scale-110 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]'
+                    (isPortfolioOpen || pathname.includes(`${dashSlug}/account`) || pathname.includes(`${dashSlug}/staff`) || pathname.includes(`${dashSlug}/reports`)) && 'scale-110 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]'
                   )}
-                  fill={isPortfolioOpen || pathname === `/dashboard/${restaurantId}/account` || pathname === `/dashboard/${restaurantId}/staff` || pathname.startsWith(`/dashboard/${restaurantId}/reports`) ? 'currentColor' : 'none'} 
+                  fill={isPortfolioOpen || pathname.includes(`${dashSlug}/account`) || pathname.includes(`${dashSlug}/staff`) || pathname.includes(`${dashSlug}/reports`) ? 'currentColor' : 'none'} 
                 />
                 <span className={cn(
                   "text-[10px] font-bold tracking-wide transition-colors",
-                  (isPortfolioOpen || pathname === `/dashboard/${restaurantId}/account` || pathname === `/dashboard/${restaurantId}/staff` || pathname.startsWith(`/dashboard/${restaurantId}/reports`)) ? 'text-violet-400' : 'text-muted-foreground'
+                  (isPortfolioOpen || pathname.includes(`${dashSlug}/account`) || pathname.includes(`${dashSlug}/staff`) || pathname.includes(`${dashSlug}/reports`)) ? 'text-violet-400' : 'text-muted-foreground'
                 )}>
                   More
                 </span>
@@ -225,7 +234,7 @@ export function BottomNav({
                              key={m.restaurant_id}
                              type="button"
                              disabled={isSwitchingRestaurant}
-                             onClick={() => void handleRestaurantSwitch(m.restaurant_id)}
+                             onClick={() => void handleRestaurantSwitch(m)}
                              className={cn(
                                "w-full flex items-center justify-between p-4 rounded-2xl border transition-all group/opt disabled:opacity-60 disabled:cursor-not-allowed",
                                isCurrent 
@@ -257,7 +266,7 @@ export function BottomNav({
                     {isSpecialAdmin && canEstablishMore && (
                       <div className="pt-4 mt-4 border-t border-border">
                         <Link 
-                          href={`/dashboard/${restaurantId}/setup/new`}
+                          href={`/dashboard/${dashSlug}/setup/new`}
                           onClick={() => setOpen(false)}
                           className="w-full flex items-center justify-center gap-3 p-5 rounded-[2rem] bg-violet-600/10 text-violet-400 border border-violet-500/20 hover:bg-violet-600/20 hover:border-violet-500/40 transition-all font-black text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-violet-600/5 group/new"
                         >
@@ -269,30 +278,52 @@ export function BottomNav({
                   </div>
                 ) : (
                   <div className="p-4 space-y-1.5 mt-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <MenuLink 
-                      href={`/dashboard/${restaurantId}/reports`} 
-                      icon={BarChart3} 
-                      label="Reports" 
-                      active={pathname.startsWith(`/dashboard/${restaurantId}/reports`)} 
-                      onClick={() => setOpen(false)}
-                    />
-                    {isAdmin && (
-                      <MenuLink 
-                        href={`/dashboard/${restaurantId}/staff`} 
-                        icon={Users} 
-                        label="Staff" 
-                        active={pathname.startsWith(`/dashboard/${restaurantId}/staff`)} 
-                        onClick={() => setOpen(false)}
-                      />
-                    )}
+                    {(() => {
+                      const additionalHrefs = [
+                        `/dashboard/${dashSlug}/reports`,
+                        `/dashboard/${dashSlug}/units/manage`,
+                        `/dashboard/${dashSlug}/staff`,
+                        `/dashboard/${dashSlug}/account`,
+                        ...primaryItems.map(i => i.href)
+                      ]
+                      return (
+                        <>
+                          <MenuLink 
+                            href={`/dashboard/${dashSlug}/reports`} 
+                            icon={BarChart3} 
+                            label="Reports" 
+                            active={pathname.startsWith(`/dashboard/${dashSlug}/reports`) && !additionalHrefs.some(h => h !== `/dashboard/${dashSlug}/reports` && h.startsWith(`/dashboard/${dashSlug}/reports`) && pathname.startsWith(h))} 
+                            onClick={() => setOpen(false)}
+                          />
+                          {(isAdmin || isStaff) && (
+                            <MenuLink 
+                              href={`/dashboard/${dashSlug}/units/manage`} 
+                              icon={Settings} 
+                              label={`Manage ${terms.units}`} 
+                              active={pathname === `/dashboard/${dashSlug}/units/manage` || (pathname.startsWith(`/dashboard/${dashSlug}/units/manage`) && !additionalHrefs.some(h => h !== `/dashboard/${dashSlug}/units/manage` && h.startsWith(`/dashboard/${dashSlug}/units/manage`) && pathname.startsWith(h)))} 
+                              onClick={() => setOpen(false)}
+                            />
+                          )}
+                          {isAdmin && (
+                            <MenuLink 
+                              href={`/dashboard/${dashSlug}/staff`} 
+                              icon={Users} 
+                              label="Staff" 
+                              active={pathname.startsWith(`/dashboard/${dashSlug}/staff`) && !additionalHrefs.some(h => h !== `/dashboard/${dashSlug}/staff` && h.startsWith(`/dashboard/${dashSlug}/staff`) && pathname.startsWith(h))} 
+                              onClick={() => setOpen(false)}
+                            />
+                          )}
 
-                    <MenuLink 
-                      href={`/dashboard/${restaurantId}/account`} 
-                      icon={avatarUrl ? () => <div className="w-5 h-5 rounded-md overflow-hidden"><img src={avatarUrl} className="w-full h-full object-cover" /></div> : UserCircle} 
-                      label="Settings" 
-                      active={pathname.startsWith(`/dashboard/${restaurantId}/account`)} 
-                      onClick={() => setOpen(false)}
-                    />
+                          <MenuLink 
+                            href={`/dashboard/${dashSlug}/account`} 
+                            icon={avatarUrl ? () => <div className="w-5 h-5 rounded-md overflow-hidden"><img src={avatarUrl} className="w-full h-full object-cover" /></div> : UserCircle} 
+                            label="Settings" 
+                            active={pathname.startsWith(`/dashboard/${dashSlug}/account`) && !additionalHrefs.some(h => h !== `/dashboard/${dashSlug}/account` && h.startsWith(`/dashboard/${dashSlug}/account`) && pathname.startsWith(h))} 
+                            onClick={() => setOpen(false)}
+                          />
+                        </>
+                      )
+                    })()}
 
                     <div className="pt-6 mt-6 border-t border-border/50 px-2 text-center">
                       <form action={logout}>

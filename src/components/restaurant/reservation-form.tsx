@@ -8,6 +8,7 @@ import { HotelReservationForm } from '../hotel/HotelReservationForm'
 
 interface Props {
   tables: Tables<'physical_tables'>[]
+  zones: { id: string, name: string, sort_order: number }[]
   restaurantId: string
   initialData?: Omit<Tables<'reservations'>, 'start_time' | 'end_time'> & { start_time: Date; end_time?: Date }
   preSelectedTableId?: string

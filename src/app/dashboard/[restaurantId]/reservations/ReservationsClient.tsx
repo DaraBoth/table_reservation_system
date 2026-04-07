@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { format, parseISO } from 'date-fns'
-import { Plus, ChevronRight, ClipboardList, Calendar, Clock } from 'lucide-react'
+import { Plus, ChevronRight, ClipboardList, CalendarDays, Clock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { buttonVariants } from '@/components/ui/button-variants'
@@ -12,9 +12,12 @@ import { createClient } from '@/lib/supabase/client'
 import { getTerms } from '@/lib/business-type'
 import { DateNavigator } from '@/components/dashboard/DateNavigator'
 import { Tables } from '@/lib/types/database'
+import { groupAndSortTables } from '@/lib/sorting'
 import { ViewSwitcher, type ViewStyle } from '@/components/dashboard/ViewSwitcher'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
+import { ActionHub } from '@/components/dashboard/ActionHub'
+import { BarChart3 } from 'lucide-react'
 
 interface Reservation extends Tables<'reservations'> {
   physical_tables: Pick<Tables<'physical_tables'>, 'table_name' | 'capacity'> | null
@@ -24,6 +27,7 @@ interface Reservation extends Tables<'reservations'> {
 interface Props {
   initialBookings: Reservation[]
   restaurantId: string
+  currentSlug?: string
   currentUserId?: string
   initialDate: string
   todayIso: string
@@ -59,8 +63,16 @@ const statusAvatarBg: Record<string, string> = {
 }
 
 export function ReservationsClient({ 
-  initialBookings, restaurantId, currentUserId, initialDate, todayIso, businessType, tables 
+  initialBookings, 
+  restaurantId, 
+  currentSlug,
+  currentUserId, 
+  initialDate, 
+  todayIso, 
+  businessType, 
+  tables 
 }: Props) {
+  const dashboardSlug = currentSlug || restaurantId
   const [selectedDate, setSelectedDate] = useState(initialDate)
   const [bookings, setBookings] = useState<Reservation[]>(initialBookings)
   const [viewStyle, setViewStyle] = useState<ViewStyle>('grid')
@@ -91,38 +103,64 @@ export function ReservationsClient({
     const timeStr = format(now, 'hh:mm bb')
     
     // Determine which tables are occupied on this specific date
-    // (Note: This is a simplified check based on current dashboard bookings)
-    const occupiedTableIds = bookings
-      .filter(b => ['confirmed', 'arrived'].includes(b.status))
-      .map(b => b.table_id)
+    const occupiedRows = bookings.filter(b => ['confirmed', 'arrived'].includes(b.status))
+    const occupiedTableIds = occupiedRows.map(b => b.table_id)
 
-    const availableTables = tables.filter(t => !occupiedTableIds.includes(t.id))
-    const bookedTables = tables.filter(t => occupiedTableIds.includes(t.id))
+    // Use our sorting utility to get consistent grouping
+    // We need zones, but they might be on the tables themselves
+    const uniqueZones = Array.from(new Set(tables.map(t => (t as any).zones).filter(Boolean).map(z => JSON.stringify(z)))).map(s => JSON.parse(s))
+    const { sortedZones, grouped, unassigned } = groupAndSortTables(tables, uniqueZones)
     
     let text = `Date: ${dateStr} As of ${timeStr}\n\n`
     
-    text += `AVAILABLE (${availableTables.length}):\n`
-    availableTables.forEach(t => {
-      text += `• ${t.table_name} (${t.capacity} Seats)\n`
-    })
+    text += `AVAILABLE (${tables.filter(t => !occupiedTableIds.includes(t.id)).length}):\n`
     
-    text += `\nBOOKED (${bookedTables.length}):\n`
-    bookedTables.forEach(t => {
-      const res = bookings.find(b => b.table_id === t.id && ['confirmed', 'arrived'].includes(b.status))
-      if (res) {
-        const hhmm = res.start_time?.replace(/^(\d{2}):(\d{2}):\d{2}$/, (_, h, m) => {
+    const renderTableStatus = (t: any, isAvailable: boolean) => {
+      if (isAvailable) {
+        return `• ${t.table_name} (${t.capacity} Seats)\n`
+      } else {
+        const res = occupiedRows.find(b => b.table_id === t.id)
+        if (!res) return ''
+        const hhmm = res.start_time?.replace(/^(\d{2}):(\d{2}):\d{2}$/, (_: string, h: string, m: string) => {
           const hh = parseInt(h);
-          const mm = m;
-          const ampm = hh >= 12 ? 'PM' : 'AM';
-          const displayH = hh % 12 || 12;
-          return `${displayH}:${mm} ${ampm}`;
+          return `${hh % 12 || 12}:${m} ${hh >= 12 ? 'PM' : 'AM'}`;
         });
-        text += `• ${t.table_name} - ${res.guest_name} ${hhmm}\n`
+        return `• ${t.table_name} - ${res.guest_name} ${hhmm}\n`
+      }
+    }
+
+    // List by Zone
+    sortedZones.forEach(zone => {
+      const zoneTables = grouped[zone.id] || []
+      const availableInZone = zoneTables.filter(t => !occupiedTableIds.includes(t.id))
+      if (availableInZone.length > 0) {
+        text += `[${zone.name}]\n`
+        availableInZone.forEach(t => { text += renderTableStatus(t, true) })
       }
     })
     
+    if (unassigned.filter(t => !occupiedTableIds.includes(t.id)).length > 0) {
+      text += `[Unassigned]\n`
+      unassigned.filter(t => !occupiedTableIds.includes(t.id)).forEach(t => { text += renderTableStatus(t, true) })
+    }
+    
+    text += `\nBOOKED (${occupiedTableIds.length}):\n`
+    sortedZones.forEach(zone => {
+      const zoneTables = grouped[zone.id] || []
+      const bookedInZone = zoneTables.filter(t => occupiedTableIds.includes(t.id))
+      if (bookedInZone.length > 0) {
+        text += `[${zone.name}]\n`
+        bookedInZone.forEach(t => { text += renderTableStatus(t, false) })
+      }
+    })
+
+    if (unassigned.filter(t => occupiedTableIds.includes(t.id)).length > 0) {
+      text += `[Unassigned]\n`
+      unassigned.filter(t => occupiedTableIds.includes(t.id)).forEach(t => { text += renderTableStatus(t, false) })
+    }
+    
     try {
-      await navigator.clipboard.writeText(text)
+      await navigator.clipboard.writeText(text.trim())
       toast.success('Status report copied!')
     } catch (err) {
       toast.error('Failed to copy status')
@@ -136,7 +174,7 @@ export function ReservationsClient({
   const fetchLatestData = useCallback(async () => {
     const { data } = await supabase
       .from('reservations')
-      .select('*, physical_tables(table_name, capacity), profiles(full_name)')
+      .select('*, physical_tables(table_name, capacity, zones(name, sort_order)), profiles(full_name)')
       .eq('restaurant_id', restaurantId)
       .lte('reservation_date', selectedDate)
       .gte('checkout_date', selectedDate)
@@ -181,10 +219,6 @@ export function ReservationsClient({
             <h1 className="text-xl font-black text-foreground italic tracking-tight uppercase">
               {terms.bookings}
             </h1>
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-violet-600/10 border border-violet-500/20">
-              <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
-              <span className="text-[9px] font-black text-violet-400 uppercase tracking-tighter">Live Feed</span>
-            </div>
             <Button
               variant="outline"
               size="sm"
@@ -202,11 +236,16 @@ export function ReservationsClient({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <ViewSwitcher currentStyle={viewStyle} onStyleChange={handleViewChange} />
+        <div className="flex items-center gap-3">
+          {isSelectedToday && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Live Sync</span>
+            </div>
+          )}
           <Link
             id="new-booking-button"
-            href={`/dashboard/${restaurantId}/reservations/new`}
+            href={`/dashboard/${dashboardSlug}/reservations/new`}
             className={cn(
               buttonVariants({ size: 'sm' }),
               'bg-gradient-to-r from-violet-600 to-indigo-600 border-0 rounded-xl gap-1.5 font-black text-foreground shadow-lg shadow-violet-500/20 h-10 px-4 transition-all duration-300 active:scale-95'
@@ -234,12 +273,7 @@ export function ReservationsClient({
               Booked for {isSelectedToday ? 'Today' : format(parseISO(selectedDate), 'MMM dd')}
             </h2>
           </div>
-          {isSelectedToday && (
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[9px] font-black text-emerald-400 uppercase tracking-tighter">Live Sync</span>
-            </div>
-          )}
+          <ViewSwitcher currentStyle={viewStyle} onStyleChange={handleViewChange} />
         </div>
 
         {bookings.length > 0 ? (
@@ -261,7 +295,7 @@ export function ReservationsClient({
                   >
                     <Link 
                       id={`booking-link-list-${res.id}`}
-                      href={`/dashboard/${restaurantId}/reservations/${res.id}/edit`}
+                      href={`/dashboard/${dashboardSlug}/reservations/${res.id}/edit`}
                       className="group flex items-center gap-4 p-3 rounded-2xl bg-card/40 border border-border hover:border-violet-500/30 transition-all overflow-hidden"
                     >
                       <div className={cn(
@@ -316,7 +350,7 @@ export function ReservationsClient({
                   >
                     <Link 
                       id={`booking-link-compact-${res.id}`}
-                      href={`/dashboard/${restaurantId}/reservations/${res.id}/edit`}
+                      href={`/dashboard/${dashboardSlug}/reservations/${res.id}/edit`}
                       className="relative block h-24 p-3 rounded-2xl bg-card/40 border border-border hover:border-violet-500/30 transition-all overflow-hidden group"
                     >
                       <div className={cn(
@@ -352,7 +386,7 @@ export function ReservationsClient({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.02 }}
                 >
-                  <BookingCard res={res} restaurantId={restaurantId} todayIso={todayIso} currentUserId={currentUserId} />
+                  <BookingCard res={res} restaurantId={restaurantId} dashboardSlug={dashboardSlug} todayIso={todayIso} currentUserId={currentUserId} />
                 </motion.div>
               )
             })}
@@ -365,11 +399,27 @@ export function ReservationsClient({
           </div>
         )}
       </section>
+      <ActionHub 
+        actions={[
+          { 
+            label: 'New Reservation', 
+            icon: <Plus className="w-6 h-6" />, 
+            color: 'bg-violet-600 text-white',
+            onClick: () => window.location.href = `/dashboard/${dashboardSlug}/reservations/new`
+          },
+          { 
+            label: 'View Reports', 
+            icon: <BarChart3 className="w-5 h-5" />, 
+            color: 'bg-blue-600 text-white',
+            onClick: () => window.location.href = `/dashboard/${dashboardSlug}/reports`
+          },
+        ]} 
+      />
     </div>
   )
 }
 
-function BookingCard({ res, restaurantId, todayIso, currentUserId }: { res: Reservation; restaurantId: string; todayIso: string; currentUserId?: string }) {
+function BookingCard({ res, restaurantId, dashboardSlug, todayIso, currentUserId }: { res: Reservation; restaurantId: string; dashboardSlug: string; todayIso: string; currentUserId?: string }) {
   const start = res.start_time
     ? new Date(`${res.reservation_date}T${res.start_time}`)
     : null
@@ -416,7 +466,7 @@ function BookingCard({ res, restaurantId, todayIso, currentUserId }: { res: Rese
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between gap-2 overflow-hidden">
              <p className="text-[11px] text-muted-foreground font-black flex items-center gap-1 uppercase tracking-tight">
-               <Calendar className="w-3 h-3 text-muted-foreground/60" /> {timeStr}
+               <CalendarDays className="w-3 h-3 text-muted-foreground/60" /> {timeStr}
              </p>
              <p className="text-[9px] text-muted-foreground/50 font-bold truncate italic">
                {String(res.created_by) === String(currentUserId) ? 'Created by you' : (res.profiles?.full_name || 'Staff')}
@@ -444,6 +494,6 @@ function BookingCard({ res, restaurantId, todayIso, currentUserId }: { res: Rese
     </div>
   )
 
-  if (canEdit) return <Link id={`booking-link-grid-${res.id}`} href={`/dashboard/${restaurantId}/reservations/${res.id}/edit`}>{card}</Link>
+  if (canEdit) return <Link id={`booking-link-grid-${res.id}`} href={`/dashboard/${dashboardSlug}/reservations/${res.id}/edit`}>{card}</Link>
   return card
 }

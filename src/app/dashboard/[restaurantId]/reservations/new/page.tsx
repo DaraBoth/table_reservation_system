@@ -23,8 +23,13 @@ export default async function NewReservationPage({ params, searchParams }: { par
     .select('*')
     .eq('restaurant_id', restaurantId)
     .eq('is_active', true)
-    .order('table_name')
   
+  const { data: zones } = await supabase
+    .from('zones')
+    .select('*')
+    .eq('restaurant_id', restaurantId)
+    .order('sort_order', { ascending: true })
+
   const tables = tableData || []
 
   // Read pre-selected table from URL param (e.g., tapped from Tables page)
@@ -33,6 +38,7 @@ export default async function NewReservationPage({ params, searchParams }: { par
   return (
     <CreateReservationForm
       tables={tables ?? []}
+      zones={zones ?? []}
       restaurantId={restaurantId}
       preSelectedTableId={tableId}
       businessType={businessType}
