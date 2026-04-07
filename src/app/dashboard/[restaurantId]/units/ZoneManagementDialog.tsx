@@ -148,6 +148,7 @@ export function ZoneManagementDialog({ restaurantId, onUpdate }: Props) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
+        nativeButton={false}
         render={
           <Button variant="outline" className="h-10 px-4 bg-card border border-border rounded-xl text-foreground/70 text-[10px] font-black uppercase tracking-widest hover:border-violet-500/50 hover:text-violet-300 transition-all shadow-lg gap-2">
             <Layers className="w-4 h-4" /> Manage Zones

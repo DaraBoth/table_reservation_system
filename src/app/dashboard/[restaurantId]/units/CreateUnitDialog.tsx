@@ -43,6 +43,7 @@ export function CreateUnitDialog({
     <Sheet open={open} onOpenChange={setOpen}>
       <Confetti active={showConfetti} />
       <SheetTrigger
+        nativeButton={false}
         render={
           <Button className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 shadow-lg shadow-violet-500/25 text-foreground h-12 rounded-xl text-[11px] font-black uppercase tracking-widest px-6 active:scale-95 transition-all">
             + Add {terms.unit}

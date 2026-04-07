@@ -1,6 +1,6 @@
 # "Platform Refactor" Task Tracking
 
-Current focus: Audit and terminology.
+Current focus: Final audit.
 
 - [x] Consolidate disparate header actions into the `ActionHub` component logic.
 - [x] Implement MUI-style "Speed Dial" elastic expansion for the hub.
@@ -10,5 +10,6 @@ Current focus: Audit and terminology.
 - [x] Simplify utility bar (remove card wrap, keep only ViewSwitcher).
 - [x] Reduce vertical spacing between header and controls.
 - [x] Remove redundant `min-h-[5.5rem]` vertical spacer.
+- [x] Fix "Base UI" accessibility console error (`nativeButton={false}`).
 - [ ] Audit terminology across the app for "Unit/Table/Room" accuracy.
 - [ ] Final visual polish on iPad (Landscape vs Portrait).

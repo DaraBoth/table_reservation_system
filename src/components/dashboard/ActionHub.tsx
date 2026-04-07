@@ -21,10 +21,10 @@ export function ActionHub({ actions }: ActionHubProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <div className="fixed bottom-8 right-8 z-[200]">
+    <div className="fixed bottom-26 md:bottom-8 right-6 md:right-8 z-[200]">
       <AnimatePresence>
         {isOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -44,11 +44,11 @@ export function ActionHub({ actions }: ActionHubProps) {
                   initial={{ opacity: 0, y: 20, scale: 0.8 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.8 }}
-                  transition={{ 
-                    delay: (actions.length - idx) * 0.05, 
-                    type: "spring", 
-                    stiffness: 300, 
-                    damping: 25 
+                  transition={{
+                    delay: (actions.length - idx) * 0.05,
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 25
                   }}
                   className="flex items-center gap-4 group"
                 >
@@ -66,7 +66,7 @@ export function ActionHub({ actions }: ActionHubProps) {
                       })}
                     </div>
                   ) : (
-                    <button 
+                    <button
                       onClick={() => { action.onClick?.(); setIsOpen(false); }}
                       className={cn("w-14 h-14 rounded-[1.25rem] flex items-center justify-center transition-all active:scale-95 shadow-2xl border border-border/50 hover:border-violet-500/50", action.color)}
                     >

@@ -42,6 +42,7 @@ export function EditUnitSheet({ table, businessType = 'restaurant', isAdmin, tri
   return (
     <Sheet>
       <SheetTrigger
+        nativeButton={false}
         render={
           (trigger as React.ReactElement) || (
             <button className="w-9 h-9 flex items-center justify-center bg-muted/50 border border-border rounded-xl text-muted-foreground hover:border-violet-500/50 hover:text-violet-400 transition-all active:scale-90">
