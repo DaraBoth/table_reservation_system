@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react'
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { format, parseISO } from 'date-fns'
 import { Plus, ChevronRight, ClipboardList, CalendarDays } from 'lucide-react'
@@ -15,7 +15,7 @@ import { Tables } from '@/lib/types/database'
 import { groupAndSortTables } from '@/lib/sorting'
 import { ViewSwitcher, type ViewStyle } from '@/components/dashboard/ViewSwitcher'
 import { toast } from 'sonner'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { ActionHub } from '@/components/dashboard/ActionHub'
 import { BarChart3 } from 'lucide-react'
 
@@ -79,6 +79,19 @@ export function ReservationsClient({
   const [selectedDate, setSelectedDate] = useState(initialDate)
   const [bookings, setBookings] = useState<Reservation[]>(initialBookings)
   const [viewStyle, setViewStyle] = useState<ViewStyle>('grid')
+  const [liveMessage, setLiveMessage] = useState<string | null>(null)
+  const liveMessageTimeoutRef = useRef<number | null>(null)
+
+  const showLiveMessage = useCallback((message: string) => {
+    setLiveMessage(message)
+    if (liveMessageTimeoutRef.current) {
+      window.clearTimeout(liveMessageTimeoutRef.current)
+    }
+    liveMessageTimeoutRef.current = window.setTimeout(() => {
+      setLiveMessage(null)
+      liveMessageTimeoutRef.current = null
+    }, 4000)
+  }, [])
 
   const handleViewChange = (style: ViewStyle) => {
     setViewStyle(style)
@@ -212,7 +225,16 @@ export function ReservationsClient({
           table: 'reservations',
           filter: `restaurant_id=eq.${restaurantId}`
         },
-        () => {
+        (payload: { eventType: string; new: Record<string, unknown> }) => {
+          if (payload.eventType === 'INSERT') {
+            const guestName = typeof payload.new.guest_name === 'string' ? payload.new.guest_name : 'New guest'
+            const startTime = typeof payload.new.start_time === 'string' ? payload.new.start_time.slice(0, 5) : null
+            const message = startTime ? `${guestName} at ${startTime}` : guestName
+            showLiveMessage(`New booking: ${message}`)
+            toast.success(`New booking: ${message}`)
+          } else {
+            showLiveMessage('Bookings updated')
+          }
           void fetchLatestData()
         }
       )
@@ -221,7 +243,15 @@ export function ReservationsClient({
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [supabase, restaurantId, fetchLatestData])
+  }, [fetchLatestData, restaurantId, showLiveMessage, supabase])
+
+  useEffect(() => {
+    return () => {
+      if (liveMessageTimeoutRef.current) {
+        window.clearTimeout(liveMessageTimeoutRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const refreshOnFocus = () => {
@@ -253,9 +283,25 @@ export function ReservationsClient({
       <div className="flex flex-col justify-between gap-3 pt-2 sm:flex-row sm:items-center sm:gap-4">
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2 sm:justify-start sm:flex-wrap">
-            <h1 className="text-xl font-black text-foreground italic tracking-tight uppercase">
-              {terms.bookings}
-            </h1>
+            <div className="flex items-center gap-2 sm:flex-wrap">
+              <h1 className="text-xl font-black text-foreground italic tracking-tight uppercase">
+                {terms.bookings}
+              </h1>
+              <AnimatePresence>
+                {liveMessage ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                  >
+                    <Badge className="border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-emerald-300 shadow-sm shadow-emerald-950/20">
+                      <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      {liveMessage}
+                    </Badge>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+            </div>
             <Button
               variant="outline"
               size="sm"

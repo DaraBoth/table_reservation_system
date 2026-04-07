@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { format, parseISO } from 'date-fns'
 import { createClient } from '@/lib/supabase/client'
@@ -12,6 +12,7 @@ import { NumberTicker } from '@/components/magicui/number-ticker'
 import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
 import type { Tables } from '@/lib/types/database'
+import { toast } from 'sonner'
 
 interface DashboardClientProps {
   restaurantId: string
@@ -46,11 +47,24 @@ const statusLabels: Record<string, string> = {
 
 export function DashboardClient({ initialData, restaurantId, activeSlug }: DashboardClientProps) {
   const [stats, setStats] = useState(initialData)
+  const [liveMessage, setLiveMessage] = useState<string | null>(null)
   const { totalToday, pendingCount, totalTables, upcomingReservations, businessType, todayStr } = stats
   const terms = getTerms(businessType)
   const UnitIcon = terms.hasCheckout ? BedDouble : Table2
   const supabase = useMemo(() => createClient(), [])
   const dashSlug = activeSlug || restaurantId
+  const liveMessageTimeoutRef = useRef<number | null>(null)
+
+  const showLiveMessage = useCallback((message: string) => {
+    setLiveMessage(message)
+    if (liveMessageTimeoutRef.current) {
+      window.clearTimeout(liveMessageTimeoutRef.current)
+    }
+    liveMessageTimeoutRef.current = window.setTimeout(() => {
+      setLiveMessage(null)
+      liveMessageTimeoutRef.current = null
+    }, 4000)
+  }, [])
 
   const fetchLatestOverview = useCallback(async () => {
     const today = new Date()
@@ -86,10 +100,20 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
   useEffect(() => {
     const channel = supabase
       .channel(`dashboard-realtime-${restaurantId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations', filter: `restaurant_id=eq.${restaurantId}` }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations', filter: `restaurant_id=eq.${restaurantId}` }, (payload: { eventType: string; new: Record<string, unknown> }) => {
+        if (payload.eventType === 'INSERT') {
+          const guestName = typeof payload.new.guest_name === 'string' ? payload.new.guest_name : 'New guest'
+          const startTime = typeof payload.new.start_time === 'string' ? payload.new.start_time.slice(0, 5) : null
+          const message = startTime ? `${guestName} at ${startTime}` : guestName
+          showLiveMessage(`New booking: ${message}`)
+          toast.success(`New booking: ${message}`)
+        } else {
+          showLiveMessage('Bookings updated')
+        }
         void fetchLatestOverview()
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'physical_tables', filter: `restaurant_id=eq.${restaurantId}` }, () => {
+        showLiveMessage(`${terms.units} updated`)
         void fetchLatestOverview()
       })
       .subscribe()
@@ -97,7 +121,15 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [fetchLatestOverview, restaurantId, supabase])
+  }, [fetchLatestOverview, restaurantId, showLiveMessage, supabase, terms.units])
+
+  useEffect(() => {
+    return () => {
+      if (liveMessageTimeoutRef.current) {
+        window.clearTimeout(liveMessageTimeoutRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const refreshOnFocus = () => {
@@ -147,7 +179,23 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
         className="pt-2"
       >
         <p className="text-muted-foreground text-sm font-medium tracking-tight uppercase">{todayStr}</p>
-        <h1 className="text-3xl font-black text-foreground mt-1 italic tracking-tighter">Today&apos;s Overview</h1>
+        <div className="mt-1 flex items-center gap-3">
+          <h1 className="text-3xl font-black text-foreground italic tracking-tighter">Today&apos;s Overview</h1>
+          <AnimatePresence>
+            {liveMessage ? (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+              >
+                <Badge className="border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-emerald-300 shadow-sm shadow-emerald-950/20">
+                  <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {liveMessage}
+                </Badge>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </div>
       </motion.div>
 
       {/* Stats Row with Magic Card Glow */}

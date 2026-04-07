@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { format, parseISO } from 'date-fns'
 import { createClient } from '@/lib/supabase/client'
 import { motion } from 'framer-motion'
@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { ActionHub } from '@/components/dashboard/ActionHub'
+import { toast } from 'sonner'
 
 interface BusyInfo {
   guestName: string
@@ -76,6 +77,8 @@ export function UnitsClient({
   const [now, setNow] = useState(() => new Date(initialNowIso))
   const [viewStyle, setViewStyle] = useState<ViewStyle>('grid')
   const [selectedDate, setSelectedDate] = useState(initialDate)
+  const [liveMessage, setLiveMessage] = useState<string | null>(null)
+  const liveMessageTimeoutRef = useRef<number | null>(null)
   
   const supabase = useMemo(() => createClient(), [])
   const terms = getTerms(businessType)
@@ -93,6 +96,17 @@ export function UnitsClient({
     setViewStyle(s)
     localStorage.setItem('units-view-style', s)
   }
+
+  const showLiveMessage = useCallback((message: string) => {
+    setLiveMessage(message)
+    if (liveMessageTimeoutRef.current) {
+      window.clearTimeout(liveMessageTimeoutRef.current)
+    }
+    liveMessageTimeoutRef.current = window.setTimeout(() => {
+      setLiveMessage(null)
+      liveMessageTimeoutRef.current = null
+    }, 4000)
+  }, [])
 
   // Keep clock running
   useEffect(() => {
@@ -161,15 +175,35 @@ export function UnitsClient({
   useEffect(() => {
     const channel = supabase
       .channel(`tables-realtime-${restaurantId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations', filter: `restaurant_id=eq.${restaurantId}` }, () => { void fetchLatestBusyRows() })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'physical_tables', filter: `restaurant_id=eq.${restaurantId}` }, () => { void fetchLatestTables() })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'zones', filter: `restaurant_id=eq.${restaurantId}` }, () => { void fetchZones() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations', filter: `restaurant_id=eq.${restaurantId}` }, (payload: { eventType: string; new: Record<string, unknown> }) => {
+        if (payload.eventType === 'INSERT') {
+          const guestName = typeof payload.new.guest_name === 'string' ? payload.new.guest_name : 'Guest'
+          const tableId = typeof payload.new.table_id === 'string' ? payload.new.table_id : null
+          const tableName = tableId ? tables.find((table) => table.id === tableId)?.table_name : null
+          const message = tableName ? `${tableName} booked for ${guestName}` : `${guestName} booked`
+          showLiveMessage(message)
+          toast.success(message)
+        } else {
+          showLiveMessage(`${occupiedLabel} status updated`)
+        }
+        void fetchLatestBusyRows()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'physical_tables', filter: `restaurant_id=eq.${restaurantId}` }, () => { showLiveMessage(`${terms.units} updated`); void fetchLatestTables() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'zones', filter: `restaurant_id=eq.${restaurantId}` }, () => { showLiveMessage('Zones updated'); void fetchZones() })
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [supabase, restaurantId, fetchLatestBusyRows, fetchLatestTables, fetchZones])
+  }, [fetchLatestBusyRows, fetchLatestTables, fetchZones, occupiedLabel, restaurantId, showLiveMessage, supabase, tables, terms.units])
+
+  useEffect(() => {
+    return () => {
+      if (liveMessageTimeoutRef.current) {
+        window.clearTimeout(liveMessageTimeoutRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const refreshAll = () => {
@@ -374,6 +408,12 @@ export function UnitsClient({
             <h1 className="text-2xl sm:text-3xl font-black text-foreground italic tracking-tighter uppercase leading-none">
               {mode === 'management' ? `Manage ${terms.units}` : `${terms.units} Status`}
             </h1>
+            {liveMessage ? (
+              <Badge className="border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-emerald-300 shadow-sm shadow-emerald-950/20">
+                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                {liveMessage}
+              </Badge>
+            ) : null}
           </div>
 
           {mode === 'monitoring' && (
