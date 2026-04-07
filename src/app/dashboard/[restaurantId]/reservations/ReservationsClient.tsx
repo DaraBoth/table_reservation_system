@@ -25,6 +25,7 @@ interface Reservation extends Tables<'reservations'> {
 }
 
 type TableWithZone = Tables<'physical_tables'> & { zones?: { id?: string; name: string; sort_order: number } | null }
+type ZoneSummary = { id: string; name: string; sort_order: number }
 
 interface Props {
   initialBookings: Reservation[]
@@ -106,12 +107,12 @@ export function ReservationsClient({
 
     // Use our sorting utility to get consistent grouping
     // We need zones, but they might be on the tables themselves
-    const uniqueZones = Array.from(
+    const uniqueZones: ZoneSummary[] = Array.from(
       new Map(
         tables
           .map(table => (table as TableWithZone).zones)
-          .filter((zone): zone is NonNullable<TableWithZone['zones']> => Boolean(zone?.name))
-          .map(zone => [zone.id ?? zone.name, zone])
+          .filter((zone): zone is ZoneSummary => Boolean(zone?.id && zone.name))
+          .map(zone => [zone.id, zone])
       ).values()
     )
     const { sortedZones, grouped, unassigned } = groupAndSortTables(tables, uniqueZones)

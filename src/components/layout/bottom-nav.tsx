@@ -288,6 +288,11 @@ export function BottomNav({
                       ]
                       return (
                         <>
+                          <div className="px-2 pt-1 pb-2">
+                            <span className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
+                              Insights
+                            </span>
+                          </div>
                           <MenuLink 
                             href={`/dashboard/${dashSlug}/reports`} 
                             icon={BarChart3} 
@@ -295,6 +300,13 @@ export function BottomNav({
                             active={pathname.startsWith(`/dashboard/${dashSlug}/reports`) && !additionalHrefs.some(h => h !== `/dashboard/${dashSlug}/reports` && h.startsWith(`/dashboard/${dashSlug}/reports`) && pathname.startsWith(h))} 
                             onClick={() => setOpen(false)}
                           />
+                          {(isAdmin || isStaff) && (
+                            <div className="px-2 pt-4 pb-2">
+                              <span className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
+                                Configuration
+                              </span>
+                            </div>
+                          )}
                           {(isAdmin || isStaff) && (
                             <MenuLink 
                               href={`/dashboard/${dashSlug}/units/manage`} 
@@ -313,6 +325,12 @@ export function BottomNav({
                               onClick={() => setOpen(false)}
                             />
                           )}
+
+                          <div className="px-2 pt-4 pb-2">
+                            <span className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
+                              System
+                            </span>
+                          </div>
 
                           <MenuLink 
                             href={`/dashboard/${dashSlug}/account`} 

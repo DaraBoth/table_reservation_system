@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { getTerms } from '@/lib/business-type'
+import type { BusinessType } from '@/lib/business-type'
 import { Button } from '@/components/ui/button'
 import { 
   ChevronLeft, 
@@ -34,6 +36,7 @@ interface SidebarProps {
   isStaff?: boolean
   restaurantId?: string
   activeSlug?: string
+  businessType?: BusinessType
   memberships?: any[]
   isSpecialAdmin?: boolean
   specialFeatures?: Record<string, any>
@@ -48,6 +51,7 @@ export function Sidebar({
   isStaff,
   restaurantId,
   activeSlug,
+  businessType = 'restaurant',
   memberships = [],
   isSpecialAdmin = false,
   specialFeatures = {}
@@ -57,6 +61,7 @@ export function Sidebar({
   const [isMounted, setIsMounted] = useState(false)
   
   const dashSlug = activeSlug || restaurantId
+  const terms = getTerms(businessType)
 
   // Grouped Navigation Items
   const navGroups = type === 'superadmin' 
@@ -76,17 +81,17 @@ export function Sidebar({
           label: 'Operations',
           items: [
             { href: `/dashboard/${dashSlug}`, label: 'Overview', icon: LayoutDashboard },
-            { href: `/dashboard/${dashSlug}/units`, label: 'Units Status', icon: Grid2X2 },
-            { href: `/dashboard/${dashSlug}/reservations`, label: 'Reservations', icon: CalendarDays },
+            { href: `/dashboard/${dashSlug}/units`, label: terms.units, icon: Grid2X2 },
+            { href: `/dashboard/${dashSlug}/reservations`, label: terms.bookings, icon: CalendarDays },
             { href: `/dashboard/${dashSlug}/customers`, label: 'Customers', icon: BookUser },
-            { href: `/dashboard/${dashSlug}/reports`, label: 'Analytics', icon: BarChart3 },
+            { href: `/dashboard/${dashSlug}/reports`, label: 'Reports', icon: BarChart3 },
           ]
         },
         ...(isAdmin || isStaff ? [
           {
             label: 'Configuration',
             items: [
-              { href: `/dashboard/${dashSlug}/units/manage`, label: 'Unit Config', icon: Settings2 },
+              { href: `/dashboard/${dashSlug}/units/manage`, label: `Manage ${terms.units}`, icon: Settings2 },
               ...(isAdmin ? [
                 { href: `/dashboard/${dashSlug}/staff`, label: 'Staff Management', icon: Users },
               ] : []),

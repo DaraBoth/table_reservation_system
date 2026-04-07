@@ -63,6 +63,7 @@ export default async function DashboardLayout({
         isStaff={membership.role === 'staff'}
         restaurantId={membership.restaurant_id}
         activeSlug={activeSlug}
+        businessType={businessType}
         memberships={allMemberships}
         isSpecialAdmin={isSpecialAdmin}
         specialFeatures={specialFeatures}
