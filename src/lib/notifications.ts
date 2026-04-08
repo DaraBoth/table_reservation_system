@@ -129,6 +129,7 @@ export async function dispatchPushNotification({
   url,
   icon,
   excludeUserId,
+  excludeDeviceToken,
 }: {
   restaurantId: string
   title: string
@@ -136,6 +137,7 @@ export async function dispatchPushNotification({
   url?: string
   icon?: string
   excludeUserId?: string
+  excludeDeviceToken?: string
 }): Promise<PushDispatchResult> {
   const debugId = `push_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
@@ -145,6 +147,7 @@ export async function dispatchPushNotification({
       title,
       body,
       url,
+      excludeDeviceToken,
     })
 
     configureWebPush(debugId)
@@ -153,6 +156,9 @@ export async function dispatchPushNotification({
     // Deduplicate by device_token (prefer token, fallback to endpoint)
     const seenDevices = new Set<string>()
     const subscriptions = rawSubscriptions.filter(sub => {
+      // 🚫 Skip the sender's device if token provided
+      if (excludeDeviceToken && sub.device_token === excludeDeviceToken) return false
+
       const deviceKey = sub.device_token || sub.endpoint
       if (seenDevices.has(deviceKey)) return false
       seenDevices.add(deviceKey)
@@ -250,7 +256,7 @@ export async function dispatchPushNotification({
 /**
  * High-level helper for new bookings
  */
-export async function notifyNewBooking(reservationId: string) {
+export async function notifyNewBooking(reservationId: string, excludeDeviceToken?: string) {
   const supabase = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
   const excludeUserId = user?.id
@@ -293,6 +299,7 @@ export async function notifyNewBooking(reservationId: string) {
     body: `${timeLabel ? `${timeLabel} | ` : ''}${tableName} | ${res.party_size} People | By: ${creatorName}`,
     url: getReservationUrl(res),
     excludeUserId,
+    excludeDeviceToken,
   })
 }
 
@@ -300,7 +307,7 @@ export async function notifyNewBooking(reservationId: string) {
 /**
  * High-level helper for arrivals
  */
-export async function notifyArrival(reservationId: string) {
+export async function notifyArrival(reservationId: string, excludeDeviceToken?: string) {
   const supabase = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
   const excludeUserId = user?.id
@@ -328,6 +335,7 @@ export async function notifyArrival(reservationId: string) {
     body: `${timeLabel ? `${timeLabel} | ` : ''}Table: ${tableName} | Party of ${res.party_size}`,
     url: getReservationUrl(res),
     excludeUserId,
+    excludeDeviceToken,
   })
 }
 
@@ -335,7 +343,7 @@ export async function notifyArrival(reservationId: string) {
 /**
  * High-level helper for cancellations
  */
-export async function notifyCancellation(reservationId: string) {
+export async function notifyCancellation(reservationId: string, excludeDeviceToken?: string) {
   const supabase = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
   const excludeUserId = user?.id
@@ -361,6 +369,7 @@ export async function notifyCancellation(reservationId: string) {
     body: `${timeLabel ? `${timeLabel} | ` : ''}${res.party_size} people canceled their reservation.`,
     url: `/dashboard/${res.restaurants?.slug || res.restaurant_id}/reservations`,
     excludeUserId,
+    excludeDeviceToken,
   })
 }
 
@@ -368,7 +377,7 @@ export async function notifyCancellation(reservationId: string) {
 /**
  * High-level helper for booking updates
  */
-export async function notifyBookingUpdate(reservationId: string) {
+export async function notifyBookingUpdate(reservationId: string, excludeDeviceToken?: string) {
   const supabase = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
   const excludeUserId = user?.id
@@ -395,6 +404,6 @@ export async function notifyBookingUpdate(reservationId: string) {
     body: `${timeLabel ? `${timeLabel} | ` : ''}${tableName} | ${res.party_size} People | Status: ${res.status.toUpperCase()}`,
     url: getReservationUrl(res),
     excludeUserId,
+    excludeDeviceToken,
   })
 }
-

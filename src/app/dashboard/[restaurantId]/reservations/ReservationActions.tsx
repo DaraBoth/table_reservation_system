@@ -2,6 +2,8 @@
 
 import { useActionState, useState } from 'react'
 import { cancelReservation, updateReservationStatus } from '@/app/actions/reservations'
+import { getOrCreateDeviceToken } from '@/lib/push-client'
+
 import { cn } from '@/lib/utils'
 import { Clock, CircleCheck, UserCheck, CheckCheck, UserX, Ban, Check } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -12,6 +14,8 @@ export function CancelReservationButton({ reservationId, restaurantId }: { reser
     <form action={action} className="w-full">
       <input type="hidden" name="reservationId" value={reservationId} />
       <input type="hidden" name="restaurantId" value={restaurantId} />
+      <input type="hidden" name="deviceToken" value={getOrCreateDeviceToken()} />
+
       <button
         type="submit"
         disabled={pending}
@@ -55,6 +59,8 @@ export function UpdateStatusButton({
       <input type="hidden" name="reservationId" value={reservationId} />
       <input type="hidden" name="restaurantId" value={restaurantId} />
       <input type="hidden" name="status" value={selected} />
+      <input type="hidden" name="deviceToken" value={getOrCreateDeviceToken()} />
+
 
       {/* Chip grid — 2 columns */}
       <div className="grid grid-cols-2 gap-2">

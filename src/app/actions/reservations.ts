@@ -172,8 +172,10 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
     }).select().single()
 
     if (error) return { error: error.message }
+    const deviceToken = String(formData.get('deviceToken') || '')
     const { notifyNewBooking } = await import('@/lib/notifications')
-    await notifyNewBooking(data.id)
+    await notifyNewBooking(data.id, deviceToken)
+
   } else {
     // 🍽️ RESTAURANT: Multi-slot or Split range
     const groupId = (hasExtraSlots || isMultiDay) ? crypto.randomUUID() : null
@@ -260,9 +262,11 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
 
     const primaryReservationId = insertedReservations?.[0]?.id
     if (primaryReservationId) {
+      const deviceToken = String(formData.get('deviceToken') || '')
       const { notifyNewBooking } = await import('@/lib/notifications')
-      await notifyNewBooking(primaryReservationId)
+      await notifyNewBooking(primaryReservationId, deviceToken)
     }
+
   }
 
   // 👤 Auto-register / Update Customer Record
@@ -308,8 +312,10 @@ export async function cancelReservation(_: ActionState, formData: FormData): Pro
   if (error) return { error: error.message }
 
   // 🔔 Trigger Push Notification
+  const deviceToken = String(formData.get('deviceToken') || '')
   const { notifyCancellation } = await import('@/lib/notifications')
-  await notifyCancellation(reservationId)
+  await notifyCancellation(reservationId, deviceToken)
+
 
   revalidatePath(`/dashboard/${restaurantId}/reservations`)
   revalidatePath(`/dashboard/${restaurantId}`)
@@ -344,15 +350,17 @@ export async function updateReservationStatus(_: ActionState, formData: FormData
   if (error) return { error: error.message }
 
   // 🔔 Trigger Push Notification
+  const deviceToken = String(formData.get('deviceToken') || '')
   const { notifyArrival, notifyBookingUpdate } = await import('@/lib/notifications')
   if (status === 'arrived') {
-    await notifyArrival(reservationId)
+    await notifyArrival(reservationId, deviceToken)
   } else if (status === 'cancelled') {
     const { notifyCancellation } = await import('@/lib/notifications')
-    await notifyCancellation(reservationId)
+    await notifyCancellation(reservationId, deviceToken)
   } else {
-    await notifyBookingUpdate(reservationId)
+    await notifyBookingUpdate(reservationId, deviceToken)
   }
+
 
   revalidatePath(`/dashboard/${restaurantId}/reservations`)
   revalidatePath(`/dashboard/${restaurantId}/reservations/${reservationId}`)
@@ -445,8 +453,10 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
   )
 
   // 🔔 Trigger Push Notification
+  const deviceToken = String(formData.get('deviceToken') || '')
   const { notifyBookingUpdate } = await import('@/lib/notifications')
-  await notifyBookingUpdate(reservationId)
+  await notifyBookingUpdate(reservationId, deviceToken)
+
 
   revalidatePath(`/dashboard/${restaurantId}/reservations`)
   revalidatePath(`/dashboard/${restaurantId}/reservations/${reservationId}`)

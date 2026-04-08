@@ -23,6 +23,8 @@ import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
 import { CustomerSelector } from '@/components/dashboard/CustomerSelector'
 import { groupAndSortTables } from '@/lib/sorting'
+import { getOrCreateDeviceToken } from '@/lib/push-client'
+
 
 interface Props {
   tables: Tables<'physical_tables'>[]
@@ -173,6 +175,8 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
       <form action={action} className="space-y-6">
         <input type="hidden" name="restaurantId" value={restaurantId} />
         <input type="hidden" name="tableId" value={selectedTableId} />
+        <input type="hidden" name="deviceToken" value={getOrCreateDeviceToken()} />
+
         <input type="hidden" name="status" value={bookingStatus} />
         <input type="hidden" name="partySize" value={partySize} />
         <input type="hidden" name="notes" value={notes} />
