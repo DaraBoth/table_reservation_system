@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { logout } from '@/app/actions/auth'
+import { LogoutButton } from '@/components/auth/logout-button'
+
 import { Button } from '@/components/ui/button'
 import { LogOut, ChevronRight } from 'lucide-react'
 import { NotificationBell } from '@/components/notification-bell'
@@ -81,17 +82,8 @@ export function TopBar({ brandName, userName, avatarUrl, restaurantId, activeSlu
 
           <div className="flex items-center gap-1">
             <NotificationBell restaurantId={restaurantId} />
-            <form action={logout}>
-              <Button
-                variant="ghost"
-                size="icon"
-                type="submit"
-                className="w-9 h-9 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 rounded-xl"
-                title="Sign out"
-              >
-                <LogOut className="w-4 h-4" />
-              </Button>
-            </form>
+            <LogoutButton isCollapsed={false} showText={false} className="w-9 h-9" />
+
           </div>
         </div>
       </div>

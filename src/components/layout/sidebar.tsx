@@ -22,7 +22,8 @@ import {
   BarChart3,
   UserCircle
 } from 'lucide-react'
-import { logout } from '@/app/actions/auth'
+import { LogoutButton } from '@/components/auth/logout-button'
+
 
 interface SidebarProps {
   user: {
@@ -264,20 +265,8 @@ export function Sidebar({
           )}
         </div>
         
-        <form action={logout}>
-          <Button 
-            type="submit" 
-            variant="ghost" 
-            size={isCollapsed ? "icon" : "sm"}
-            className={cn(
-              "w-full text-muted-foreground hover:text-foreground hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition-all",
-              isCollapsed ? "justify-center" : "justify-start gap-3 px-3 h-10 rounded-xl"
-            )}
-          >
-            <LogOut className="h-4 w-4" />
-            {!isCollapsed && <span className="text-xs font-bold uppercase tracking-wider">Sign out</span>}
-          </Button>
-        </form>
+        <LogoutButton isCollapsed={isCollapsed} />
+
       </div>
     </aside>
   )

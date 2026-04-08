@@ -14,8 +14,10 @@ type PushSubscriptionRow = {
   id: string
   user_id: string | null
   endpoint: string
+  device_token: string | null
   subscription: StoredPushSubscription
 }
+
 
 export type PushDispatchResult = {
   ok: boolean
@@ -71,14 +73,15 @@ async function getEligibleSubscriptions(restaurantId: string, debugId: string, e
 
   const { data: subscriptionsRaw, error: subscriptionError } = await supabase
     .from('push_subscriptions')
-    .select('id, user_id, endpoint, subscription')
-    .eq('restaurant_id', restaurantId)
+    .select('id, user_id, endpoint, subscription, device_token')
+
+
 
   if (subscriptionError) {
     throw new Error(subscriptionError.message)
   }
 
-  const subscriptions = (subscriptionsRaw ?? []) as PushSubscriptionRow[]
+  const subscriptions = (subscriptionsRaw ?? []) as unknown as PushSubscriptionRow[]
   if (subscriptions.length === 0) {
     console.log(`[push:${debugId}] No subscriptions found for restaurant ${restaurantId}`)
     return []
@@ -107,7 +110,7 @@ async function getEligibleSubscriptions(restaurantId: string, debugId: string, e
 
   const eligibleUserIds = new Set((membershipsRaw ?? []).map((membership) => membership.user_id))
   if (excludeUserId) eligibleUserIds.delete(excludeUserId)
-  
+
   const eligibleSubscriptions = subscriptions.filter((subscription) => subscription.user_id && eligibleUserIds.has(subscription.user_id))
 
   console.log(`[push:${debugId}] Eligible subscriptions`, {
@@ -145,7 +148,17 @@ export async function dispatchPushNotification({
     })
 
     configureWebPush(debugId)
-    const subscriptions = await getEligibleSubscriptions(restaurantId, debugId, excludeUserId)
+    const rawSubscriptions = await getEligibleSubscriptions(restaurantId, debugId, excludeUserId)
+
+    // Deduplicate by device_token (prefer token, fallback to endpoint)
+    const seenDevices = new Set<string>()
+    const subscriptions = rawSubscriptions.filter(sub => {
+      const deviceKey = sub.device_token || sub.endpoint
+      if (seenDevices.has(deviceKey)) return false
+      seenDevices.add(deviceKey)
+      return true
+    })
+
 
     if (subscriptions.length === 0) {
       return {
@@ -241,11 +254,12 @@ export async function notifyNewBooking(reservationId: string) {
   const supabase = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
   const excludeUserId = user?.id
-  
+
   // 1. Fetch details: Guest, Table, Party Size, Creator
   const { data: res, error } = await supabase
     .from('reservations')
-    .select('id, restaurant_id, reservation_date, start_time, party_size, guest_name, created_by, physical_tables(table_name), restaurants(slug)')
+    .select('id, restaurant_id, reservation_date, start_time, party_size, guest_name, created_by, physical_tables(table_name), restaurants(slug, name)')
+
     .eq('id', reservationId)
     .single()
 
@@ -262,7 +276,7 @@ export async function notifyNewBooking(reservationId: string) {
       .select('full_name')
       .eq('id', res.created_by)
       .maybeSingle()
-    
+
     if (profile?.full_name) {
       creatorName = profile.full_name
     }
@@ -270,15 +284,18 @@ export async function notifyNewBooking(reservationId: string) {
 
   const tableName = (res.physical_tables as any)?.table_name || '—'
   const timeLabel = formatReservationTime(res.reservation_date, res.start_time)
-  
+
+  const businessName = (res.restaurants as any)?.name || 'TableBook'
+
   await dispatchPushNotification({
     restaurantId: res.restaurant_id,
-    title: `New Booking: ${res.guest_name}`,
+    title: `[${businessName}] New Booking: ${res.guest_name}`,
     body: `${timeLabel ? `${timeLabel} | ` : ''}${tableName} | ${res.party_size} People | By: ${creatorName}`,
     url: getReservationUrl(res),
     excludeUserId,
   })
 }
+
 
 /**
  * High-level helper for arrivals
@@ -287,10 +304,11 @@ export async function notifyArrival(reservationId: string) {
   const supabase = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
   const excludeUserId = user?.id
-  
+
   const { data: res, error } = await supabase
     .from('reservations')
-    .select('id, restaurant_id, reservation_date, start_time, party_size, guest_name, physical_tables(table_name), restaurants(slug)')
+    .select('id, restaurant_id, reservation_date, start_time, party_size, guest_name, physical_tables(table_name), restaurants(slug, name)')
+
     .eq('id', reservationId)
     .single()
 
@@ -301,15 +319,18 @@ export async function notifyArrival(reservationId: string) {
 
   const tableName = (res.physical_tables as any)?.table_name || '—'
   const timeLabel = formatReservationTime(res.reservation_date, res.start_time)
-  
+
+  const businessName = (res.restaurants as any)?.name || 'TableBook'
+
   await dispatchPushNotification({
     restaurantId: res.restaurant_id,
-    title: `Guest Arrived: ${res.guest_name}`,
+    title: `[${businessName}] Guest Arrived: ${res.guest_name}`,
     body: `${timeLabel ? `${timeLabel} | ` : ''}Table: ${tableName} | Party of ${res.party_size}`,
     url: getReservationUrl(res),
     excludeUserId,
   })
 }
+
 
 /**
  * High-level helper for cancellations
@@ -318,10 +339,11 @@ export async function notifyCancellation(reservationId: string) {
   const supabase = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
   const excludeUserId = user?.id
-  
+
   const { data: res, error } = await supabase
     .from('reservations')
-    .select('id, restaurant_id, reservation_date, start_time, party_size, guest_name, restaurants(slug)')
+    .select('id, restaurant_id, reservation_date, start_time, party_size, guest_name, restaurants(slug, name)')
+
     .eq('id', reservationId)
     .single()
 
@@ -330,16 +352,18 @@ export async function notifyCancellation(reservationId: string) {
     return
   }
 
+  const businessName = (res.restaurants as any)?.name || 'TableBook'
   const timeLabel = formatReservationTime(res.reservation_date, res.start_time)
 
   await dispatchPushNotification({
     restaurantId: res.restaurant_id,
-    title: `Booking Cancelled: ${res.guest_name}`,
+    title: `[${businessName}] Booking Cancelled: ${res.guest_name}`,
     body: `${timeLabel ? `${timeLabel} | ` : ''}${res.party_size} people canceled their reservation.`,
     url: `/dashboard/${res.restaurants?.slug || res.restaurant_id}/reservations`,
     excludeUserId,
   })
 }
+
 
 /**
  * High-level helper for booking updates
@@ -348,10 +372,11 @@ export async function notifyBookingUpdate(reservationId: string) {
   const supabase = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
   const excludeUserId = user?.id
-  
+
   const { data: res, error } = await supabase
     .from('reservations')
-    .select('id, restaurant_id, reservation_date, start_time, party_size, guest_name, status, physical_tables(table_name), restaurants(slug)')
+    .select('id, restaurant_id, reservation_date, start_time, party_size, guest_name, status, physical_tables(table_name), restaurants(slug, name)')
+
     .eq('id', reservationId)
     .single()
 
@@ -360,14 +385,16 @@ export async function notifyBookingUpdate(reservationId: string) {
     return
   }
 
+  const businessName = (res.restaurants as any)?.name || 'TableBook'
   const tableName = (res.physical_tables as any)?.table_name || '—'
   const timeLabel = formatReservationTime(res.reservation_date, res.start_time)
-  
+
   await dispatchPushNotification({
     restaurantId: res.restaurant_id,
-    title: `Booking Updated: ${res.guest_name}`,
+    title: `[${businessName}] Booking Updated: ${res.guest_name}`,
     body: `${timeLabel ? `${timeLabel} | ` : ''}${tableName} | ${res.party_size} People | Status: ${res.status.toUpperCase()}`,
     url: getReservationUrl(res),
     excludeUserId,
   })
 }
+

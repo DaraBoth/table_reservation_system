@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { Bell, BellOff, BellRing } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
-import { ensurePushServiceWorker, getDeviceInfo, resetPushRegistration, urlBase64ToUint8Array } from '@/lib/push-client'
+import { ensurePushServiceWorker, getDeviceInfo, getOrCreateDeviceToken, resetPushRegistration, urlBase64ToUint8Array } from '@/lib/push-client'
+
 
 export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('default')
@@ -75,12 +76,15 @@ export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
       }
 
       const deviceInfo = getDeviceInfo()
+      const deviceToken = getOrCreateDeviceToken()
 
       console.log('[push] Calling /api/push/subscribe', {
         restaurantId,
         endpoint: subscription.endpoint,
         deviceInfo,
+        deviceToken,
       })
+
 
       const response = await fetch('/api/push/subscribe', {
         method: 'POST',
@@ -91,6 +95,7 @@ export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
           restaurantId,
           subscription,
           deviceInfo,
+          deviceToken,
         }),
       })
 

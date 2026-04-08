@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import { ensurePushServiceWorker, getDeviceInfo, urlBase64ToUint8Array } from '@/lib/push-client'
+import { ensurePushServiceWorker, getDeviceInfo, getOrCreateDeviceToken, urlBase64ToUint8Array } from '@/lib/push-client'
+
 
 export function NotificationManager({ restaurantId }: { restaurantId?: string }) {
   useEffect(() => {
@@ -55,12 +56,15 @@ export function NotificationManager({ restaurantId }: { restaurantId?: string })
 
   const syncSubscriptionWithSupabase = async (subscription: PushSubscription) => {
     const deviceInfo = getDeviceInfo()
+    const deviceToken = getOrCreateDeviceToken()
 
     console.log('[push] Auto-sync calling /api/push/subscribe', {
       restaurantId,
       endpoint: subscription.endpoint,
       deviceInfo,
+      deviceToken,
     })
+
 
     const response = await fetch('/api/push/subscribe', {
       method: 'POST',
@@ -71,8 +75,10 @@ export function NotificationManager({ restaurantId }: { restaurantId?: string })
         restaurantId,
         subscription,
         deviceInfo,
+        deviceToken,
       }),
     })
+
 
     if (!response.ok) {
       const errorText = await response.text()

@@ -17,7 +17,9 @@ const requestSchema = z.object({
   restaurantId: z.string().uuid().optional(),
   subscription: subscriptionSchema,
   deviceInfo: z.string().optional(),
+  deviceToken: z.string().uuid().optional(),
 })
+
 
 export async function POST(request: Request) {
   try {
@@ -56,10 +58,12 @@ export async function POST(request: Request) {
         restaurant_id: parsed.data.restaurantId || null,
         endpoint: parsed.data.subscription.endpoint,
         subscription: parsed.data.subscription,
-        device_info: parsed.data.deviceInfo || 'Unknown Device',
+        device_token: parsed.data.deviceToken || null,
       }, {
-        onConflict: 'user_id,endpoint',
+        onConflict: 'user_id,device_token',
       })
+
+
 
     if (error) {
       console.error('[push:subscribe] Failed to upsert subscription', error)

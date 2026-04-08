@@ -20,6 +20,21 @@ export function getDeviceInfo() {
   return 'Unknown Device'
 }
 
+export function getOrCreateDeviceToken() {
+  if (typeof window === 'undefined') return 'server-side'
+  
+  const key = 'tb-device-token'
+  let token = localStorage.getItem(key)
+  
+  if (!token) {
+    token = crypto.randomUUID()
+    localStorage.setItem(key, token)
+  }
+  
+  return token
+}
+
+
 export async function ensurePushServiceWorker() {
   if (!('serviceWorker' in navigator)) {
     throw new Error('Service workers are not supported in this browser')
