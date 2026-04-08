@@ -36,16 +36,28 @@ function asOptionalString(value: unknown): string | undefined {
 function formatReservationTime(reservationDate?: string | null, startTime?: string | null) {
   if (!reservationDate || !startTime) return undefined
 
-  const date = new Date(`${reservationDate}T${startTime}`)
-  if (Number.isNaN(date.getTime())) return undefined
-
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(date)
+  try {
+    // We expect HH:mm:ss format (e.g. 20:00:00)
+    // Avoid using new Date() because it interprets strings in server local time
+    const [hours, minutes] = startTime.split(':')
+    const hh = parseInt(hours, 10)
+    const mm = minutes || '00'
+    const ampm = hh >= 12 ? 'PM' : 'AM'
+    const displayHour = hh % 12 || 12
+    
+    // Parse date for month/day display
+    const dateParts = reservationDate.split('-')
+    const monthIndex = parseInt(dateParts[1], 10) - 1
+    const day = parseInt(dateParts[2], 10)
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    
+    return `${months[monthIndex]} ${day}, ${displayHour}:${mm} ${ampm}`
+  } catch (e) {
+    console.error('[formatReservationTime] Failed to parse:', { reservationDate, startTime }, e)
+    return undefined
+  }
 }
+
 
 function getReservationUrl(reservation: {
   id: string

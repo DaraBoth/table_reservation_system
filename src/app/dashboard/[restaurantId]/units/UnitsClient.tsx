@@ -372,7 +372,8 @@ export function UnitsClient({
           {mode === 'management' ? (
             <EditUnitSheet table={t} businessType={businessType} canManage={canManage} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${t.table_name}`} className="absolute inset-0 z-10 cursor-pointer w-full h-full" />} />
           ) : isTappable ? (
-            <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}`} className="absolute inset-0 z-10" />
+            <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}&date=${selectedDate}`} className="absolute inset-0 z-10" />
+
           ) : (
             <div className="absolute inset-0 z-10" />
           )}
@@ -392,6 +393,8 @@ export function UnitsClient({
             zones={zones} 
             mode={mode}
             currentSlug={dashboardSlug}
+            selectedDate={selectedDate}
+
           />
         </motion.div>
       )}
@@ -556,7 +559,8 @@ export function UnitsClient({
                             ) : busyMap.has(t.id) || !t.is_active ? (
                               <div className="absolute inset-0 z-20" />
                             ) : (
-                              <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}`} className="absolute inset-0 z-20" />
+                              <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}&date=${selectedDate}`} className="absolute inset-0 z-20" />
+
                             )}
                           </motion.div>
                         )}
@@ -587,7 +591,8 @@ export function UnitsClient({
                             ) : busyMap.has(t.id) || !t.is_active ? (
                               <div className="absolute inset-0 z-10" />
                             ) : (
-                              <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}`} className="absolute inset-0 z-10" />
+                              <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}&date=${selectedDate}`} className="absolute inset-0 z-10" />
+
                             )}
                           </motion.div>
                         )}

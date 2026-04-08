@@ -1,7 +1,9 @@
 'use client'
 
 import * as React from 'react'
-import { useActionState, useState, useTransition, useMemo } from 'react'
+import { useActionState, useState, useTransition, useMemo, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
+
 import { format } from 'date-fns'
 import { createReservation, updateReservation } from '@/app/actions/reservations'
 import { getCommonCustomers, getOccupiedTableIds } from '@/app/actions/booking-intelligence'
@@ -49,13 +51,20 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
   const [slideDir, setSlideDir] = useState<SlideDir>('right')
   const [renderKey, setRenderKey] = useState(0)
 
+  const searchParams = useSearchParams()
+  const urlDate = searchParams.get('date')
+
   // Primary Arrival
   const [startTime, setStartTime] = React.useState<Date>(() => {
     if (initialData) return initialData.start_time
-    const d = new Date()
-    d.setHours(19, 0, 0, 0)
+    
+    const d = urlDate ? new Date(`${urlDate}T19:00:00`) : new Date()
+    if (!urlDate) {
+      d.setHours(19, 0, 0, 0)
+    }
     return d
   })
+
 
 
   const [selectedTableId, setSelectedTableId] = useState<string>(initialData?.table_id || preSelectedTableId || '')
@@ -107,9 +116,12 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
     getCommonCustomers(restaurantId).then(setCommonCustomers).catch(console.error)
   }, [restaurantId])
 
-  React.useEffect(() => {
+  useEffect(() => {
     startOccupancyTransition(async () => {
-      const details = await getOccupiedTableIds(restaurantId, startTime)
+      const reservationDate = format(startTime, 'yyyy-MM-dd')
+      const startTimeStr = format(startTime, 'HH:mm:ss')
+      
+      const details = await getOccupiedTableIds(restaurantId, reservationDate, startTimeStr)
       // Filter out nulls and handle edit case (don't block the current reservation's table)
       const filtered = details.filter((d): d is { table_id: string; guest_name: string; start_time: string } =>
         d.table_id !== null && d.table_id !== initialData?.table_id // If editing, allow selecting OWN table
@@ -118,6 +130,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
       if (filtered.some(f => f.table_id === selectedTableId)) setSelectedTableId('')
     })
   }, [startTime, restaurantId, initialData?.id])
+
 
   const goTo = (nextStep: number) => {
     setSlideDir(nextStep > step ? 'right' : 'left')

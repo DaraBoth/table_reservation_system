@@ -63,7 +63,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ rest
     .eq('restaurant_id', rid)
     .eq('reservation_date', todayIso)
     .neq('status', 'cancelled')
-    .order('start_time', { ascending: true })
+    .order('created_at', { ascending: false })
+
 
   const reservations = rawRows as any[] || []
   

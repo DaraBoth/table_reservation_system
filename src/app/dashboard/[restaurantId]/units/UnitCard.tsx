@@ -33,6 +33,7 @@ interface UnitCardProps {
   zones?: { id: string, name: string }[]
   mode?: 'monitoring' | 'management'
   currentSlug?: string
+  selectedDate?: string
 }
 
 export function UnitCard({ 
@@ -45,7 +46,8 @@ export function UnitCard({
   canManage,
   zones = [],
   mode = 'monitoring',
-  currentSlug
+  currentSlug,
+  selectedDate
 }: UnitCardProps) {
   const terms = getTerms(businessType)
   const occupiedLabel = terms.hasCheckout ? 'Occupied' : 'Booked'
@@ -101,7 +103,7 @@ export function UnitCard({
       {mode === 'monitoring' ? (
         isTappable ? (
           <Link 
-            href={`/dashboard/${currentSlug || table.restaurant_id}/reservations/new?tableId=${table.id}`} 
+            href={`/dashboard/${currentSlug || table.restaurant_id}/reservations/new?tableId=${table.id}${selectedDate ? `&date=${selectedDate}` : ''}`} 
             className="absolute inset-0 z-10"
           />
         ) : (

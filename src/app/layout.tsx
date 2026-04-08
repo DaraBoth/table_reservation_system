@@ -78,7 +78,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL || ''} />
       </head>
-      <body className={`${sourceSans3.variable} ${sourceSans3.className} antialiased`}>
+      <body className={`${sourceSans3.variable} ${sourceSans3.className} antialiased`} suppressHydrationWarning>
+
         <ThemeProvider>
         <MuiProvider>
           <AuthProvider>

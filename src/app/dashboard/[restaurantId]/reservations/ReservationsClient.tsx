@@ -204,7 +204,8 @@ export function ReservationsClient({
       .eq('restaurant_id', restaurantId)
       .lte('reservation_date', selectedDate)
       .gte('checkout_date', selectedDate)
-      .order('start_time', { ascending: true })
+      .order('created_at', { ascending: false })
+
 
     if (data) setBookings(data as Reservation[])
   }, [supabase, restaurantId, selectedDate])

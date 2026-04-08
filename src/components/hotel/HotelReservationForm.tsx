@@ -1,7 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import { useActionState, useState, useTransition } from 'react'
+import { useActionState, useState, useTransition, useMemo, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
 import { createReservation, updateReservation } from '@/app/actions/reservations'
 import { getCommonCustomers, getOccupiedTableIds } from '@/app/actions/booking-intelligence'
@@ -20,9 +21,7 @@ import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
 import { CustomerSelector } from '@/components/dashboard/CustomerSelector'
 import { groupAndSortTables } from '@/lib/sorting'
-import { useMemo } from 'react'
 import { getOrCreateDeviceToken } from '@/lib/push-client'
-
 
 interface Props {
   tables: Tables<'physical_tables'>[]
@@ -44,6 +43,9 @@ export function HotelReservationForm({ tables, zones, restaurantId, initialData,
   const terms = getTerms(businessType)
   const TermIcon = terms.Icon
 
+  const searchParams = useSearchParams()
+  const urlDate = searchParams.get('date')
+
   const [step, setStep] = useState(1)
   const [slideDir, setSlideDir] = useState<SlideDir>('right')
   const [renderKey, setRenderKey] = useState(0)
@@ -51,8 +53,11 @@ export function HotelReservationForm({ tables, zones, restaurantId, initialData,
   // Check-in
   const [startTime, setStartTime] = React.useState<Date>(() => {
     if (initialData) return initialData.start_time
-    const d = new Date()
-    d.setHours(12, 0, 0, 0)
+    
+    const d = urlDate ? new Date(`${urlDate}T12:00:00`) : new Date()
+    if (!urlDate) {
+      d.setHours(12, 0, 0, 0)
+    }
     return d
   })
 
@@ -82,9 +87,12 @@ export function HotelReservationForm({ tables, zones, restaurantId, initialData,
 
   const [notes, setNotes] = useState(initialData?.notes || '')
 
-  React.useEffect(() => {
+  useEffect(() => {
     startOccupancyTransition(async () => {
-      const data = await getOccupiedTableIds(restaurantId, startTime)
+      const reservationDate = format(startTime, 'yyyy-MM-dd')
+      const startTimeStr = format(startTime, 'HH:mm:ss')
+      
+      const data = await getOccupiedTableIds(restaurantId, reservationDate, startTimeStr)
       // Filter out nulls and current reservation's table, then typed as string[]
       const filtered = data
         .map(r => r.table_id)
@@ -150,7 +158,6 @@ export function HotelReservationForm({ tables, zones, restaurantId, initialData,
         <input type="hidden" name="restaurantId" value={restaurantId} />
         <input type="hidden" name="tableId" value={selectedTableId} />
         <input type="hidden" name="deviceToken" value={getOrCreateDeviceToken()} />
-
         <input type="hidden" name="status" value="confirmed" />
         <input type="hidden" name="partySize" value={partySize} />
         <input type="hidden" name="notes" value={notes} />

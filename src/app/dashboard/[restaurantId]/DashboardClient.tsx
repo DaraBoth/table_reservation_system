@@ -77,7 +77,8 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
         .eq('restaurant_id', restaurantId)
         .eq('reservation_date', todayIso)
         .neq('status', 'cancelled')
-        .order('start_time', { ascending: true }),
+        .order('created_at', { ascending: false }),
+
       supabase
         .from('physical_tables')
         .select('id')

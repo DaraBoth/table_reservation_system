@@ -51,7 +51,8 @@ export default async function ReservationsPage({ params, searchParams }: { param
     .eq('restaurant_id', membership.restaurant_id!)
     .lte('reservation_date', initialDate)
     .gte('checkout_date', initialDate)
-    .order('start_time', { ascending: true })
+    .order('created_at', { ascending: false })
+
 
   return (
     <div className="max-w-6xl mx-auto pb-24 md:pb-6">

@@ -126,20 +126,36 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
   // AUTO-CONFIRM LOGIC: If they select 'Waiting' (pending) but the table is actually free, make it 'confirmed'
   let finalStatus = userStatus || 'confirmed'
   if (finalStatus === 'pending') {
+    // 1. Fetch potential overlaps using the unified logic rules
     const { data: overlaps } = await supabase
       .from('reservations')
-      .select('id')
+      .select('id, start_time, end_time, reservation_date, checkout_date')
       .eq('table_id', tableId)
-      .eq('reservation_date', reservationDate)
-      .neq('status', 'cancelled')
-      .lt('start_time', endTimeStr)
-      .gt('end_time', startTimeStr)
-      .limit(1)
+      .in('status', ['pending', 'confirmed', 'arrived'])
+      .lte('reservation_date', reservationDate)
+      .gte('checkout_date', reservationDate)
 
-    if (!overlaps || overlaps.length === 0) {
+    const hasConflict = (overlaps || []).some(r => {
+      if (isHotel) {
+        // Hotel: Check-out today check
+        if (r.checkout_date === reservationDate && r.end_time) {
+          if (startTimeStr >= r.end_time) return false
+        }
+        // Hotel: Check-in today check
+        if (r.reservation_date === reservationDate && r.start_time) {
+          if (endTimeStr <= r.start_time) return false
+        }
+        return true
+      }
+      // Restaurant: Any booking on this day is a conflict
+      return true
+    })
+
+    if (!hasConflict) {
       finalStatus = 'confirmed'
     }
   }
+
 
   // Fetch table name for snapshot
   const { data: tableData } = await supabase
