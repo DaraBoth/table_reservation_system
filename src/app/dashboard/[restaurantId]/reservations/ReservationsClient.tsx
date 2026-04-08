@@ -209,14 +209,7 @@ export function ReservationsClient({
     if (data) setBookings(data as Reservation[])
   }, [supabase, restaurantId, selectedDate])
 
-  // Correct server-side UTC date on mount: update selectedDate to client's local today if they differ
-  useEffect(() => {
-    const clientToday = format(new Date(), 'yyyy-MM-dd')
-    if (clientToday !== selectedDate) {
-      setSelectedDate(clientToday)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+
 
   useEffect(() => {
     const load = async () => {
@@ -287,6 +280,7 @@ export function ReservationsClient({
       window.clearInterval(interval)
       window.removeEventListener('focus', refreshOnFocus)
       document.removeEventListener('visibilitychange', refreshOnVisible)
+      window.removeEventListener('visibilitychange', refreshOnVisible)
     }
   }, [fetchLatestData])
 
@@ -294,26 +288,35 @@ export function ReservationsClient({
     <div className="space-y-6 lg:space-y-7">
       <div className="flex flex-col justify-between gap-3 pt-2 sm:flex-row sm:items-center sm:gap-4">
         <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2 sm:justify-start sm:flex-wrap">
-            <div className="flex items-center gap-2 sm:flex-wrap">
-              <h1 className="text-xl font-black text-foreground italic tracking-tight uppercase">
-                {terms.bookings}
-              </h1>
-              <AnimatePresence>
-                {liveMessage ? (
-                  <motion.div
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                  >
-                    <Badge className="border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-emerald-300 shadow-sm shadow-emerald-950/20">
-                      <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      {liveMessage}
-                    </Badge>
-                  </motion.div>
-                ) : null}
-              </AnimatePresence>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 sm:justify-start">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-foreground italic tracking-tight uppercase leading-none">
+              {terms.bookings}
+            </h1>
+
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 backdrop-blur-md shadow-[0_0_15px_rgba(139,92,246,0.1)]">
+              <div className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
+              </div>
+              <span className="text-[10px] sm:text-xs font-black text-violet-300 uppercase tracking-widest">
+                {format(new Date(), 'MMMM d')}
+              </span>
             </div>
+
+            <AnimatePresence>
+              {liveMessage ? (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                >
+                  <Badge className="border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-emerald-300 shadow-sm shadow-emerald-950/20">
+                    <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    {liveMessage}
+                  </Badge>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
             <Button
               variant="outline"
               size="sm"
@@ -323,9 +326,6 @@ export function ReservationsClient({
               Share Status
             </Button>
           </div>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
-            {mobileDateLabel}
-          </p>
         </div>
 
         <div className="flex items-center gap-3 sm:justify-end">

@@ -133,16 +133,7 @@ export function UnitsClient({
     setBusyRows(initialBusyRows)
   }, [initialBusyRows])
 
-  // Correct server-side UTC date on mount: the server may compute "today" in UTC,
-  // which is yesterday in UTC+ timezones after midnight.
   const clientTodayIso = useMemo(() => format(new Date(), 'yyyy-MM-dd'), [])
-  useEffect(() => {
-    if (clientTodayIso !== selectedDate) {
-      setSelectedDate(clientTodayIso)
-      setNow(new Date())
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const fetchLatestBusyRows = useCallback(async () => {
     const fmt = selectedDate
@@ -415,10 +406,23 @@ export function UnitsClient({
 
       <div className="flex flex-col gap-3 sm:gap-5 lg:gap-6 pt-2 sm:pt-4 lg:pt-6 pb-1 sm:pb-2">
         <div className="flex flex-col gap-3 sm:gap-4">
-          <div className="flex items-center gap-3 pt-1">
-            <h1 className="text-2xl sm:text-3xl font-black text-foreground italic tracking-tighter uppercase leading-none">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3 pt-1">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-foreground italic tracking-tighter uppercase leading-none">
               {mode === 'management' ? `Manage ${terms.units}` : `${terms.units} Status`}
             </h1>
+            
+            {mode === 'monitoring' && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 backdrop-blur-md shadow-[0_0_15px_rgba(139,92,246,0.1)]">
+                <div className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
+                </div>
+                <span className="text-[10px] sm:text-xs font-black text-violet-300 uppercase tracking-widest">
+                  {format(now, 'MMMM d')}
+                </span>
+              </div>
+            )}
+
             {liveMessage ? (
               <Badge className="border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-emerald-300 shadow-sm shadow-emerald-950/20">
                 <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -427,11 +431,6 @@ export function UnitsClient({
             ) : null}
           </div>
 
-          {mode === 'monitoring' && (
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
-              {selectedDateLabel}
-            </p>
-          )}
         </div>
 
         {mode === 'management' && (

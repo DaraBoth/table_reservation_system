@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Plus } from 'lucide-react'
 
 export function CreateStaffDialog({ restaurantId }: { restaurantId: string }) {
   const [state, action, pending] = useActionState(createStaffAccount, null)
@@ -15,8 +15,9 @@ export function CreateStaffDialog({ restaurantId }: { restaurantId: string }) {
     <Sheet>
       <SheetTrigger
         render={
-          <Button className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 shadow-lg shadow-violet-500/25 text-foreground font-black h-12">
-            + Add Staff
+          <Button className="h-11 px-6 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 text-foreground font-bold shadow-lg shadow-violet-500/20 active:scale-95 transition-all flex items-center gap-2 group">
+            <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+            <span className="text-sm">Add Staff</span>
           </Button>
         }
       />
@@ -40,12 +41,12 @@ export function CreateStaffDialog({ restaurantId }: { restaurantId: string }) {
           <div className="space-y-1.5">
             <Label className="text-foreground/70 text-sm font-bold uppercase tracking-widest px-1">Password *</Label>
             <div className="relative group">
-              <Input 
-                name="password" 
-                type={showPassword ? "text" : "password"} 
-                required 
+              <Input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                required
                 placeholder="min 6 characters"
-                className="bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500 h-14 rounded-2xl text-base px-4 font-medium pr-12" 
+                className="bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500 h-14 rounded-2xl text-base px-4 font-medium pr-12"
               />
               <button
                 type="button"

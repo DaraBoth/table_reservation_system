@@ -8,8 +8,10 @@ import { createPrivateMetadata } from '@/lib/seo'
 
 export const metadata = createPrivateMetadata('Live Status', 'Track table or room availability in real time.')
 
-export default async function UnitsPage({ params }: { params: Promise<{ restaurantId: string }> }) {
+export default async function UnitsPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>, searchParams: Promise<{ date?: string }> }) {
   const { restaurantId } = await params
+  const { date: selectedDateParam } = await searchParams
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
@@ -41,6 +43,8 @@ export default async function UnitsPage({ params }: { params: Promise<{ restaura
 
   const today = new Date()
   const todayDate = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0')
+  const initialDate = selectedDateParam || todayDate
+
   const currentTimeIso = today.toISOString()
 
   // Initial Fetch for Busy Status: Anyone whose range covers TODAY
@@ -49,8 +53,9 @@ export default async function UnitsPage({ params }: { params: Promise<{ restaura
     .select('table_id, guest_name, guest_phone, status, party_size, reservation_date, checkout_date, start_time, end_time, profiles(full_name)')
     .eq('restaurant_id', membership.restaurant_id!)
     .in('status', ['pending', 'confirmed', 'arrived'])
-    .lte('reservation_date', todayDate)
-    .gte('checkout_date', todayDate)
+    .lte('reservation_date', initialDate)
+    .gte('checkout_date', initialDate)
+
 
   return (
     <div className="max-w-6xl mx-auto pb-10 md:pb-6">
@@ -60,7 +65,8 @@ export default async function UnitsPage({ params }: { params: Promise<{ restaura
         restaurantId={membership.restaurant_id!}
         businessType={businessType}
         canManage={canManage}
-        initialDate={todayDate}
+        initialDate={initialDate}
+
         initialNowIso={currentTimeIso}
         mode="monitoring"
         currentSlug={activeSlug}

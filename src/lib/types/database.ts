@@ -194,6 +194,7 @@ export type Database = {
         Row: {
           created_at: string | null
           device_info: string | null
+          device_token: string | null
           endpoint: string
           id: string
           restaurant_id: string | null
@@ -203,6 +204,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           device_info?: string | null
+          device_token?: string | null
           endpoint: string
           id?: string
           restaurant_id?: string | null
@@ -212,12 +214,14 @@ export type Database = {
         Update: {
           created_at?: string | null
           device_info?: string | null
+          device_token?: string | null
           endpoint?: string
           id?: string
           restaurant_id?: string | null
           subscription?: Json
           user_id?: string | null
         }
+
         Relationships: [
           {
             foreignKeyName: "push_subscriptions_restaurant_id_fkey"

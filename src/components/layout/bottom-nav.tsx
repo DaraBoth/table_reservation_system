@@ -33,11 +33,11 @@ interface BottomNavProps {
   avatarUrl?: string | null
 }
 
-export function BottomNav({ 
-  isAdmin, 
+export function BottomNav({
+  isAdmin,
   isStaff,
-  businessType = 'restaurant', 
-  isSpecialAdmin = false, 
+  businessType = 'restaurant',
+  isSpecialAdmin = false,
   specialFeatures = {},
   restaurantId,
   activeSlug,
@@ -50,7 +50,7 @@ export function BottomNav({
   const [isPortfolioOpen, setIsPortfolioOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isSwitchingRestaurant, setIsSwitchingRestaurant] = useState(false)
-  
+
   const terms = getTerms(businessType)
   const dashSlug = activeSlug || restaurantId
   const manageUnitsPath = `/dashboard/${dashSlug}/units/manage`
@@ -70,7 +70,7 @@ export function BottomNav({
 
   const filteredMemberships = useMemo(() => {
     if (!searchQuery) return memberships
-    return memberships.filter(m => 
+    return memberships.filter(m =>
       m.restaurants?.name?.toLowerCase().includes(searchQuery.toLowerCase())
     )
   }, [memberships, searchQuery])
@@ -172,7 +172,7 @@ export function BottomNav({
                     'w-6 h-6 transition-all duration-300',
                     (isPortfolioOpen || pathname.includes(`${dashSlug}/account`) || pathname.includes(`${dashSlug}/staff`) || pathname.includes(`${dashSlug}/reports`) || pathname === manageUnitsPath || pathname.startsWith(`${manageUnitsPath}/`)) && 'scale-110 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]'
                   )}
-                  fill={isPortfolioOpen || pathname.includes(`${dashSlug}/account`) || pathname.includes(`${dashSlug}/staff`) || pathname.includes(`${dashSlug}/reports`) || pathname === manageUnitsPath || pathname.startsWith(`${manageUnitsPath}/`) ? 'currentColor' : 'none'} 
+                  fill={isPortfolioOpen || pathname.includes(`${dashSlug}/account`) || pathname.includes(`${dashSlug}/staff`) || pathname.includes(`${dashSlug}/reports`) || pathname === manageUnitsPath || pathname.startsWith(`${manageUnitsPath}/`) ? 'currentColor' : 'none'}
                 />
                 <span className={cn(
                   "text-[10px] font-bold tracking-wide transition-colors",
@@ -186,7 +186,7 @@ export function BottomNav({
           <SheetContent side="right" className="bg-background/90 backdrop-blur-xl border-border/50 p-0 sm:max-w-xs overflow-hidden">
             <div className="flex flex-col h-full bg-background/40">
               <SheetHeader className="p-6 pb-4 text-left border-b border-border/50">
-                <button 
+                <button
                   onClick={() => setIsPortfolioOpen(!isPortfolioOpen)}
                   className="flex items-center justify-between w-full group"
                 >
@@ -219,7 +219,7 @@ export function BottomNav({
                     {/* Vercel-style Search */}
                     <div className="relative group">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 group-focus-within:text-violet-400 transition-colors" />
-                      <input 
+                      <input
                         autoFocus
                         placeholder="Find Brand..."
                         value={searchQuery}
@@ -232,45 +232,45 @@ export function BottomNav({
                     </div>
 
                     <div className="space-y-1.5 pt-2">
-                       {filteredMemberships.map((m: any) => {
-                         const isCurrent = m.restaurant_id === restaurantId
-                         return (
-                           <button 
-                             key={m.restaurant_id}
-                             type="button"
-                             disabled={isSwitchingRestaurant}
-                             onClick={() => void handleRestaurantSwitch(m)}
-                             className={cn(
-                               "w-full flex items-center justify-between p-4 rounded-2xl border transition-all group/opt disabled:opacity-60 disabled:cursor-not-allowed",
-                               isCurrent 
-                                ? "bg-violet-600/10 border-violet-500/20 shadow-inner" 
+                      {filteredMemberships.map((m: any) => {
+                        const isCurrent = m.restaurant_id === restaurantId
+                        return (
+                          <button
+                            key={m.restaurant_id}
+                            type="button"
+                            disabled={isSwitchingRestaurant}
+                            onClick={() => void handleRestaurantSwitch(m)}
+                            className={cn(
+                              "w-full flex items-center justify-between p-4 rounded-2xl border transition-all group/opt disabled:opacity-60 disabled:cursor-not-allowed",
+                              isCurrent
+                                ? "bg-violet-600/10 border-violet-500/20 shadow-inner"
                                 : "bg-transparent border-transparent hover:bg-card hover:border-border"
-                             )}
-                           >
-                             <div className="flex items-center gap-3">
-                               <div className={cn(
-                                 "w-9 h-9 rounded-[0.9rem] flex items-center justify-center text-[10px] uppercase font-black transition-all",
-                                 isCurrent ? "bg-violet-600 text-foreground" : "bg-card border border-border text-muted-foreground/60 group-hover/opt:text-foreground group-hover/opt:bg-muted"
-                               )}>
-                                 {m.restaurants?.name?.slice(0, 2) || 'RT'}
-                               </div>
-                               <div className="flex flex-col">
-                                 <span className={cn("text-[12px] font-bold tracking-tight", isCurrent ? "text-foreground" : "text-muted-foreground group-hover/opt:text-foreground")}>
-                                   {m.restaurants?.name}
-                                 </span>
-                                 <span className="text-[8px] text-muted-foreground/60 font-black uppercase tracking-widest mt-0.5">{m.role}</span>
-                               </div>
-                             </div>
-                             {isCurrent && <Check className="w-4 h-4 text-violet-400" />}
-                           </button>
-                         )
-                       })}
+                            )}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={cn(
+                                "w-9 h-9 rounded-[0.9rem] flex items-center justify-center text-[10px] uppercase font-black transition-all",
+                                isCurrent ? "bg-violet-600 text-foreground" : "bg-card border border-border text-muted-foreground/60 group-hover/opt:text-foreground group-hover/opt:bg-muted"
+                              )}>
+                                {m.restaurants?.name?.slice(0, 2) || 'RT'}
+                              </div>
+                              <div className="flex flex-col">
+                                <span className={cn("text-[12px] font-bold tracking-tight", isCurrent ? "text-foreground" : "text-muted-foreground group-hover/opt:text-foreground")}>
+                                  {m.restaurants?.name}
+                                </span>
+                                <span className="text-[8px] text-muted-foreground/60 font-black uppercase tracking-widest mt-0.5">{m.role}</span>
+                              </div>
+                            </div>
+                            {isCurrent && <Check className="w-4 h-4 text-violet-400" />}
+                          </button>
+                        )
+                      })}
                     </div>
 
                     {/* Establishment Trigger (Vercel style at bottom) */}
                     {isSpecialAdmin && canEstablishMore && (
                       <div className="pt-4 mt-4 border-t border-border">
-                        <Link 
+                        <Link
                           href={`/dashboard/${dashSlug}/setup/new`}
                           onClick={() => setOpen(false)}
                           className="w-full flex items-center justify-center gap-3 p-5 rounded-[2rem] bg-violet-600/10 text-violet-400 border border-violet-500/20 hover:bg-violet-600/20 hover:border-violet-500/40 transition-all font-black text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-violet-600/5 group/new"
@@ -298,11 +298,11 @@ export function BottomNav({
                               Insights
                             </span>
                           </div>
-                          <MenuLink 
-                            href={`/dashboard/${dashSlug}/reports`} 
-                            icon={BarChart3} 
-                            label="Reports" 
-                            active={pathname.startsWith(`/dashboard/${dashSlug}/reports`) && !additionalHrefs.some(h => h !== `/dashboard/${dashSlug}/reports` && h.startsWith(`/dashboard/${dashSlug}/reports`) && pathname.startsWith(h))} 
+                          <MenuLink
+                            href={`/dashboard/${dashSlug}/reports`}
+                            icon={BarChart3}
+                            label="Reports"
+                            active={pathname.startsWith(`/dashboard/${dashSlug}/reports`) && !additionalHrefs.some(h => h !== `/dashboard/${dashSlug}/reports` && h.startsWith(`/dashboard/${dashSlug}/reports`) && pathname.startsWith(h))}
                             onClick={() => setOpen(false)}
                           />
                           {(isAdmin || isStaff) && (
@@ -313,20 +313,20 @@ export function BottomNav({
                             </div>
                           )}
                           {(isAdmin || isStaff) && (
-                            <MenuLink 
-                              href={`/dashboard/${dashSlug}/units/manage`} 
-                              icon={Settings} 
-                              label={`Manage ${terms.units}`} 
-                              active={pathname === `/dashboard/${dashSlug}/units/manage` || (pathname.startsWith(`/dashboard/${dashSlug}/units/manage`) && !additionalHrefs.some(h => h !== `/dashboard/${dashSlug}/units/manage` && h.startsWith(`/dashboard/${dashSlug}/units/manage`) && pathname.startsWith(h)))} 
+                            <MenuLink
+                              href={`/dashboard/${dashSlug}/units/manage`}
+                              icon={Settings}
+                              label={`Manage ${terms.units}`}
+                              active={pathname === `/dashboard/${dashSlug}/units/manage` || (pathname.startsWith(`/dashboard/${dashSlug}/units/manage`) && !additionalHrefs.some(h => h !== `/dashboard/${dashSlug}/units/manage` && h.startsWith(`/dashboard/${dashSlug}/units/manage`) && pathname.startsWith(h)))}
                               onClick={() => setOpen(false)}
                             />
                           )}
                           {isAdmin && (
-                            <MenuLink 
-                              href={`/dashboard/${dashSlug}/staff`} 
-                              icon={Users} 
-                              label="Staff" 
-                              active={pathname.startsWith(`/dashboard/${dashSlug}/staff`) && !additionalHrefs.some(h => h !== `/dashboard/${dashSlug}/staff` && h.startsWith(`/dashboard/${dashSlug}/staff`) && pathname.startsWith(h))} 
+                            <MenuLink
+                              href={`/dashboard/${dashSlug}/staff`}
+                              icon={Users}
+                              label="Staff"
+                              active={pathname.startsWith(`/dashboard/${dashSlug}/staff`) && !additionalHrefs.some(h => h !== `/dashboard/${dashSlug}/staff` && h.startsWith(`/dashboard/${dashSlug}/staff`) && pathname.startsWith(h))}
                               onClick={() => setOpen(false)}
                             />
                           )}
@@ -337,11 +337,11 @@ export function BottomNav({
                             </span>
                           </div>
 
-                          <MenuLink 
-                            href={`/dashboard/${dashSlug}/account`} 
-                            icon={avatarUrl ? () => <div className="w-5 h-5 rounded-md overflow-hidden"><img src={avatarUrl} className="w-full h-full object-cover" /></div> : UserCircle} 
-                            label="Settings" 
-                            active={pathname.startsWith(`/dashboard/${dashSlug}/account`) && !additionalHrefs.some(h => h !== `/dashboard/${dashSlug}/account` && h.startsWith(`/dashboard/${dashSlug}/account`) && pathname.startsWith(h))} 
+                          <MenuLink
+                            href={`/dashboard/${dashSlug}/account`}
+                            icon={avatarUrl ? () => <div className="w-5 h-5 rounded-md overflow-hidden"><img src={avatarUrl} className="w-full h-full object-cover" /></div> : UserCircle}
+                            label="Settings"
+                            active={pathname.startsWith(`/dashboard/${dashSlug}/account`) && !additionalHrefs.some(h => h !== `/dashboard/${dashSlug}/account` && h.startsWith(`/dashboard/${dashSlug}/account`) && pathname.startsWith(h))}
                             onClick={() => setOpen(false)}
                           />
                         </>
@@ -369,7 +369,7 @@ export function BottomNav({
                   BookJM
                 </p>
                 <p className="text-[9px] text-muted-foreground font-semibold tracking-wider italic">
-                  VERSION 2.4.0 • © 2026 
+                  VERSION 1.0.0 • © 2026
                 </p>
               </div>
             </div>
@@ -396,9 +396,9 @@ function MenuLink({ href, icon: Icon, label, active, onClick, className }: { hre
       {active && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-violet-500 rounded-r-lg shadow-[0_0_12px_rgba(139,92,246,0.8)]" />
       )}
-      <Icon 
-        className={cn("w-5 h-5 transition-transform duration-300 group-hover:scale-110", active && "drop-shadow-[0_0_8px_rgba(139,92,246,0.4)]")} 
-        fill={active ? 'currentColor' : 'none'} 
+      <Icon
+        className={cn("w-5 h-5 transition-transform duration-300 group-hover:scale-110", active && "drop-shadow-[0_0_8px_rgba(139,92,246,0.4)]")}
+        fill={active ? 'currentColor' : 'none'}
       />
       <div className="flex flex-col">
         {label}
