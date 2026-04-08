@@ -42,7 +42,7 @@ export function HotelReservationForm({ tables, zones, restaurantId, initialData,
   const terms = getTerms(businessType)
   const TermIcon = terms.Icon
 
-  const [step, setStep] = useState(preSelectedTableId ? 2 : 1)
+  const [step, setStep] = useState(1)
   const [slideDir, setSlideDir] = useState<SlideDir>('right')
   const [renderKey, setRenderKey] = useState(0)
 
@@ -50,9 +50,7 @@ export function HotelReservationForm({ tables, zones, restaurantId, initialData,
   const [startTime, setStartTime] = React.useState<Date>(() => {
     if (initialData) return initialData.start_time
     const d = new Date()
-    const mins = d.getMinutes()
-    if (mins > 0 && mins <= 30) d.setMinutes(30, 0, 0)
-    else { d.setHours(d.getHours() + 1, 0, 0, 0) }
+    d.setHours(12, 0, 0, 0)
     return d
   })
 
@@ -60,19 +58,26 @@ export function HotelReservationForm({ tables, zones, restaurantId, initialData,
   const [endTime, setEndTime] = React.useState<Date>(() => {
     if (initialData?.end_time) return initialData.end_time
     const d = new Date()
-    const mins = d.getMinutes()
-    if (mins > 0 && mins <= 30) d.setMinutes(30, 0, 0)
-    else { d.setHours(d.getHours() + 1, 0, 0, 0) }
+    d.setHours(12, 0, 0, 0)
     d.setDate(d.getDate() + 1)
     return d
   })
+
 
   const [selectedTableId, setSelectedTableId] = useState<string>(initialData?.table_id || preSelectedTableId || '')
   const [occupiedIds, setOccupiedIds] = useState<string[]>([])
 
   const [guestName, setGuestName] = useState(initialData?.guest_name || '')
   const [guestPhone, setGuestPhone] = useState(initialData?.guest_phone || '')
-  const [partySize, setPartySize] = useState(String(initialData?.party_size || '2'))
+  const [partySize, setPartySize] = useState(() => {
+    if (initialData?.party_size) return String(initialData.party_size)
+    if (preSelectedTableId) {
+      const table = tables.find(t => t.id === preSelectedTableId)
+      if (table) return String(table.capacity * 2)
+    }
+    return '2'
+  })
+
   const [notes, setNotes] = useState(initialData?.notes || '')
 
   React.useEffect(() => {
