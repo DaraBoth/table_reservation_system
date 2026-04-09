@@ -20,25 +20,38 @@ interface TopBarProps {
   activeSlug?: string
   memberships?: any[]
   logoUrl?: string
+  isSpecialAdmin?: boolean
+  specialFeatures?: Record<string, any>
 }
 
 
-export function TopBar({ brandName, userName, avatarUrl, restaurantId, activeSlug, memberships, logoUrl }: TopBarProps) {
-  const { isCollapsed, toggleSidebar } = useSidebar()
-  const dashSlug = activeSlug || restaurantId
+export function TopBar({ 
+  brandName, 
+  userName, 
+  userEmail, 
+  avatarUrl, 
+  restaurantId, 
+  activeSlug, 
+  memberships, 
+  logoUrl,
+  isSpecialAdmin,
+  specialFeatures
+}: TopBarProps) {
   const pathname = usePathname()
+  const { toggleSidebar } = useSidebar()
 
-  const hasMultiple = (memberships?.length ?? 0) > 1
+  // Find the exact active membership based on current URL to pass dashSlug everywhere
+  const activeMembership = memberships?.find(m => m.restaurant_id === restaurantId)
+  const dashSlug = activeMembership?.restaurants?.slug || restaurantId
 
-
-  const isEditing = pathname.includes('/edit') || pathname.includes('/new')
+  const isEditing = pathname.includes('/edit-') || pathname.includes('/create-') || pathname.includes('/setup')
+  const hasMultiple = memberships && memberships.length > 1
 
   return (
     <>
-    <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/60">
-      <div className="flex items-center justify-between px-4 h-14">
-        {/* Left: Back or Brand or Switcher */}
-        <div className="flex items-center gap-3">
+      <PWAInstallBanner />
+      <header className="sticky top-0 z-30 w-full flex items-center justify-between px-3 md:px-6 h-14 bg-card/60 backdrop-blur-xl border-b border-border/40 shadow-[0_4px_30px_rgba(0,0,0,0.02)]">
+        <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
           <Button
             onClick={toggleSidebar}
             variant="ghost"
@@ -60,6 +73,8 @@ export function TopBar({ brandName, userName, avatarUrl, restaurantId, activeSlu
             <RestaurantSwitcher 
               currentRestaurantId={restaurantId} 
               memberships={memberships} 
+              isSpecialAdmin={isSpecialAdmin}
+              specialFeatures={specialFeatures}
             />
           ) : (
             <div className="flex items-center gap-2">
@@ -104,9 +119,7 @@ export function TopBar({ brandName, userName, avatarUrl, restaurantId, activeSlu
             <LogoutButton isCollapsed={false} showText={false} className="w-9 h-9" />
           </div>
         </div>
-      </div>
-    </header>
-      <PWAInstallBanner />
+      </header>
     </>
   )
 }

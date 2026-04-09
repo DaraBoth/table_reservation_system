@@ -15,12 +15,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { usePathname, useRouter } from 'next/navigation'
 
+import Link from 'next/link'
+
 interface RestaurantSwitcherProps {
   currentRestaurantId: string
   memberships: any[]
+  isSpecialAdmin?: boolean
+  specialFeatures?: Record<string, any>
 }
 
-export function RestaurantSwitcher({ currentRestaurantId, memberships }: RestaurantSwitcherProps) {
+export function RestaurantSwitcher({ currentRestaurantId, memberships, isSpecialAdmin, specialFeatures }: RestaurantSwitcherProps) {
   const [open, setOpen] = React.useState(false)
   const pathname = usePathname()
   const router = useRouter()
@@ -28,6 +32,7 @@ export function RestaurantSwitcher({ currentRestaurantId, memberships }: Restaur
 
   const activeMembership = memberships.find(m => m.restaurant_id === currentRestaurantId)
   const currentName = activeMembership?.restaurants?.name || "Select Restaurant"
+  const dashSlug = activeMembership?.restaurants?.slug || currentRestaurantId
 
   const buildTargetPath = React.useCallback((nextRestaurantId: string) => {
     const segments = pathname.split('/').filter(Boolean)
@@ -136,15 +141,26 @@ export function RestaurantSwitcher({ currentRestaurantId, memberships }: Restaur
           ))}
         </DropdownMenuGroup>
         
-        {/* Placeholder for "Add New" for Admins if relevant, or just a separator */}
-        <DropdownMenuSeparator className="bg-muted mx-1 my-1" />
-        <DropdownMenuItem 
-          disabled 
-          className="flex items-center gap-2 px-2 py-2 text-muted-foreground rounded-xl opacity-50"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span className="text-sm font-medium">Add Business</span>
-        </DropdownMenuItem>
+        {/* Create Brand Trigger for Special Admins */}
+        {isSpecialAdmin && !!specialFeatures?.['create_restaurant'] && (
+          <>
+            <DropdownMenuSeparator className="bg-muted mx-1 my-1" />
+            <DropdownMenuItem 
+              className="p-0 border-0 focus:bg-transparent"
+              onSelect={() => {
+                setOpen(false)
+                router.push(`/dashboard/${dashSlug}/setup/new`)
+              }}
+            >
+              <div className="flex items-center gap-2 p-2 mx-1 mt-1 rounded-lg bg-violet-600/5 hover:bg-violet-600/10 border border-violet-500/20 transition-all border-dashed group/new cursor-pointer w-full">
+                <div className="w-6 h-6 rounded-md bg-violet-600 text-foreground flex items-center justify-center text-[10px] font-black">
+                   +
+                </div>
+                <span className="text-[10px] font-black text-violet-500 uppercase tracking-widest group-hover/new:text-violet-400">ADD BUSINESS</span>
+              </div>
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )

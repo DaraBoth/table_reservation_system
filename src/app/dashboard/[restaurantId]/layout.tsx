@@ -73,6 +73,7 @@ export default async function DashboardLayout({
         {/* Desktop/Tablet Sidebar */}
         <Sidebar 
           user={{ email: user.email, name: displayName }}
+          avatarUrl={profile?.avatar_url}
           role={membership.role}
           brandName={restaurantName}
           logoUrl={logoUrl}
@@ -99,6 +100,8 @@ export default async function DashboardLayout({
             restaurantId={membership.restaurant_id ?? undefined} 
             activeSlug={activeSlug}
             memberships={allMemberships}
+            isSpecialAdmin={isSpecialAdmin}
+            specialFeatures={specialFeatures}
           />
           <main className="flex-1 overflow-y-auto px-4 pt-6 pb-32 md:pb-6 custom-scrollbar">
             {children}

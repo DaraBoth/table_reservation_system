@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { useSidebar } from './sidebar-provider'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
-import { Button } from '@/components/ui/button'
 import { 
   LogOut, 
   LayoutDashboard, 
@@ -19,9 +18,13 @@ import {
   ShieldCheck,
   BookUser,
   BarChart3,
-  UserCircle
+  UserCircle,
+  Plus,
+  Loader2
 } from 'lucide-react'
 import { LogoutButton } from '@/components/auth/logout-button'
+import { login } from '@/app/actions/auth'
+import { toast } from 'sonner'
 
 
 interface SidebarProps {
@@ -29,6 +32,7 @@ interface SidebarProps {
     email: string | undefined
     name: string
   }
+  avatarUrl?: string | null
   role: string
   brandName: string
   type: 'superadmin' | 'dashboard'
@@ -45,6 +49,7 @@ interface SidebarProps {
 
 export function Sidebar({ 
   user, 
+  avatarUrl,
   role, 
   brandName, 
   type, 
@@ -59,11 +64,43 @@ export function Sidebar({
   logoUrl = ''
 }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const { isCollapsed } = useSidebar()
   const [isMounted, setIsMounted] = useState(false)
+  const [savedAccounts, setSavedAccounts] = useState<any[]>([])
+  const [isPending, startTransition] = useTransition()
+  const [switchingId, setSwitchingId] = useState<string | null>(null)
   
   const dashSlug = activeSlug || restaurantId
   const terms = getTerms(businessType)
+
+  useEffect(() => {
+    setIsMounted(true)
+    const stored = JSON.parse(localStorage.getItem('bookjm_saved_accounts') || '[]')
+    // Filter out the current user from the "other accounts" list
+    const currentEmail = user.email
+    setSavedAccounts(stored.filter((acc: any) => 
+      acc.identifier !== currentEmail && 
+      acc.identifier !== currentEmail?.split('@')[0]
+    ))
+  }, [user.email])
+
+  const handleAccountSwitch = (account: any) => {
+    setSwitchingId(account.identifier)
+    startTransition(async () => {
+      const formData = new FormData()
+      formData.append('identifier', account.identifier)
+      formData.append('password', account.password)
+      
+      const res = await login(null, formData)
+      if (res?.error) {
+        toast.error(`${res.error} (Saved password may have changed)`)
+        setSwitchingId(null)
+      } else if (res?.success && res.url) {
+        window.location.href = res.url // Force reload to sync new session
+      }
+    })
+  }
 
   // Grouped Navigation Items
   const navGroups = type === 'superadmin' 
@@ -108,11 +145,6 @@ export function Sidebar({
         }
       ]
 
-  // Persist state to local state for internal mounting only
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
   if (!isMounted) return <aside className="w-64 bg-background border-r border-border" />
 
   return (
@@ -123,76 +155,75 @@ export function Sidebar({
       )}
     >
 
-      {/* Brand Header & Switcher */}
-      <div className={cn("p-4 flex flex-col gap-2 overflow-hidden transition-all duration-300", isCollapsed ? "items-center" : "")}>
-        <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-xl shadow-violet-500/20 overflow-hidden">
-            {logoUrl ? (
-              <img src={logoUrl} alt={brandName} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-foreground font-black text-xs tracking-tighter">TB</span>
-            )}
+      {/* Modern Top Header with User Profile & Switcher */}
+      <div className={cn("p-4 flex flex-col gap-4 overflow-hidden transition-all duration-300", isCollapsed ? "items-center" : "")}>
+        
+        {/* Active User Section */}
+        <div className="flex items-center gap-3 group/profile">
+          <div className="relative flex-shrink-0">
+            <div className={cn(
+              "w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center shadow-xl shadow-violet-500/20 overflow-hidden ring-2 ring-violet-500/20 transition-transform duration-300",
+              !isCollapsed && "group-hover/profile:scale-105"
+            )}>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-white font-black text-xs">{user.name.slice(0, 2).toUpperCase()}</span>
+              )}
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-background shadow-sm" />
           </div>
+          
           {!isCollapsed && (
             <div className="flex-1 flex flex-col min-w-0 animate-in fade-in slide-in-from-left-2 duration-300">
-              <span className="font-bold text-foreground text-sm tracking-tight truncate">{brandName}</span>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <span className="text-[9px] uppercase tracking-widest font-black text-muted-foreground">{role}</span>
-              </div>
+              <span className="font-black text-foreground text-sm tracking-tight truncate">{user.name}</span>
+              <span className="text-[10px] uppercase tracking-widest font-black text-violet-500">{role}</span>
             </div>
           )}
         </div>
 
-        {/* Portfolio Switcher (Only in Dashboard mode) */}
-        {!isCollapsed && type === 'dashboard' && (memberships.length > 1 || isSpecialAdmin) && (
-          <div className="mt-2 grid grid-cols-1 gap-1 animate-in fade-in slide-in-from-top-2 duration-400">
-            <div className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-1 px-1">Portfolio</div>
-            
-            {/* Filtered memberships to show other brands */}
-            {memberships.filter(m => m.restaurant_id !== restaurantId).map((m: any) => {
-              const targetSlug = m.restaurants?.slug || m.restaurant_id
-              return (
-                <Link 
-                  key={m.restaurant_id}
-                  href={`/dashboard/${targetSlug}`}
-                  className="flex items-center gap-2 p-2 rounded-lg bg-muted/20 hover:bg-muted/50 border border-border/30 transition-all group/brand"
-                >
-                  <div className="w-6 h-6 rounded-md bg-muted border border-border flex items-center justify-center text-[10px] text-muted-foreground group-hover/brand:text-foreground group-hover/brand:bg-violet-600/20 transition-colors uppercase font-black overflow-hidden flex-shrink-0">
-                    {m.restaurants?.logo_url ? (
-                      <img src={m.restaurants.logo_url} alt={m.restaurants?.name || ''} className="w-full h-full object-cover" />
-                    ) : (
-                      m.restaurants?.name?.slice(0, 2) || 'RT'
-                    )}
-                  </div>
-                  <span className="text-[10px] font-bold text-muted-foreground group-hover/brand:text-foreground/70 truncate">{m.restaurants?.name}</span>
-                </Link>
-              )
-            })}
-
-            {/* Create Brand Trigger for Special Admins */}
-            {isSpecialAdmin && !!specialFeatures['create_restaurant'] && (
-              <Link 
-                href={`/dashboard/${dashSlug}/setup/new`}
-                className="flex items-center gap-2 p-2 rounded-lg bg-violet-600/5 hover:bg-violet-600/10 border border-violet-500/20 transition-all border-dashed group/new mt-1"
+        {/* Multi-Account Switcher (Avatars Row) */}
+        {!isCollapsed && (
+          <div className="flex items-center gap-2 mt-1 animate-in fade-in slide-in-from-top-2 duration-500 delay-100">
+            {savedAccounts.slice(0, 3).map((account) => (
+              <button
+                key={account.identifier}
+                onClick={() => handleAccountSwitch(account)}
+                disabled={isPending}
+                className="relative group/acc w-8 h-8 rounded-xl bg-muted border border-border flex items-center justify-center transition-all hover:scale-110 active:scale-95 disabled:opacity-50 overflow-hidden"
+                title={`Switch to ${account.name}`}
               >
-                <div className="w-6 h-6 rounded-md bg-violet-600 text-foreground flex items-center justify-center text-[10px] font-black">
-                   +
-                </div>
-                <span className="text-[10px] font-black text-violet-400 uppercase tracking-tight">Add Business</span>
-              </Link>
-            )}
+                {switchingId === account.identifier ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-violet-500" />
+                ) : account.avatar ? (
+                  <img src={account.avatar} alt={account.name} className="w-full h-full object-cover grayscale group-hover/acc:grayscale-0 transition-all" />
+                ) : (
+                  <span className="text-[9px] font-black">{account.name.slice(0, 2).toUpperCase()}</span>
+                )}
+              </button>
+            ))}
+            
+            {/* Add Account Button (Facebook Style) */}
+            <Link 
+              href="/login"
+              className="w-8 h-8 rounded-xl bg-violet-600/10 border border-violet-500/30 flex items-center justify-center text-violet-500 hover:bg-violet-600/20 transition-all hover:scale-110 active:scale-95 group/add"
+              title="Add another account"
+            >
+              <Plus className="w-4 h-4 transition-transform group-hover/add:rotate-90" />
+            </Link>
           </div>
         )}
       </div>
 
+      <div className="h-px bg-border/40 mx-4 mb-2" />
+
       {/* Grouped Navigation */}
-      <nav className="flex-1 px-3 space-y-6 mt-4 overflow-y-auto custom-scrollbar">
+      <nav className="flex-1 px-3 space-y-6 overflow-y-auto custom-scrollbar pt-2">
         {navGroups.map((group) => (
           <div key={group.label} className="space-y-1">
             {!isCollapsed && (
               <div className="px-3 mb-2 animate-in fade-in slide-in-from-left-1 duration-400">
-                <span className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
+                <span className="text-[9px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">
                   {group.label}
                 </span>
               </div>
@@ -202,7 +233,6 @@ export function Sidebar({
               {(() => {
                 const allHrefs = navGroups.flatMap(g => g.items.map(i => i.href))
                 return group.items.map((item) => {
-                  // Active if path starts with href AND no other more specific menu item matches
                   const isActive = pathname === item.href || (
                     pathname.startsWith(item.href) && 
                     !allHrefs.some(h => h !== item.href && h.startsWith(item.href) && pathname.startsWith(h))
@@ -243,22 +273,9 @@ export function Sidebar({
         ))}
       </nav>
 
-      {/* User & Sign Out */}
-      <div className="p-4 border-t border-border/40 mt-auto">
-        <div className={cn("flex items-center gap-3 mb-4 rounded-2xl p-2 bg-muted/20 hover:bg-muted/40 transition-colors cursor-default overflow-hidden", isCollapsed ? "justify-center p-1" : "")}>
-          <div className={cn("h-9 w-9 border-2 border-border rounded-full bg-gradient-to-br from-indigo-600 to-violet-700 text-foreground text-[10px] flex items-center justify-center font-bold ring-2 ring-card flex-shrink-0", isCollapsed ? "h-8 w-8" : "")}>
-            {user.name.slice(0, 2).toUpperCase()}
-          </div>
-          {!isCollapsed && (
-            <div className="flex flex-col min-w-0 animate-in fade-in slide-in-from-left-2 duration-300">
-              <span className="text-xs font-bold text-foreground truncate">{user.name}</span>
-              <span className="text-[10px] text-muted-foreground truncate mt-0.5 tracking-tight font-medium">{user.email}</span>
-            </div>
-          )}
-        </div>
-        
+      {/* Clean Bottom Section: Logout Only */}
+      <div className="p-4 border-t border-border/40 mt-auto bg-card/20 backdrop-blur-sm">
         <LogoutButton isCollapsed={isCollapsed} />
-
       </div>
     </aside>
   )

@@ -37,7 +37,6 @@ export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
 
       if (result === 'granted') {
         await subscribeUser()
-        toast.success('Notifications enabled! You will now receive booking alerts.')
       }
     } catch (err) {
       console.error('Failed to request permission:', err)
