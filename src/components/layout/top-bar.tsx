@@ -83,9 +83,10 @@ export function TopBar({ brandName, userName, avatarUrl, restaurantId, activeSlu
           {/* User Identity - Navigates to Account Settings */}
           <Link 
             href={`/dashboard/${dashSlug}/account`}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-violet-600/5 border border-violet-500/10 hover:bg-violet-600/10 transition-all group cursor-pointer active:scale-95 shadow-sm"
+            className="flex items-center gap-2 p-1.5 sm:px-3 rounded-2xl bg-violet-600/5 border border-violet-500/10 hover:bg-violet-600/10 transition-all group cursor-pointer active:scale-95 shadow-sm"
           >
-            <div className="flex flex-col items-end min-w-0 max-w-[80px] xs:max-w-none">
+            {/* Hidden on mobile to save space */}
+            <div className="hidden sm:flex flex-col items-end min-w-0 max-w-[80px] xs:max-w-none">
               <span className="text-[10px] font-black text-foreground italic uppercase tracking-tighter leading-none truncate w-full">{userName}</span>
               <span className="text-[9px] text-violet-500 font-black uppercase tracking-widest mt-0.5 group-hover:text-violet-400 transition-colors">View Profile</span>
             </div>
