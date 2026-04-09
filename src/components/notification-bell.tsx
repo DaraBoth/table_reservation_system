@@ -48,7 +48,7 @@ export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
     try {
       const registration = await ensurePushServiceWorker()
       const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-      
+
       if (!publicVapidKey) {
         console.error('[push] Missing NEXT_PUBLIC_VAPID_PUBLIC_KEY')
         toast.error('Push notifications are not configured.')
@@ -131,8 +131,8 @@ export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
       onClick={handleToggle}
       className={cn(
         "relative w-9 h-9 flex items-center justify-center rounded-xl transition-all active:scale-90",
-        permission === 'granted' 
-          ? "text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20" 
+        permission === 'granted'
+          ? "text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20"
           : "text-muted-foreground bg-card border border-border hover:border-violet-500/50 hover:text-violet-400"
       )}
       title={permission === 'granted' ? 'Notifications Active' : 'Enable Notifications'}
@@ -144,7 +144,7 @@ export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
       ) : (
         <Bell className="w-4 h-4" />
       )}
-      
+
       {/* Indicator dot */}
       {permission !== 'granted' && (
         <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-amber-500 rounded-full shadow-[0_0_5px_rgba(245,158,11,0.5)]" />

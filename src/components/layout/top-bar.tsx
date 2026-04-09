@@ -43,7 +43,7 @@ export function TopBar({ brandName, userName, avatarUrl, restaurantId, activeSlu
             onClick={toggleSidebar}
             variant="ghost"
             size="icon"
-            className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all rounded-lg"
+            className="hidden md:flex h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all rounded-lg"
           >
             <PanelLeft className="w-5 h-5" />
           </Button>
