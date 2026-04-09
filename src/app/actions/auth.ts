@@ -13,7 +13,12 @@ const LoginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 })
 
-export type ActionState = { error?: string; success?: string; url?: string } | null
+export type ActionState = { 
+  error?: string; 
+  success?: string; 
+  url?: string;
+  profile?: { fullName: string; avatarUrl: string | null }
+} | null
 
 export async function login(_: ActionState, formData: FormData): Promise<ActionState> {
   const raw = {
@@ -38,21 +43,34 @@ export async function login(_: ActionState, formData: FormData): Promise<ActionS
     return { error: 'Invalid credentials. Please check your username and password.' }
   }
 
-  // Get role to redirect appropriately
+  // Get role and profile
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Authentication failed.' }
 
-  const { data: membership } = await supabase
-    .from('account_memberships')
-    .select('role')
-    .eq('user_id', user.id)
-    .limit(1)
-    .maybeSingle()
+  const [{ data: membership }, { data: profile }] = await Promise.all([
+    supabase
+      .from('account_memberships')
+      .select('role')
+      .eq('user_id', user.id)
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('profiles')
+      .select('full_name, avatar_url')
+      .eq('id', user.id)
+      .maybeSingle()
+  ])
 
-  if (membership?.role === 'superadmin') {
-    redirect('/superadmin')
+  const targetUrl = membership?.role === 'superadmin' ? '/superadmin' : '/dashboard'
+
+  return {
+    success: 'true',
+    url: targetUrl,
+    profile: {
+      fullName: profile?.full_name || email.split('@')[0],
+      avatarUrl: profile?.avatar_url || null
+    }
   }
-  redirect('/dashboard')
 }
 
 // ─── Logout ───────────────────────────────────────────────────────────────────
