@@ -20,6 +20,13 @@ interface EditCustomerDialogProps {
 export function EditCustomerDialog({ customer, restaurantId }: EditCustomerDialogProps) {
   const [state, action, pending] = useActionState(updateCommonCustomer, null)
   const [open, setOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   // Close dialog on success
   useEffect(() => {
@@ -37,7 +44,7 @@ export function EditCustomerDialog({ customer, restaurantId }: EditCustomerDialo
           </Button>
         }
       />
-      <SheetContent side="bottom" className="bg-card border-border text-foreground p-6 rounded-t-3xl">
+      <SheetContent side={isMobile ? 'bottom' : 'right'} className={`bg-card border-border text-foreground p-6 ${isMobile ? 'rounded-t-3xl' : ''}`}>
         <SheetHeader className="p-0 mb-4">
           <SheetTitle className="text-foreground text-lg font-black italic tracking-tight">Edit Customer Reference</SheetTitle>
         </SheetHeader>

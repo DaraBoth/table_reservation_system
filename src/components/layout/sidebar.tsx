@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSidebar } from './sidebar-provider'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -8,8 +9,6 @@ import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
 import { Button } from '@/components/ui/button'
 import { 
-  ChevronLeft, 
-  ChevronRight, 
   LogOut, 
   LayoutDashboard, 
   Utensils, 
@@ -41,6 +40,7 @@ interface SidebarProps {
   memberships?: any[]
   isSpecialAdmin?: boolean
   specialFeatures?: Record<string, any>
+  logoUrl?: string
 }
 
 export function Sidebar({ 
@@ -55,10 +55,11 @@ export function Sidebar({
   businessType = 'restaurant',
   memberships = [],
   isSpecialAdmin = false,
-  specialFeatures = {}
+  specialFeatures = {},
+  logoUrl = ''
 }: SidebarProps) {
   const pathname = usePathname()
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const { isCollapsed } = useSidebar()
   const [isMounted, setIsMounted] = useState(false)
   
   const dashSlug = activeSlug || restaurantId
@@ -107,18 +108,10 @@ export function Sidebar({
         }
       ]
 
-  // Persist state to localStorage
+  // Persist state to local state for internal mounting only
   useEffect(() => {
-    const saved = localStorage.getItem('sidebar-collapsed')
-    if (saved === 'true') setIsCollapsed(true)
     setIsMounted(true)
   }, [])
-
-  const toggleSidebar = () => {
-    const newState = !isCollapsed
-    setIsCollapsed(newState)
-    localStorage.setItem('sidebar-collapsed', String(newState))
-  }
 
   if (!isMounted) return <aside className="w-64 bg-background border-r border-border" />
 
@@ -129,21 +122,16 @@ export function Sidebar({
         isCollapsed ? "w-20" : "w-66"
       )}
     >
-      {/* Toggle Button */}
-      <Button
-        onClick={toggleSidebar}
-        variant="ghost"
-        size="icon"
-        className="absolute -right-3 top-20 z-50 h-6 w-6 rounded-full border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted shadow-xl"
-      >
-        {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
-      </Button>
 
       {/* Brand Header & Switcher */}
       <div className={cn("p-4 flex flex-col gap-2 overflow-hidden transition-all duration-300", isCollapsed ? "items-center" : "")}>
         <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-xl shadow-violet-500/20">
-            <span className="text-foreground font-black text-xs tracking-tighter">TB</span>
+          <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-xl shadow-violet-500/20 overflow-hidden">
+            {logoUrl ? (
+              <img src={logoUrl} alt={brandName} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-foreground font-black text-xs tracking-tighter">TB</span>
+            )}
           </div>
           {!isCollapsed && (
             <div className="flex-1 flex flex-col min-w-0 animate-in fade-in slide-in-from-left-2 duration-300">
@@ -170,8 +158,12 @@ export function Sidebar({
                   href={`/dashboard/${targetSlug}`}
                   className="flex items-center gap-2 p-2 rounded-lg bg-muted/20 hover:bg-muted/50 border border-border/30 transition-all group/brand"
                 >
-                  <div className="w-6 h-6 rounded-md bg-muted border border-border flex items-center justify-center text-[10px] text-muted-foreground group-hover/brand:text-foreground group-hover/brand:bg-violet-600/20 transition-colors uppercase font-black">
-                    {m.restaurants?.name?.slice(0, 2) || 'RT'}
+                  <div className="w-6 h-6 rounded-md bg-muted border border-border flex items-center justify-center text-[10px] text-muted-foreground group-hover/brand:text-foreground group-hover/brand:bg-violet-600/20 transition-colors uppercase font-black overflow-hidden flex-shrink-0">
+                    {m.restaurants?.logo_url ? (
+                      <img src={m.restaurants.logo_url} alt={m.restaurants?.name || ''} className="w-full h-full object-cover" />
+                    ) : (
+                      m.restaurants?.name?.slice(0, 2) || 'RT'
+                    )}
                   </div>
                   <span className="text-[10px] font-bold text-muted-foreground group-hover/brand:text-foreground/70 truncate">{m.restaurants?.name}</span>
                 </Link>

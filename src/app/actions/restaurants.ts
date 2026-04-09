@@ -208,7 +208,8 @@ export async function updateOwnRestaurantInfo(_: ActionState, formData: FormData
     return { error: 'Unauthorized — business owner only' }
   }
 
-  const { error } = await supabase
+  const adminClient = createAdminClient()
+  const { error } = await adminClient
     .from('restaurants')
     .update({
       name: formData.get('name') as string,
@@ -285,7 +286,7 @@ export async function updateRestaurantLogo(restaurantId: string, formData: FormD
   revalidatePath(`/dashboard/${restaurantId}/account`)
   revalidatePath(`/`) 
 
-  return { success: 'Logo updated successfully' }
+  return { success: 'Logo updated successfully', url: publicUrl }
 }
 
 // ─── Finish Restaurant Setup ──────────────────────────────────────────────────

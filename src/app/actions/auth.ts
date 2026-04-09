@@ -13,7 +13,7 @@ const LoginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 })
 
-export type ActionState = { error?: string; success?: string } | null
+export type ActionState = { error?: string; success?: string; url?: string } | null
 
 export async function login(_: ActionState, formData: FormData): Promise<ActionState> {
   const raw = {
@@ -67,17 +67,56 @@ export async function logout() {
 
 const UpdateProfileSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
+  username: z.string().min(2, 'Username must be at least 2 characters').regex(/^[a-z0-9_.]+$/, 'Username can only contain lowercase letters, numbers, underscores, and periods'),
 })
+
+export async function checkUsernameAvailability(username: string): Promise<{ available: boolean; error?: string }> {
+  try {
+    const adminClient = createAdminClient()
+    const email = username.includes('@') ? username : `${username}@system.local`
+    
+    // We list users and check manually as Supabase doesn't offer a direct "exists" for auth.users without RPC
+    // For small to medium apps this is fine. For larger ones, an RPC or profiles column is better.
+    const { data: { users }, error } = await adminClient.auth.admin.listUsers()
+    if (error) throw error
+    
+    const exists = users.some(u => u.email?.toLowerCase() === email.toLowerCase())
+    return { available: !exists }
+  } catch (error: any) {
+    return { available: false, error: error.message }
+  }
+}
 
 export async function updateOwnProfile(_: ActionState, formData: FormData): Promise<ActionState> {
   const parsed = UpdateProfileSchema.safeParse({
     fullName: formData.get('fullName'),
+    username: formData.get('username'),
   })
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
+
+  const oldEmail = user.email || ''
+  const isSystemEmail = oldEmail.endsWith('@system.local')
+  const newUsername = parsed.data.username
+  const newEmail = isSystemEmail ? `${newUsername}@system.local` : newUsername
+
+  // If username/email changed, check availability
+  if (newEmail.toLowerCase() !== oldEmail.toLowerCase()) {
+    const { available, error: checkError } = await checkUsernameAvailability(newUsername)
+    if (checkError) return { error: checkError }
+    if (!available) return { error: 'This username is already taken.' }
+
+    // Update Auth Email
+    const adminClient = createAdminClient()
+    const { error: authError } = await adminClient.auth.admin.updateUserById(user.id, {
+      email: newEmail,
+      email_confirm: true // Force confirmation since it's a system change
+    })
+    if (authError) return { error: authError.message }
+  }
 
   const { error } = await supabase
     .from('profiles')

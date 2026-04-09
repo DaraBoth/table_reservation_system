@@ -77,9 +77,11 @@ export function RestaurantSwitcher({ currentRestaurantId, memberships }: Restaur
             aria-expanded={open}
             className="flex items-center gap-2 px-2 h-9 text-foreground hover:bg-white/5 rounded-xl transition-all duration-200"
           >
-            <div className="w-6 h-6 rounded-md bg-linear-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/30 flex items-center justify-center shrink-0">
+            <div className="w-6 h-6 rounded-md bg-linear-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/30 flex items-center justify-center shrink-0 overflow-hidden">
               {isPending ? (
                 <Loader2 className="w-3.5 h-3.5 text-violet-400 animate-spin" />
+              ) : activeMembership?.restaurants?.logo_url ? (
+                <img src={activeMembership.restaurants.logo_url} alt={currentName} className="w-full h-full object-cover" />
               ) : (
                 <Store className="w-3.5 h-3.5 text-violet-400" />
               )}
@@ -116,11 +118,15 @@ export function RestaurantSwitcher({ currentRestaurantId, memberships }: Restaur
               )}
             >
               <div className="flex items-center gap-2">
-                {isPending && membership.restaurant_id !== currentRestaurantId ? (
-                  <Loader2 className="w-4 h-4 text-violet-400 animate-spin" />
-                ) : (
-                  <Store className="w-4 h-4 opacity-70" />
-                )}
+                <div className="w-5 h-5 rounded-md bg-muted border border-border flex items-center justify-center overflow-hidden shrink-0">
+                  {isPending && membership.restaurant_id !== currentRestaurantId ? (
+                    <Loader2 className="w-3 h-3 text-violet-400 animate-spin" />
+                  ) : membership.restaurants?.logo_url ? (
+                    <img src={membership.restaurants.logo_url} alt={membership.restaurants?.name || ''} className="w-full h-full object-cover" />
+                  ) : (
+                    <Store className="w-3 h-3 opacity-70" />
+                  )}
+                </div>
                 <span className="text-sm font-medium">{membership.restaurants?.name}</span>
               </div>
               {membership.restaurant_id === currentRestaurantId && (

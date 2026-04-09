@@ -9,6 +9,7 @@ import { RealtimeListener } from '@/components/realtime-listener'
 import { NotificationManager } from '@/components/notification-manager'
 import { getActiveRestaurant } from '@/lib/restaurant-context'
 import { APP_NAME } from '@/lib/seo'
+import { SidebarProvider } from '@/components/layout/sidebar-provider'
 
 export const metadata: Metadata = {
   title: {
@@ -64,54 +65,59 @@ export default async function DashboardLayout({
   const restaurantName = membership.restaurants?.name ?? 'Dashboard'
   const businessType = (membership.restaurants?.business_type ?? 'restaurant') as BusinessType
   const displayName = profile?.full_name || user.email?.split('@')[0] || 'User'
+  const logoUrl = membership.restaurants?.logo_url || ''
 
   return (
-    <div className="flex bg-background h-screen overflow-hidden">
-      {/* Desktop/Tablet Sidebar */}
-      <Sidebar 
-        user={{ email: user.email, name: displayName }}
-        role={membership.role}
-        brandName={restaurantName}
-        type="dashboard"
-        isAdmin={isAdmin}
-        isStaff={membership.role === 'staff'}
-        restaurantId={membership.restaurant_id}
-        activeSlug={activeSlug}
-        businessType={businessType}
-        memberships={allMemberships}
-        isSpecialAdmin={isSpecialAdmin}
-        specialFeatures={specialFeatures}
-      />
-
-      <div className="flex-1 flex flex-col min-w-0 w-full overflow-hidden">
-        <RealtimeListener restaurantId={membership.restaurant_id ?? undefined} />
-        <NotificationManager restaurantId={membership.restaurant_id ?? undefined} />
-        <TopBar 
-          brandName={restaurantName} 
-          userName={displayName} 
-          userEmail={user.email} 
-          avatarUrl={profile?.avatar_url}
-          restaurantId={membership.restaurant_id ?? undefined} 
-          activeSlug={activeSlug}
-          memberships={allMemberships}
-        />
-        <main className="flex-1 overflow-y-auto px-4 pt-6 pb-32 md:pb-6 custom-scrollbar">
-          {children}
-        </main>
-        
-        {/* Mobile Bottom Navigation */}
-        <BottomNav 
-          isAdmin={isAdmin} 
+    <SidebarProvider>
+      <div className="flex bg-background h-screen overflow-hidden">
+        {/* Desktop/Tablet Sidebar */}
+        <Sidebar 
+          user={{ email: user.email, name: displayName }}
+          role={membership.role}
+          brandName={restaurantName}
+          logoUrl={logoUrl}
+          type="dashboard"
+          isAdmin={isAdmin}
           isStaff={membership.role === 'staff'}
-          businessType={businessType} 
+          restaurantId={membership.restaurant_id}
+          activeSlug={activeSlug}
+          businessType={businessType}
+          memberships={allMemberships}
           isSpecialAdmin={isSpecialAdmin}
           specialFeatures={specialFeatures}
-          restaurantId={membership.restaurant_id ?? undefined}
-          activeSlug={activeSlug}
-          memberships={allMemberships}
-          avatarUrl={profile?.avatar_url}
         />
+
+        <div className="flex-1 flex flex-col min-w-0 w-full overflow-hidden">
+          <RealtimeListener restaurantId={membership.restaurant_id ?? undefined} />
+          <NotificationManager restaurantId={membership.restaurant_id ?? undefined} />
+          <TopBar 
+            brandName={restaurantName} 
+            logoUrl={logoUrl}
+            userName={displayName} 
+            userEmail={user.email} 
+            avatarUrl={profile?.avatar_url}
+            restaurantId={membership.restaurant_id ?? undefined} 
+            activeSlug={activeSlug}
+            memberships={allMemberships}
+          />
+          <main className="flex-1 overflow-y-auto px-4 pt-6 pb-32 md:pb-6 custom-scrollbar">
+            {children}
+          </main>
+          
+          {/* Mobile Bottom Navigation */}
+          <BottomNav 
+            isAdmin={isAdmin} 
+            isStaff={membership.role === 'staff'}
+            businessType={businessType} 
+            isSpecialAdmin={isSpecialAdmin}
+            specialFeatures={specialFeatures}
+            restaurantId={membership.restaurant_id ?? undefined}
+            activeSlug={activeSlug}
+            memberships={allMemberships}
+            avatarUrl={profile?.avatar_url}
+          />
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   )
 }

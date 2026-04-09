@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useState, useEffect } from 'react'
 import { createStaffAccount } from '@/app/actions/memberships'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,6 +11,13 @@ import { Eye, EyeOff, Plus } from 'lucide-react'
 export function CreateStaffDialog({ restaurantId }: { restaurantId: string }) {
   const [state, action, pending] = useActionState(createStaffAccount, null)
   const [showPassword, setShowPassword] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
   return (
     <Sheet>
       <SheetTrigger
@@ -21,7 +28,7 @@ export function CreateStaffDialog({ restaurantId }: { restaurantId: string }) {
           </Button>
         }
       />
-      <SheetContent side="bottom" className="bg-background border-border text-foreground p-6 rounded-t-3xl">
+      <SheetContent side={isMobile ? 'bottom' : 'right'} className={`bg-background border-border text-foreground p-6 ${isMobile ? 'rounded-t-3xl' : ''}`}>
         <SheetHeader className="p-0 mb-4">
           <SheetTitle className="text-foreground text-lg font-black italic tracking-tight">Expand Your Crew</SheetTitle>
           <p className="text-xs text-muted-foreground font-bold">Create a secure login for a new team member</p>

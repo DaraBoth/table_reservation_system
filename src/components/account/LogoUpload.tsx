@@ -121,6 +121,7 @@ export function LogoUpload({ currentLogoUrl, businessName, onUpload, disabled }:
 
         {!disabled && (
           <button
+            type="button"
             onClick={() => fileInputRef.current?.click()}
             className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-2 backdrop-blur-[2px]"
           >
@@ -184,6 +185,7 @@ export function LogoUpload({ currentLogoUrl, businessName, onUpload, disabled }:
 
             <DialogFooter className="flex-row gap-3 sm:justify-end">
               <Button
+                type="button"
                 variant="ghost"
                 onClick={() => setIsDialogOpen(false)}
                 disabled={isUploading}
@@ -192,6 +194,7 @@ export function LogoUpload({ currentLogoUrl, businessName, onUpload, disabled }:
                 Cancel
               </Button>
               <Button
+                type="button"
                 onClick={handleSave}
                 disabled={isUploading}
                 className="flex-1 sm:flex-none h-12 px-8 bg-violet-600 hover:bg-violet-500 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-500/20"

@@ -18,6 +18,13 @@ export function AddCustomerForm({ trigger, restaurantId }: AddCustomerFormProps)
   const [state, action, pending] = useActionState<ActionState, FormData>(addCommonCustomer as any, null)
   const [open, setOpen] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   // 🎉 Success Surprise!
   useEffect(() => {
@@ -43,7 +50,7 @@ export function AddCustomerForm({ trigger, restaurantId }: AddCustomerFormProps)
           )
         }
       />
-      <SheetContent side="bottom" className="bg-card border-border text-foreground p-6 rounded-t-3xl">
+      <SheetContent side={isMobile ? 'bottom' : 'right'} className={`bg-card border-border text-foreground p-6 ${isMobile ? 'rounded-t-3xl' : ''}`}>
         <SheetHeader className="p-0 mb-4">
           <SheetTitle className="text-foreground text-lg font-black italic tracking-tight">Create User Profile</SheetTitle>
           <p className="text-xs text-muted-foreground">Quickly save contact details for future seatings</p>

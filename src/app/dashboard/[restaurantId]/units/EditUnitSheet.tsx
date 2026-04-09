@@ -69,7 +69,7 @@ export function EditUnitSheet({ table, businessType = 'restaurant', canManage, t
   }, [deleteState, router])
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet key={table.id} open={open} onOpenChange={setOpen}>
       <SheetTrigger
         nativeButton
         render={

@@ -5,9 +5,11 @@ import { usePathname } from 'next/navigation'
 import { LogoutButton } from '@/components/auth/logout-button'
 
 import { Button } from '@/components/ui/button'
-import { LogOut, ChevronRight } from 'lucide-react'
+import { ChevronRight, PanelLeft } from 'lucide-react'
 import { NotificationBell } from '@/components/notification-bell'
 import { RestaurantSwitcher } from './restaurant-switcher'
+import { useSidebar } from './sidebar-provider'
+import { PWAInstallBanner } from '@/components/pwa-install'
 
 interface TopBarProps {
   brandName: string
@@ -17,10 +19,12 @@ interface TopBarProps {
   restaurantId?: string
   activeSlug?: string
   memberships?: any[]
+  logoUrl?: string
 }
 
 
-export function TopBar({ brandName, userName, avatarUrl, restaurantId, activeSlug, memberships }: TopBarProps) {
+export function TopBar({ brandName, userName, avatarUrl, restaurantId, activeSlug, memberships, logoUrl }: TopBarProps) {
+  const { isCollapsed, toggleSidebar } = useSidebar()
   const dashSlug = activeSlug || restaurantId
   const pathname = usePathname()
 
@@ -30,10 +34,20 @@ export function TopBar({ brandName, userName, avatarUrl, restaurantId, activeSlu
   const isEditing = pathname.includes('/edit') || pathname.includes('/new')
 
   return (
+    <>
     <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/60">
       <div className="flex items-center justify-between px-4 h-14">
         {/* Left: Back or Brand or Switcher */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={toggleSidebar}
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all rounded-lg"
+          >
+            <PanelLeft className="w-5 h-5" />
+          </Button>
+
           {isEditing ? (
             <Link
               href={pathname.includes('reservations') ? `/dashboard/${dashSlug}/reservations` : `/dashboard/${dashSlug}`}
@@ -49,8 +63,12 @@ export function TopBar({ brandName, userName, avatarUrl, restaurantId, activeSlu
             />
           ) : (
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
-                <span className="text-foreground font-black text-[10px]">TB</span>
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center overflow-hidden">
+                {logoUrl ? (
+                  <img src={logoUrl} alt={brandName} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-foreground font-black text-[10px]">TB</span>
+                )}
               </div>
               <span className="text-foreground font-bold text-sm">{brandName}</span>
             </div>
@@ -80,13 +98,14 @@ export function TopBar({ brandName, userName, avatarUrl, restaurantId, activeSlu
             </div>
           </Link>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-3">
             <NotificationBell restaurantId={restaurantId} />
             <LogoutButton isCollapsed={false} showText={false} className="w-9 h-9" />
-
           </div>
         </div>
       </div>
-    </header >
+    </header>
+      <PWAInstallBanner />
+    </>
   )
 }

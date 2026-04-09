@@ -25,6 +25,13 @@ export function CreateUnitDialog({
   const [state, action, pending] = useActionState(createPhysicalTable, null)
   const [open, setOpen] = useState(false)
   const [selectedZone, setSelectedZone] = useState<string | null>('none')
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
   const terms = getTerms(businessType)
   const hasSuccess = Boolean(state && 'success' in state && state.success)
   const selectedZoneLabel = selectedZone === 'none'
@@ -55,7 +62,7 @@ export function CreateUnitDialog({
           )
         }
       />
-      <SheetContent side="bottom" className="bg-background border-border text-foreground p-6 rounded-t-3xl h-[85vh] overflow-y-auto custom-scrollbar">
+      <SheetContent side={isMobile ? 'bottom' : 'right'} className={`bg-background border-border text-foreground p-6 h-[85vh] overflow-y-auto custom-scrollbar ${isMobile ? 'rounded-t-3xl' : ''}`}>
         <SheetHeader className="p-0 mb-6 font-black italic tracking-tighter uppercase">
           <SheetTitle className="text-foreground text-xl">Add New {terms.unit}</SheetTitle>
         </SheetHeader>

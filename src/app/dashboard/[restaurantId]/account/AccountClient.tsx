@@ -1,15 +1,15 @@
 "use client"
 
-import { useActionState, useState } from 'react'
+import * as React from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
-import { changeOwnPassword, updateOwnProfile, updateProfileAvatar } from '@/app/actions/auth'
+import { changeOwnPassword, updateOwnProfile, updateProfileAvatar, checkUsernameAvailability } from '@/app/actions/auth'
 import { updateOwnRestaurantInfo, updateRestaurantLogo } from '@/app/actions/restaurants'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { 
   ShieldCheck, 
-  Store, 
+  Store as StoreIcon, 
   UserCircle, 
   AlertTriangle, 
   Check, 
@@ -17,6 +17,8 @@ import {
   Mail,
   Phone,
   MapPin,
+  Loader2,
+  Fingerprint,
 } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
@@ -51,15 +53,65 @@ interface AccountClientProps {
 type Tab = 'profile' | 'security' | 'business'
 
 export function AccountClient({ user, membership, profile }: AccountClientProps) {
-  const [passwordState, passwordAction, passwordPending] = useActionState(changeOwnPassword, null)
-  const [profileState, profileAction, profilePending] = useActionState(updateOwnProfile, null)
-  const [businessState, businessAction, businessPending] = useActionState(updateOwnRestaurantInfo, null)
+  const [passwordState, passwordAction, passwordPending] = React.useActionState(changeOwnPassword, null)
+  const [profileState, profileAction, profilePending] = React.useActionState(updateOwnProfile, null)
+  const [businessState, businessAction, businessPending] = React.useActionState(updateOwnRestaurantInfo, null)
   
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [name, setName] = useState(profile?.full_name || '')
+  const [name, setName] = React.useState(profile?.full_name || '')
+  
+  const initialUsername = (user?.email && user.email.endsWith('@system.local'))
+    ? user.email.split('@')[0]
+    : user?.email || ''
+  const [username, setUsername] = React.useState(initialUsername)
+  const [isChecking, setIsChecking] = React.useState(false)
+  const [isAvailable, setIsAvailable] = React.useState<boolean | null>(null)
+  const [usernameError, setUsernameError] = React.useState<string | null>(null)
+  
+  const [currentLogoUrl, setCurrentLogoUrl] = React.useState(membership?.restaurants?.logo_url || '')
+  
+  // Sync state with props when they change (e.g. after router refresh)
+  React.useEffect(() => {
+    if (membership?.restaurants?.logo_url) {
+      setCurrentLogoUrl(membership.restaurants.logo_url)
+    }
+  }, [membership?.restaurants?.logo_url])
+  
   const storeName = membership?.restaurants?.name || 'Store'
   const storeSlug = membership?.restaurants?.slug || ''
+  
+  const checkAvailability = async () => {
+    if (!username || username === initialUsername) {
+       setIsAvailable(true)
+       setUsernameError(null)
+       return
+    }
+    
+    // Basic validation
+    if (username.length < 2) {
+      setUsernameError('Min 2 characters')
+      setIsAvailable(false)
+      return
+    }
+    if (!/^[a-z0-9_.]+$/.test(username)) {
+      setUsernameError('Lowercase, numbers, _ and . only')
+      setIsAvailable(false)
+      return
+    }
+
+    setIsChecking(true)
+    setUsernameError(null)
+    try {
+      const res = await checkUsernameAvailability(username)
+      setIsAvailable(res.available)
+      if (!res.available) setUsernameError('Already taken')
+    } catch (e) {
+      toast.error('Check failed')
+    } finally {
+      setIsChecking(false)
+    }
+  }
   
   const activeTab = (searchParams.get('tab') as Tab) || 'profile'
 
@@ -74,7 +126,7 @@ export function AccountClient({ user, membership, profile }: AccountClientProps)
   const menu = [
     { id: 'profile', icon: UserCircle, label: 'My Info' },
     { id: 'security', icon: ShieldCheck, label: 'Password' },
-    ...(isAdmin ? [{ id: 'business', icon: Store, label: 'Store' }] : []),
+    ...(isAdmin ? [{ id: 'business', icon: StoreIcon, label: 'Store' }] : []),
   ]
 
   const getTabButtonClassName = (active: boolean) => cn(
@@ -182,24 +234,81 @@ export function AccountClient({ user, membership, profile }: AccountClientProps)
                     </div>
 
                     <form action={profileAction} className="space-y-6 md:space-y-8 md:max-w-2xl">
-                        <div className="space-y-3 px-1">
-                          <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Name</Label>
-                          <Input
-                            name="fullName"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="h-14 bg-background border-border rounded-2xl text-lg font-bold text-foreground px-5 focus-visible:border-violet-500 focus-visible:ring-violet-500/20 transition-all shadow-sm placeholder:text-muted-foreground/20"
-                            placeholder="Your name"
-                          />
+                        <div className="grid gap-6 md:grid-cols-2">
+                          <div className="space-y-3 px-1">
+                            <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Name</Label>
+                            <Input
+                              name="fullName"
+                              value={name}
+                              onChange={(e) => setName(e.target.value)}
+                              className="h-14 bg-background border-border rounded-2xl text-lg font-bold text-foreground px-5 focus-visible:border-violet-500 focus-visible:ring-violet-500/20 transition-all shadow-sm placeholder:text-muted-foreground/20"
+                              placeholder="Your name"
+                            />
+                          </div>
+
+                          <div className="space-y-3 px-1">
+                            <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Username</Label>
+                            <div className="relative group">
+                              <Input
+                                name="username"
+                                value={username}
+                                onChange={(e) => {
+                                  setUsername(e.target.value.toLowerCase())
+                                  setIsAvailable(null)
+                                  setUsernameError(null)
+                                }}
+                                className={cn(
+                                  "h-14 bg-background border-border rounded-2xl text-lg font-bold text-foreground px-5 focus-visible:border-violet-500 focus-visible:ring-violet-500/20 transition-all shadow-sm placeholder:text-muted-foreground/20 pr-32",
+                                  isAvailable === true && "border-emerald-500/50 focus-visible:border-emerald-500",
+                                  isAvailable === false && "border-rose-500/50 focus-visible:border-rose-500"
+                                )}
+                                placeholder="cool.guy"
+                              />
+                              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                {isAvailable === true && (
+                                  <div className="bg-emerald-500/10 text-emerald-500 p-1.5 rounded-full">
+                                    <Check className="w-3.5 h-3.5" />
+                                  </div>
+                                )}
+                                <Button 
+                                  type="button" 
+                                  onClick={checkAvailability}
+                                  disabled={isChecking || !username || username === initialUsername}
+                                  className="h-10 px-4 bg-muted/50 hover:bg-muted text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground rounded-xl border-0"
+                                >
+                                  {isChecking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Check'}
+                                </Button>
+                              </div>
+                            </div>
+                            {usernameError && (
+                              <p className="px-1 text-[10px] font-black uppercase tracking-widest text-rose-400 mt-1">{usernameError}</p>
+                            )}
+                            <p className="px-1 text-[10px] font-bold text-muted-foreground/40 mt-1 flex items-center gap-1.5">
+                              <Fingerprint className="w-3 h-3" />
+                              This is your login identifier.
+                            </p>
+                          </div>
                         </div>
 
                       {profileState?.success && (
-                        <p className="text-xs text-emerald-400 font-black uppercase tracking-widest flex items-center gap-2 animate-in fade-in slide-in-from-left-2"><Check className="w-3.5 h-3.5" /> Saved</p>
+                        <p className="text-xs text-emerald-400 font-black uppercase tracking-widest flex items-center gap-2 animate-in fade-in slide-in-from-left-2"><Check className="w-3.5 h-3.5" /> Profile and login credentials updated</p>
+                      )}
+                      {profileState?.error && (
+                        <p className="text-xs text-rose-400 font-black uppercase tracking-widest flex items-center gap-2 animate-in fade-in slide-in-from-left-2"><AlertTriangle className="w-3.5 h-3.5" /> {profileState.error}</p>
                       )}
                       
-                      <Button type="submit" disabled={profilePending} className="h-10 px-8 bg-violet-600 hover:bg-violet-500 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-500/10 active:scale-95 transition-all">
-                        {profilePending ? 'Saving...' : 'Save'}
-                      </Button>
+                      <div className="flex items-center gap-4">
+                        <Button 
+                          type="submit" 
+                          disabled={profilePending || (isAvailable === false && username !== initialUsername)} 
+                          className="h-10 px-8 bg-violet-600 hover:bg-violet-500 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-500/10 active:scale-95 transition-all"
+                        >
+                          {profilePending ? 'Saving...' : 'Save'}
+                        </Button>
+                        {username !== initialUsername && isAvailable === null && (
+                           <p className="text-[9px] font-black uppercase tracking-widest text-amber-500 animate-pulse">Check username before saving</p>
+                        )}
+                      </div>
                     </form>
                   </div>
                 </div>
@@ -258,9 +367,10 @@ export function AccountClient({ user, membership, profile }: AccountClientProps)
                   <div className="space-y-8 md:space-y-10">
                     <form action={businessAction} className="space-y-10">
                       <input type="hidden" name="restaurantId" value={membership?.restaurant_id || ''} />
+                      <input type="hidden" name="logoUrl" value={currentLogoUrl} />
                       <div className="grid items-center gap-8 border-b border-border/50 pb-8 md:grid-cols-[auto_minmax(0,1fr)] md:gap-10 md:pb-10">
                         <LogoUpload 
-                          currentLogoUrl={membership?.restaurants?.logo_url}
+                          currentLogoUrl={currentLogoUrl}
                           businessName={storeName}
                           onUpload={async (blob) => {
                             const formData = new FormData()
@@ -270,6 +380,10 @@ export function AccountClient({ user, membership, profile }: AccountClientProps)
                               toast.error(res.error)
                               throw new Error(res.error)
                             }
+                            if ((res as any).url) {
+                              setCurrentLogoUrl((res as any).url)
+                            }
+                            router.refresh()
                             toast.success('Logo saved')
                           }}
                         />
@@ -285,7 +399,7 @@ export function AccountClient({ user, membership, profile }: AccountClientProps)
                       <div className="grid grid-cols-1 gap-x-10 gap-y-8 lg:grid-cols-2">
                         <div className="space-y-3 col-span-full px-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <Store className="w-3.5 h-3.5 text-muted-foreground/60" />
+                            <StoreIcon className="w-3.5 h-3.5 text-muted-foreground/60" />
                             <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Store Name</Label>
                           </div>
                           <Input
