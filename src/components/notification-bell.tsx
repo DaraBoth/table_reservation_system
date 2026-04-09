@@ -120,7 +120,15 @@ export function NotificationBell({ restaurantId }: { restaurantId?: string }) {
         }
       }
 
-      toast.error(err instanceof Error ? err.message : 'Push subscription failed.')
+      // Check for Brave browser to give a specific error message
+      const isBrave = (navigator as any).brave && await (navigator as any).brave.isBrave?.()
+      if (isBrave) {
+        toast.error("Brave blocks notifications by default. Enable 'Use Google services for push messaging' in brave://settings/privacy.", {
+          duration: 8000,
+        })
+      } else {
+        toast.error(err instanceof Error ? err.message : 'Push subscription failed.')
+      }
     }
   }
 

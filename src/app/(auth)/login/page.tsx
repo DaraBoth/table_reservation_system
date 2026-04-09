@@ -162,7 +162,7 @@ function LoginForm() {
                          </div>
                       ) : null}
                       {account.avatar ? (
-                        <Image src={account.avatar} alt={account.name} fill className="object-cover" />
+                        <img src={account.avatar} alt={account.name} className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-sm font-black text-foreground/50">{account.name.slice(0, 2).toUpperCase()}</span>
                       )}
