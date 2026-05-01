@@ -4,10 +4,12 @@ import type { BusinessType } from '@/lib/business-type'
 import { UnitsClient } from '../UnitsClient'
 import { getActiveRestaurant } from '@/lib/restaurant-context'
 import { createPrivateMetadata } from '@/lib/seo'
+import { getServerT } from '@/i18n/server'
 
 export const metadata = createPrivateMetadata('Manage Units', 'Edit tables, rooms, zones, and capacity settings.')
 
 export default async function ManageUnitsPage({ params }: { params: Promise<{ restaurantId: string }> }) {
+  await getServerT()
   const { restaurantId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

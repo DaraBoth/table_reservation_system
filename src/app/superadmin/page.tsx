@@ -8,10 +8,12 @@ import {
   Users, LayoutDashboard,
 } from 'lucide-react'
 import { createPrivateMetadata } from '@/lib/seo'
+import { getServerT } from '@/i18n/server'
 
 export const metadata = createPrivateMetadata('Superadmin Overview', 'Monitor platform activity, restaurants, admins, and booking volume.')
 
 export default async function SuperadminPage() {
+  const { t } = await getServerT()
   const supabase = await createClient()
 
   const { data: restaurantsRaw } = await supabase
@@ -35,10 +37,10 @@ export default async function SuperadminPage() {
   const activeCount = list.filter(r => r.is_active).length
 
   const stats = [
-    { label: 'Restaurants', value: list.length,          icon: Store,      color: 'from-violet-600 to-indigo-600', bg: 'bg-violet-500/10',  text: 'text-violet-400' },
-    { label: 'Active Sites', value: activeCount,          icon: Activity,   color: 'from-emerald-600 to-teal-600',  bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
-    { label: 'Admins',       value: totalAdmins ?? 0,     icon: ShieldCheck,color: 'from-amber-600 to-orange-600',  bg: 'bg-amber-500/10',   text: 'text-amber-400' },
-    { label: 'Bookings',     value: totalReservations ?? 0,icon: CalendarDays,  color: 'from-blue-600 to-cyan-600',     bg: 'bg-blue-500/10',    text: 'text-blue-400' },
+    { label: t('superadmin.restaurants'), value: list.length,          icon: Store,      color: 'from-violet-600 to-indigo-600', bg: 'bg-violet-500/10',  text: 'text-violet-400' },
+    { label: t('superadmin.activeSites'), value: activeCount,          icon: Activity,   color: 'from-emerald-600 to-teal-600',  bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
+    { label: t('superadmin.admins'),       value: totalAdmins ?? 0,     icon: ShieldCheck,color: 'from-amber-600 to-orange-600',  bg: 'bg-amber-500/10',   text: 'text-amber-400' },
+    { label: t('superadmin.bookings'),     value: totalReservations ?? 0,icon: CalendarDays,  color: 'from-blue-600 to-cyan-600',     bg: 'bg-blue-500/10',    text: 'text-blue-400' },
   ]
 
   return (
@@ -49,16 +51,16 @@ export default async function SuperadminPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <LayoutDashboard className="w-5 h-5 text-violet-400" />
-            <h1 className="text-2xl font-black text-foreground">Platform Overview</h1>
+            <h1 className="text-2xl font-black text-foreground">{t('superadmin.platformOverview')}</h1>
           </div>
-          <p className="text-muted-foreground text-sm">Manage all restaurants and users from here.</p>
+          <p className="text-muted-foreground text-sm">{t('superadmin.manageAll')}</p>
         </div>
         <Link
           href="/superadmin/restaurants/new"
           className="flex items-center gap-2 h-11 px-5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-foreground rounded-2xl font-bold text-sm shadow-lg shadow-violet-500/25 active:scale-[0.98] transition-all whitespace-nowrap"
         >
           <Plus className="w-4 h-4" />
-          New Restaurant
+          {t('superadmin.newRestaurant')}
         </Link>
       </div>
 
@@ -87,21 +89,21 @@ export default async function SuperadminPage() {
         <div className="lg:col-span-3 bg-card border border-border rounded-3xl overflow-hidden">
           <div className="flex items-center justify-between p-5 border-b border-border">
             <div>
-              <h2 className="text-base font-black text-foreground">All Restaurants</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">{list.length} registered</p>
+              <h2 className="text-base font-black text-foreground">{t('superadmin.allRestaurants')}</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">{t('superadmin.registeredCount', { count: list.length })}</p>
             </div>
             <Link
               href="/superadmin/restaurants"
               className="text-xs text-violet-400 font-bold hover:text-violet-300 flex items-center gap-1"
             >
-              See all <ArrowRight className="w-3 h-3" />
+              {t('superadmin.seeAll')} <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
 
           <div className="divide-y divide-border">
             {list.slice(0, 8).map((r) => {
               const isExpired = r.subscription_expires_at && new Date(r.subscription_expires_at) < new Date()
-              const leadAdmin = r.account_memberships?.find((m: any) => m.role === 'admin')?.profiles?.full_name || 'No admin'
+              const leadAdmin = r.account_memberships?.find((m: any) => m.role === 'admin')?.profiles?.full_name || t('superadmin.noAdmin')
               return (
                 <Link
                   key={r.id}
@@ -122,7 +124,7 @@ export default async function SuperadminPage() {
                         : r.is_active ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
                         : 'bg-muted text-muted-foreground border-border'
                     )}>
-                      {isExpired ? 'Expired' : r.is_active ? 'Active' : 'Suspended'}
+                      {isExpired ? t('superadmin.expired') : r.is_active ? t('superadmin.active') : t('superadmin.suspended')}
                     </Badge>
                     <ArrowRight className="w-4 h-4 text-muted-foreground/60 group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all" />
                   </div>
@@ -131,7 +133,7 @@ export default async function SuperadminPage() {
             })}
             {list.length === 0 && (
               <div className="p-12 text-center">
-                <p className="text-muted-foreground text-sm">No restaurants yet</p>
+                <p className="text-muted-foreground text-sm">{t('superadmin.noRestaurantsYet')}</p>
               </div>
             )}
           </div>
@@ -146,7 +148,7 @@ export default async function SuperadminPage() {
               <div className="w-8 h-8 rounded-xl bg-indigo-600/15 flex items-center justify-center">
                 <Zap className="w-4 h-4 text-indigo-400" />
               </div>
-              <h2 className="text-base font-black text-foreground">Recent Activity</h2>
+              <h2 className="text-base font-black text-foreground">{t('superadmin.recentActivity')}</h2>
             </div>
             <div className="p-3 space-y-1">
               {recentActivity?.map((a, i) => (
@@ -156,10 +158,10 @@ export default async function SuperadminPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-foreground truncate">
-                      {(a as any).profiles?.full_name || 'User'}
+                      {(a as any).profiles?.full_name || t('superadmin.user')}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {(a as any).restaurants?.name || 'Platform'} · {a.role}
+                      {(a as any).restaurants?.name || t('superadmin.platform')} · {a.role}
                     </p>
                   </div>
                 </div>
@@ -167,7 +169,7 @@ export default async function SuperadminPage() {
               {(!recentActivity || recentActivity.length === 0) && (
                 <div className="p-8 text-center">
                   <Clock className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-muted-foreground/60 text-xs font-bold uppercase tracking-widest">No recent events</p>
+                  <p className="text-muted-foreground/60 text-xs font-bold uppercase tracking-widest">{t('superadmin.noRecentEvents')}</p>
                 </div>
               )}
             </div>
@@ -175,11 +177,11 @@ export default async function SuperadminPage() {
 
           {/* Quick Links */}
           <div className="bg-card border border-border rounded-3xl p-4 space-y-2">
-            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2 mb-3">Quick Links</p>
+            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2 mb-3">{t('superadmin.quickLinks')}</p>
             {[
-              { href: '/superadmin/users',  label: 'User Management',  icon: Users,      color: 'text-blue-400'   },
-              { href: '/superadmin/admins', label: 'Admin Accounts',   icon: ShieldCheck,color: 'text-amber-400'  },
-              { href: '/superadmin/restaurants/new', label: 'New Restaurant', icon: Store, color: 'text-violet-400' },
+              { href: '/superadmin/users',  label: t('superadmin.userManagement'),  icon: Users,      color: 'text-blue-400'   },
+              { href: '/superadmin/admins', label: t('superadmin.adminAccounts'),   icon: ShieldCheck,color: 'text-amber-400'  },
+              { href: '/superadmin/restaurants/new', label: t('superadmin.newRestaurant'), icon: Store, color: 'text-violet-400' },
             ].map((link) => {
               const Icon = link.icon
               return (
@@ -200,13 +202,13 @@ export default async function SuperadminPage() {
           <div className="bg-card border border-border rounded-3xl p-5">
             <div className="flex items-center gap-2 mb-4">
               <Activity className="w-4 h-4 text-emerald-400" />
-              <h3 className="text-sm font-black text-foreground">System Status</h3>
+              <h3 className="text-sm font-black text-foreground">{t('superadmin.systemStatus')}</h3>
             </div>
             <div className="space-y-3">
               {[
-                { label: 'Edge Network', status: 'Online' },
-                { label: 'Database',     status: 'In Sync' },
-                { label: 'Auth Gateway', status: 'Secured' },
+                { label: t('superadmin.edgeNetwork'), status: t('superadmin.online') },
+                { label: t('superadmin.database'),     status: t('superadmin.inSync') },
+                { label: t('superadmin.authGateway'), status: t('superadmin.secured') },
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground font-semibold">{item.label}</span>

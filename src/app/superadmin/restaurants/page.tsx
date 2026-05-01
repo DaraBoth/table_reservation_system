@@ -15,10 +15,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { buttonVariants } from '@/components/ui/button-variants'
 import { createPrivateMetadata } from '@/lib/seo'
+import { getServerT } from '@/i18n/server'
 
 export const metadata = createPrivateMetadata('Restaurants', 'Manage restaurant accounts, subscriptions, and activity status.')
 
 export default async function RestaurantsPage() {
+  await getServerT()
   const supabase = await createClient()
   const { data: raw } = await supabase
     .from('restaurants')

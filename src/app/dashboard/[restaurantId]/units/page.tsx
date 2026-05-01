@@ -5,10 +5,12 @@ import { UnitsClient } from './UnitsClient'
 
 import { getActiveRestaurant } from '@/lib/restaurant-context'
 import { createPrivateMetadata } from '@/lib/seo'
+import { getServerT } from '@/i18n/server'
 
 export const metadata = createPrivateMetadata('Live Status', 'Track table or room availability in real time.')
 
 export default async function UnitsPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>, searchParams: Promise<{ date?: string }> }) {
+  await getServerT()
   const { restaurantId } = await params
   const { date: selectedDateParam } = await searchParams
 

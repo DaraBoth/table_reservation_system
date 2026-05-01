@@ -1,10 +1,12 @@
 import { getActiveRestaurant } from '@/lib/restaurant-context'
 import { redirect } from 'next/navigation'
 import { createPrivateMetadata } from '@/lib/seo'
+import { getServerT } from '@/i18n/server'
 
 export const metadata = createPrivateMetadata('Workspace Redirect', 'Redirects signed-in users to their active dashboard.', '/dashboard')
 
 export default async function DashboardPage() {
+  await getServerT()
   const res = await getActiveRestaurant()
   
   if (!res || !res.activeId) {

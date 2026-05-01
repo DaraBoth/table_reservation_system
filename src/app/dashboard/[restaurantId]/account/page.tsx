@@ -3,10 +3,12 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { AccountClient } from './AccountClient'
 import { createPrivateMetadata } from '@/lib/seo'
+import { getServerT } from '@/i18n/server'
 
 export const metadata = createPrivateMetadata('Account Settings', 'Update your profile, password, store details, and short link.')
 
 export default async function ({ params }: { params: Promise<{ restaurantId: string }> }) {
+  await getServerT()
   const { restaurantId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

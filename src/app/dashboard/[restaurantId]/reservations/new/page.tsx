@@ -3,17 +3,19 @@ import { createClient } from '@/lib/supabase/server'
 import { CreateReservationForm } from './CreateReservationForm'
 import type { BusinessType } from '@/lib/business-type'
 import { createPrivateMetadata } from '@/lib/seo'
+import { getServerT } from '@/i18n/server'
 
 export const metadata = createPrivateMetadata('New Booking', 'Create a new reservation for a guest or walk-in.')
 
 export default async function NewReservationPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>, searchParams: Promise<{ tableId?: string }> }) {
+  const { t } = await getServerT()
   const { restaurantId: routeId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
   const res = await getActiveRestaurant(routeId)
-  if (!res) return <div>Error: No restaurant membership found.</div>
+  if (!res) return <div>{t('dashboard.noRestaurantMembership', { defaultValue: 'Error: No restaurant membership found.' })}</div>
   
   const membership = res.membership as any
   const restaurantId = membership.restaurant_id

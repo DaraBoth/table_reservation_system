@@ -8,10 +8,12 @@ import { StaffActions } from './StaffActions'
 import type { Tables } from '@/lib/types/database'
 import { UserCheck, UserX, Plus, Users } from 'lucide-react'
 import { createPrivateMetadata } from '@/lib/seo'
+import { getServerT } from '@/i18n/server'
 
 export const metadata = createPrivateMetadata('Staff', 'Add staff accounts, reset passwords, and control access.')
 
 export default async function ({ params }: { params: Promise<{ restaurantId: string }> }) {
+  const { t, language } = await getServerT()
   const { restaurantId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -45,7 +47,7 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
 
       {/* Header */}
       <div className="flex items-center justify-between pt-2">
-        <p className="text-muted-foreground text-sm">{staff.length} staff members</p>
+        <p className="text-muted-foreground text-sm">{t('dashboard.staffMembersCount', { defaultValue: '{{count}} staff members', count: staff.length })}</p>
         <CreateStaffDialog restaurantId={currentRestaurantId} />
       </div>
 
@@ -57,7 +59,7 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
           </div>
           <div>
             <p className="text-xl font-black text-foreground">{activeCount}</p>
-            <p className="text-xs text-muted-foreground">Active</p>
+            <p className="text-xs text-muted-foreground">{t('superadmin.active', { defaultValue: 'Active' })}</p>
           </div>
         </div>
         <div className="flex-1 bg-card border border-border/50 rounded-2xl p-3 flex items-center gap-3">
@@ -66,7 +68,7 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
           </div>
           <div>
             <p className="text-xl font-black text-foreground">{inactiveCount}</p>
-            <p className="text-xs text-muted-foreground">Disabled</p>
+            <p className="text-xs text-muted-foreground">{t('dashboard.disabled', { defaultValue: 'Disabled' })}</p>
           </div>
         </div>
       </div>
@@ -75,9 +77,9 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
       {staff.length > 0 ? (
         <div className="space-y-3">
           {staff.map((s) => {
-            const name = s.profiles?.full_name || 'Staff Member'
+            const name = s.profiles?.full_name || t('roles.staff', { defaultValue: 'Staff Member' })
             const initials = name.slice(0, 2).toUpperCase()
-            const joinedDate = new Date(s.created_at).toLocaleDateString('en-US', {
+            const joinedDate = new Date(s.created_at).toLocaleDateString(language, {
               month: 'short', day: 'numeric', year: 'numeric'
             })
 
@@ -104,11 +106,11 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
                         ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.1)]'
                         : 'bg-muted/50 text-muted-foreground border-border'
                     }`}>
-                      {s.is_active ? 'Active' : 'Disabled'}
+                      {s.is_active ? t('superadmin.active', { defaultValue: 'Active' }) : t('dashboard.disabled', { defaultValue: 'Disabled' })}
                     </Badge>
                   </div>
                   <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
-                    Staff · Joined {joinedDate}
+                    {t('dashboard.staffJoinedDate', { defaultValue: 'Staff · Joined {{date}}', date: joinedDate })}
                   </p>
                 </div>
 
@@ -133,8 +135,8 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
           <div className="mb-4 flex justify-center">
             <Users className="w-12 h-12 text-muted-foreground/60" />
           </div>
-          <p className="text-foreground/70 font-bold text-base">No staff members yet</p>
-          <p className="text-muted-foreground text-sm mt-1 mb-6">Add your first staff member to get started</p>
+          <p className="text-foreground/70 font-bold text-base">{t('dashboard.noStaffYet', { defaultValue: 'No staff members yet' })}</p>
+          <p className="text-muted-foreground text-sm mt-1 mb-6">{t('dashboard.addFirstStaff', { defaultValue: 'Add your first staff member to get started' })}</p>
           <CreateStaffDialog restaurantId={currentRestaurantId} />
         </div>
       )}

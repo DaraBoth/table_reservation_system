@@ -8,6 +8,7 @@ import { CancelReservationButton, UpdateStatusButton } from '../../ReservationAc
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { createPrivateMetadata } from '@/lib/seo'
+import { getServerT } from '@/i18n/server'
 
 export const metadata = createPrivateMetadata('Edit Booking', 'Update guest details, timing, and assigned tables for a reservation.')
 
@@ -34,6 +35,7 @@ const statusLabels: Record<string, string> = {
 }
 
 export default async function EditReservationPage({ params }: Props) {
+  const { t } = await getServerT()
   const { id, restaurantId: routeId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -74,8 +76,8 @@ export default async function EditReservationPage({ params }: Props) {
     return (
       <div className="p-8 text-center space-y-3">
         <p className="text-2xl">⚠️</p>
-        <h2 className="text-base font-bold text-foreground">Invalid booking data</h2>
-        <p className="text-muted-foreground text-sm">The time format for this booking is broken.</p>
+        <h2 className="text-base font-bold text-foreground">{t('dashboard.invalidBookingData', { defaultValue: 'Invalid booking data' })}</h2>
+        <p className="text-muted-foreground text-sm">{t('dashboard.invalidBookingTime', { defaultValue: 'The time format for this booking is broken.' })}</p>
       </div>
     )
   }
@@ -94,7 +96,7 @@ export default async function EditReservationPage({ params }: Props) {
           {canManageStatus && (
             <div className="p-5 space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Change Status</p>
+                <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">{t('dashboard.changeStatus', { defaultValue: 'Change Status' })}</p>
                 <Badge className={cn('text-xs font-black px-3 py-1 border rounded-xl', statusColors[reservation.status] ?? '')}>
                   {statusLabels[reservation.status] ?? reservation.status}
                 </Badge>
@@ -107,7 +109,7 @@ export default async function EditReservationPage({ params }: Props) {
           <div className={cn('p-4', canManageStatus && 'border-t border-border')}>
             {!canManageStatus && (
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Current Status</p>
+                <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">{t('dashboard.currentStatus', { defaultValue: 'Current Status' })}</p>
                 <Badge className={cn('text-xs font-black px-3 py-1 border rounded-xl', statusColors[reservation.status] ?? '')}>
                   {statusLabels[reservation.status] ?? reservation.status}
                 </Badge>

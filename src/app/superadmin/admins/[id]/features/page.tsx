@@ -2,12 +2,14 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import AdminFeaturesForm from './AdminFeaturesForm'
 import { createPrivateMetadata } from '@/lib/seo'
+import { getServerT } from '@/i18n/server'
 
 export const metadata = createPrivateMetadata('Admin Features', 'Configure special admin permissions and feature access.')
 
 export default async function AdminFeaturesPage(props: {
   params: Promise<{ id: string }>
 }) {
+  const { t } = await getServerT()
   const params = await props.params
   const supabase = await createClient()
 
@@ -29,8 +31,8 @@ export default async function AdminFeaturesPage(props: {
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
       <AdminFeaturesForm
         membershipId={m.id}
-        name={profile?.full_name || 'Admin'}
-        property={restaurant?.name || 'Property'}
+        name={profile?.full_name || t('roles.admin', { defaultValue: 'Admin' })}
+        property={restaurant?.name || t('superadmin.platform', { defaultValue: 'Property' })}
         initialIsSpecial={m.is_special_admin || false}
         initialFeatures={m.special_features || []}
       />

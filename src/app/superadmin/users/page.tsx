@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table"
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { createPrivateMetadata } from '@/lib/seo'
+import { getServerT } from '@/i18n/server'
 
 export const metadata = createPrivateMetadata('Users', 'Manage platform user accounts, roles, and access.')
 
@@ -25,6 +26,7 @@ const ROLE_THEMES = {
 } as const
 
 export default async function UsersPage() {
+  await getServerT()
   const supabase = await createClient()
 
   const { data: membersRaw, error } = await supabase

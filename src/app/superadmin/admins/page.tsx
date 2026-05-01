@@ -17,10 +17,12 @@ import { Button } from '@/components/ui/button'
 import { buttonVariants } from '@/components/ui/button-variants'
 import { CreateUserDialog as CreateAdminDialog } from '../users/CreateUserDialog'
 import { createPrivateMetadata } from '@/lib/seo'
+import { getServerT } from '@/i18n/server'
 
 export const metadata = createPrivateMetadata('Admin Accounts', 'Review admin access and manage elevated account settings.')
 
 export default async function AdminsPage() {
+  await getServerT()
   const supabase = await createClient()
 
   const { data: members } = await supabase

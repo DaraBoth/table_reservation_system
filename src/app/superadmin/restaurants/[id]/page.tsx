@@ -3,10 +3,12 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { RestaurantDetailClient } from './RestaurantDetailClient'
 import { createPrivateMetadata } from '@/lib/seo'
+import { getServerT } from '@/i18n/server'
 
 export const metadata = createPrivateMetadata('Restaurant Details', 'Review a restaurant account, slug, and assigned team members.')
 
 export default async function RestaurantDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { t } = await getServerT()
   const { id } = await params
   const supabase = await createClient()
 
@@ -21,7 +23,7 @@ export default async function RestaurantDetailPage({ params }: { params: Promise
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
         <Link href="/superadmin/restaurants" className="text-sm text-muted-foreground hover:text-foreground/70 transition-colors">
-          ← Back to restaurants
+          {t('common.back', { defaultValue: 'Back' })}
         </Link>
         <div className="flex items-center gap-3 mt-2">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center text-lg font-bold text-foreground">

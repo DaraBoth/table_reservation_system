@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 type BusinessType = 'restaurant' | 'hotel' | 'guesthouse'
 
@@ -55,6 +56,7 @@ const TYPES: Array<{
 ]
 
 export default function GlobalSetupPage() {
+  const { t } = useTranslation()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [businessType, setBusinessType] = useState<BusinessType>('restaurant')
@@ -73,7 +75,7 @@ export default function GlobalSetupPage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (isAtLimit) {
-      toast.error('Expansion limit reached. Please contact support to increase your quota.')
+      toast.error(t('setup.expansionLimitReached', { defaultValue: 'Expansion limit reached. Please contact support to increase your quota.' }))
       return
     }
 
@@ -88,7 +90,7 @@ export default function GlobalSetupPage() {
       if (result?.error) {
         toast.error(result.error)
       } else {
-        toast.success('Property established successfully!')
+        toast.success(t('setup.propertyCreated', { defaultValue: 'Property established successfully!' }))
       }
     })
   }
@@ -101,7 +103,7 @@ export default function GlobalSetupPage() {
         <div className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-xl border-b border-border px-6 py-4 flex items-center justify-between">
           <Link href="/dashboard" className="group flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-[10px] font-black uppercase tracking-widest">
             <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            Dashboard
+            {t('common.dashboard', { defaultValue: 'Dashboard' })}
           </Link>
           {status && (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-border">
@@ -124,7 +126,7 @@ export default function GlobalSetupPage() {
             </div>
             <div className="space-y-3">
               <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tighter italic uppercase leading-tight">
-                Establish Brand
+                {t('setup.establishBrand', { defaultValue: 'Establish Brand' })}
               </h1>
               <p className="text-muted-foreground/60 text-[10px] font-bold uppercase tracking-[0.3em] leading-relaxed max-w-sm mx-auto">
                 Deploying high-density business logic to your portfolio context

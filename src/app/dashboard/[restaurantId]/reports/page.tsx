@@ -5,6 +5,7 @@ import type { Tables } from '@/lib/types/database'
 import { format, startOfWeek, endOfWeek, addDays, isSameDay, parseISO } from 'date-fns'
 import ReportsDashboardClient from './ReportsDashboardClient'
 import { createPrivateMetadata } from '@/lib/seo'
+import { getServerT } from '@/i18n/server'
 
 export const metadata = createPrivateMetadata('Reports', 'Review booking trends, weekly performance, and service outcomes.')
 
@@ -30,6 +31,7 @@ const statusLabels: Record<string, string> = {
 }
 
 export default async function ReportsPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>, searchParams: Promise<{ week?: string, status?: string }> }) {
+  await getServerT()
   const { restaurantId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

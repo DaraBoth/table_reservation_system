@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 type BusinessType = 'restaurant' | 'hotel' | 'guesthouse'
 
@@ -55,6 +56,7 @@ const TYPES: Array<{
 ]
 
 export default function NewBrandPage() {
+  const { t } = useTranslation()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [businessType, setBusinessType] = useState<BusinessType>('restaurant')
@@ -74,7 +76,7 @@ export default function NewBrandPage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (isAtLimit) {
-      toast.error('Expansion limit reached. Please contact support to increase your quota.')
+      toast.error(t('setup.expansionLimitReached', { defaultValue: 'Expansion limit reached. Please contact support to increase your quota.' }))
       return
     }
 
@@ -91,7 +93,7 @@ export default function NewBrandPage() {
       if (result?.error) {
         toast.error(result.error)
       } else {
-        toast.success('Your new brand has been built successfully!')
+        toast.success(t('setup.brandCreated', { defaultValue: 'Your new brand has been built successfully!' }))
         router.push('/dashboard')
       }
     })
@@ -143,7 +145,7 @@ export default function NewBrandPage() {
         </div>
         <div className="space-y-1">
           <h1 className="text-3xl font-black text-foreground tracking-tight italic uppercase">Launch Brand</h1>
-          <p className="text-muted-foreground/60 text-[10px] font-bold uppercase tracking-[0.2em]">Scale your presence and capture new segments</p>
+          <p className="text-muted-foreground/60 text-[10px] font-bold uppercase tracking-[0.2em]">{t('setup.scalePresence', { defaultValue: 'Scale your presence and capture new segments' })}</p>
         </div>
       </div>
 

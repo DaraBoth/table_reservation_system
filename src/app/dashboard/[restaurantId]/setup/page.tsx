@@ -4,10 +4,12 @@ import { redirect } from 'next/navigation'
 import { SetupForm } from './SetupForm'
 import { Sparkles } from 'lucide-react'
 import { createPrivateMetadata } from '@/lib/seo'
+import { getServerT } from '@/i18n/server'
 
 export const metadata = createPrivateMetadata('Business Setup', 'Complete the first-time setup for your restaurant or property.')
 
 export default async function ({ params }: { params: Promise<{ restaurantId: string }> }) {
+  const { t } = await getServerT()
   const { restaurantId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -32,15 +34,15 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
             <Sparkles className="w-7 h-7 text-foreground" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-foreground tracking-tight">Welcome!</h1>
-            <p className="text-muted-foreground text-sm font-medium">Set up your business to get started.</p>
+            <h1 className="text-2xl font-black text-foreground tracking-tight">{t('dashboard.welcome', { defaultValue: 'Welcome!' })}</h1>
+            <p className="text-muted-foreground text-sm font-medium">{t('dashboard.setupBusinessPrompt', { defaultValue: 'Set up your business to get started.' })}</p>
           </div>
         </div>
 
         <SetupForm restaurant={membership.restaurants} restaurantId={membership.restaurant_id} />
 
         <p className="text-center text-[10px] text-muted-foreground font-bold uppercase tracking-widest leading-relaxed px-4">
-          Admin for {membership.restaurants.name} · Settings can be changed later
+          {t('dashboard.adminForBusiness', { defaultValue: 'Admin for {{name}} · Settings can be changed later', name: membership.restaurants.name })}
         </p>
       </div>
     </div>

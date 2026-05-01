@@ -6,10 +6,12 @@ import { Phone, Users2, Plus } from 'lucide-react'
 import { EditCustomerDialog } from './EditCustomerDialog'
 import { Button } from '@/components/ui/button'
 import { createPrivateMetadata } from '@/lib/seo'
+import { getServerT } from '@/i18n/server'
 
 export const metadata = createPrivateMetadata('Customers', 'Manage saved guest profiles and repeat customer details.')
 
 export default async function ({ params }: { params: Promise<{ restaurantId: string }> }) {
+  const { t } = await getServerT()
   const { restaurantId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -35,7 +37,8 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
       <div className="flex items-center justify-between pt-2">
         <div>
           <p className="text-muted-foreground text-sm">
-            {customers.length} saved {customers.length === 1 ? 'customer' : 'customers'}
+            {customers.length} {t('dashboard.savedCustomersCount', { defaultValue: 'saved' })}{' '}
+            {customers.length === 1 ? t('dashboard.customer', { defaultValue: 'customer' }) : t('dashboard.customers', { defaultValue: 'customers' })}
           </p>
         </div>
         <AddCustomerForm 
@@ -43,7 +46,7 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
           trigger={
             <Button className="h-11 px-6 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 text-foreground font-bold shadow-lg shadow-violet-500/20 active:scale-95 transition-all flex items-center gap-2 group">
               <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
-              <span className="text-sm">Add Customer</span>
+              <span className="text-sm">{t('dashboard.addCustomer', { defaultValue: 'Add Customer' })}</span>
             </Button>
           } 
         />
@@ -89,9 +92,9 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
       ) : (
         <div className="text-center py-16 px-8 bg-card rounded-3xl border border-border">
           <Users2 className="w-14 h-14 text-violet-800 mx-auto mb-4" />
-          <p className="text-foreground/70 font-bold text-base">No saved customers yet</p>
+          <p className="text-foreground/70 font-bold text-base">{t('dashboard.noSavedCustomers', { defaultValue: 'No saved customers yet' })}</p>
           <p className="text-muted-foreground text-sm mt-1 leading-relaxed max-w-xs mx-auto">
-            Returning customers will appear here automatically as soon as you create your first booking.
+            {t('dashboard.customersAppearAfterBooking', { defaultValue: 'Returning customers will appear here automatically as soon as you create your first booking.' })}
           </p>
         </div>
       )}

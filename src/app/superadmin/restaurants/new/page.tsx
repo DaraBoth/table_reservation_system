@@ -11,6 +11,7 @@ import {
   UtensilsCrossed, Building2, Home,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 type BusinessType = 'restaurant' | 'hotel' | 'guesthouse'
 
@@ -53,6 +54,7 @@ const TYPES: Array<{
 ]
 
 export default function NewRestaurantPage() {
+  const { t } = useTranslation()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [state, setState] = useState<{ error?: string; success?: string } | null>(null)
@@ -90,7 +92,7 @@ export default function NewRestaurantPage() {
         </Link>
         <div>
           <h1 className="text-xl font-black text-foreground">New {selectedType.label.split('/')[0].trim()}</h1>
-          <p className="text-xs text-muted-foreground">Set up a new tenant and admin account</p>
+          <p className="text-xs text-muted-foreground">{t('setup.newTenantAdmin', { defaultValue: 'Set up a new tenant and admin account' })}</p>
         </div>
       </div>
 
@@ -274,10 +276,10 @@ export default function NewRestaurantPage() {
           {isPending ? (
             <span className="flex items-center justify-center gap-2">
               <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-              Creating…
+              {t('setup.creating', { defaultValue: 'Creating...' })}
             </span>
           ) : (
-            `Create ${selectedType.label.split('/')[0].trim()} & Admin`
+            t('setup.createPropertyAndAdmin', { defaultValue: 'Create {{type}} & Admin', type: selectedType.label.split('/')[0].trim() })
           )}
         </button>
       </form>

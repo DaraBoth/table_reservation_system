@@ -9,8 +9,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertCircle, ShieldAlert } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export default function RegisterSuperadminPage() {
+  const { t } = useTranslation()
   const [state, action, pending] = useActionState(tempRegisterSuperadmin, null)
 
   return (
@@ -31,54 +33,54 @@ export default function RegisterSuperadminPage() {
               className="object-cover" 
             />
           </div>
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">Superadmin Setup</h1>
-          <p className="text-muted-foreground mt-2">Initialize your system access</p>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">{t('auth.registerTitle')}</h1>
+          <p className="text-muted-foreground mt-2">{t('auth.registerSubtitle')}</p>
         </div>
 
         {/* Manual Alert Replacement */}
         <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/20 flex items-start gap-3">
           <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
           <div>
-            <h5 className="font-bold text-red-400 text-sm leading-none mb-1">Security Warning</h5>
+            <h5 className="font-bold text-red-400 text-sm leading-none mb-1">{t('auth.securityWarningTitle')}</h5>
             <p className="text-red-400/80 text-xs leading-relaxed">
-              This is a temporary registration tool. <strong>Delete this page immediately</strong> after creating your account to prevent unauthorized access.
+              {t('auth.securityWarningBodyPrefix')} <strong>{t('auth.securityWarningBodyStrong')}</strong> {t('auth.securityWarningBodySuffix')}
             </p>
           </div>
         </div>
 
         <Card className="bg-card/50 border-border backdrop-blur-xl shadow-2xl">
           <CardHeader>
-            <CardTitle className="text-foreground text-xl">Create Account</CardTitle>
+            <CardTitle className="text-foreground text-xl">{t('auth.createAccount')}</CardTitle>
             <CardDescription className="text-muted-foreground">
-              Enter your credentials to gain full platform control
+              {t('auth.createAccountSubtitle')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form action={action} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="fullName" className="text-foreground/70">Full Name</Label>
+                <Label htmlFor="fullName" className="text-foreground/70">{t('auth.fullName')}</Label>
                 <Input
                   id="fullName"
                   name="fullName"
-                  placeholder="System Administrator"
+                  placeholder={t('auth.systemAdministrator')}
                   required
                   className="bg-background/50 border-border text-foreground placeholder:text-muted-foreground/60 focus:border-violet-500 transition-colors h-11"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-foreground/70">Username</Label>
+                <Label htmlFor="username" className="text-foreground/70">{t('auth.username')}</Label>
                 <Input
                   id="username"
                   name="username"
-                  placeholder="superadmin"
+                  placeholder={t('auth.superadminPlaceholder')}
                   required
                   className="bg-background/50 border-border text-foreground placeholder:text-muted-foreground/60 focus:border-violet-500 transition-colors h-11"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-foreground/70">Password</Label>
+                <Label htmlFor="password" className="text-foreground/70">{t('auth.password')}</Label>
                 <Input
                   id="password"
                   name="password"
@@ -106,12 +108,12 @@ export default function RegisterSuperadminPage() {
                 disabled={pending}
                 className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-foreground font-semibold h-11 shadow-lg shadow-violet-500/20 border-0 transition-all active:scale-[0.98]"
               >
-                {pending ? 'Initializing...' : 'Create Superadmin Account'}
+                {pending ? t('auth.initializing') : t('auth.createSuperadminAccount')}
               </Button>
 
               <div className="text-center pt-2">
                 <Link href="/login" className="text-sm text-muted-foreground hover:text-violet-400 transition-colors">
-                  Already have an account? Sign in
+                  {t('auth.alreadyHaveAccount')}
                 </Link>
               </div>
             </form>
@@ -119,7 +121,7 @@ export default function RegisterSuperadminPage() {
         </Card>
 
         <p className="text-center text-muted-foreground/60 text-[10px] mt-8 uppercase tracking-widest font-bold">
-          &copy; 2026 TableBook Platform &bull; Security Critical
+          &copy; 2026 TableBook Platform &bull; {t('auth.securityCritical')}
         </p>
       </div>
     </div>

@@ -5,6 +5,7 @@ import type { BusinessType } from '@/lib/business-type'
 import { ReservationsClient } from './ReservationsClient'
 import type { Tables } from '@/lib/types/database'
 import { createPrivateMetadata } from '@/lib/seo'
+import { getServerT } from '@/i18n/server'
 
 type Reservation = Tables<'reservations'> & {
   physical_tables: Pick<Tables<'physical_tables'>, 'table_name' | 'capacity'> | null
@@ -14,6 +15,7 @@ type Reservation = Tables<'reservations'> & {
 export const metadata = createPrivateMetadata('Bookings', 'Manage reservations, statuses, and daily service flow.')
 
 export default async function ReservationsPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>, searchParams: Promise<{ date?: string }> }) {
+  await getServerT()
   const { restaurantId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
