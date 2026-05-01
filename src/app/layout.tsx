@@ -1,14 +1,15 @@
 import type { Metadata, Viewport } from 'next'
-import { Source_Sans_3 } from 'next/font/google'
+import { Noto_Sans_Khmer } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'sonner'
 import NextTopLoader from 'nextjs-toploader'
 import { APP_DESCRIPTION, APP_NAME, DEFAULT_OG_IMAGE, getSiteUrl } from '@/lib/seo'
 
-const sourceSans3 = Source_Sans_3({ 
-  subsets: ['latin'],
+const notoSansKhmer = Noto_Sans_Khmer({
+  subsets: ['khmer'],
   display: 'swap',
-  variable: '--font-source-sans',
+  variable: '--font-khmer-sans',
+  fallback: ['system-ui', 'sans-serif'],
 })
 
 export const metadata: Metadata = {
@@ -78,7 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL || ''} />
       </head>
-      <body className={`${sourceSans3.variable} ${sourceSans3.className} antialiased`} suppressHydrationWarning>
+      <body className={`${notoSansKhmer.variable} ${notoSansKhmer.className} antialiased`} suppressHydrationWarning>
 
         <ThemeProvider>
         <MuiProvider>

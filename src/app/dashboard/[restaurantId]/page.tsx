@@ -5,6 +5,7 @@ import { BedDouble, Table2 } from 'lucide-react'
 import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
 import { DashboardClient } from './DashboardClient'
+import { countAvailableUnits } from '@/lib/dashboard-utils'
 import type { Tables } from '@/lib/types/database'
 
 import { getActiveRestaurant } from '@/lib/restaurant-context'
@@ -59,7 +60,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ rest
   // 🚀 Bulletproof Consolidation: Get EVERYTHING for Today in one go to ensure counts match the list
   const { data: rawRows } = await supabase
     .from('reservations')
-    .select('id, status, guest_name, start_time, party_size, reservation_date, physical_tables(table_name, capacity)')
+    .select('id, status, guest_name, start_time, party_size, reservation_date, table_id, physical_tables(table_name, capacity)')
     .eq('restaurant_id', rid)
     .eq('reservation_date', todayIso)
     .neq('status', 'cancelled')
@@ -72,11 +73,12 @@ export default async function DashboardPage({ params }: { params: Promise<{ rest
   const totalToday = reservations.length
   const pendingCount = reservations.filter(r => r.status === 'pending').length
   
-  // Tables count remains separate as it's a different table
+  // Get active tables and calculate available units
   const { data: allTableRows } = await supabase
     .from('physical_tables').select('id')
     .eq('restaurant_id', rid).eq('is_active', true)
   const totalTables = allTableRows?.length ?? 0
+  const availableUnits = countAvailableUnits(totalTables, reservations)
 
   const upcomingReservations = reservations.slice(0, 10)
 
@@ -89,7 +91,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ rest
       initialData={{
         totalToday,
         pendingCount,
-        totalTables,
+        availableUnits,
         upcomingReservations,
         businessType,
         todayStr

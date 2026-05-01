@@ -13,6 +13,7 @@ import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
 import type { Tables } from '@/lib/types/database'
 import { toast } from 'sonner'
+import { countAvailableUnits } from '@/lib/dashboard-utils'
 
 interface DashboardClientProps {
   restaurantId: string
@@ -20,7 +21,7 @@ interface DashboardClientProps {
   initialData: {
     totalToday: number | null
     pendingCount: number | null
-    totalTables: number | null
+    availableUnits: number | null
     upcomingReservations: Array<Tables<'reservations'> & { physical_tables: { table_name: string; capacity: number } | null }>
     businessType: BusinessType
     todayStr: string
@@ -48,7 +49,7 @@ const statusLabels: Record<string, string> = {
 export function DashboardClient({ initialData, restaurantId, activeSlug }: DashboardClientProps) {
   const [stats, setStats] = useState(initialData)
   const [liveMessage, setLiveMessage] = useState<string | null>(null)
-  const { totalToday, pendingCount, totalTables, upcomingReservations, businessType, todayStr } = stats
+  const { totalToday, pendingCount, availableUnits, upcomingReservations, businessType, todayStr } = stats
   const terms = getTerms(businessType)
   const UnitIcon = terms.hasCheckout ? BedDouble : Table2
   const supabase = useMemo(() => createClient(), [])
@@ -73,7 +74,7 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
     const [{ data: rawRows }, { data: allTableRows }] = await Promise.all([
       supabase
         .from('reservations')
-        .select('id, status, guest_name, start_time, party_size, reservation_date, physical_tables(table_name, capacity)')
+        .select('id, status, guest_name, start_time, party_size, reservation_date, table_id, physical_tables(table_name, capacity)')
         .eq('restaurant_id', restaurantId)
         .eq('reservation_date', todayIso)
         .neq('status', 'cancelled')
@@ -92,7 +93,7 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
       ...current,
       totalToday: reservations.length,
       pendingCount: reservations.filter((reservation) => reservation.status === 'pending').length,
-      totalTables: allTableRows?.length ?? 0,
+      availableUnits: countAvailableUnits(allTableRows?.length ?? 0, reservations),
       upcomingReservations: reservations.slice(0, 10),
       todayStr: format(today, 'EEEE, MMMM d'),
     }))
@@ -208,7 +209,7 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
         {[
           { label: `Total ${terms.bookings}`, count: totalToday, icon: CalendarDays, color: 'violet', href: `/dashboard/${dashSlug}/reservations` },
           { label: 'Waiting', count: pendingCount, icon: Clock, color: 'amber', href: `/dashboard/${dashSlug}/reservations` },
-          { label: terms.units, count: totalTables, icon: UnitIcon, color: 'emerald', href: `/dashboard/${dashSlug}/units` }
+          { label: `Available ${terms.units}`, count: availableUnits, icon: UnitIcon, color: 'emerald', href: `/dashboard/${dashSlug}/units` }
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
