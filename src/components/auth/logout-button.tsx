@@ -9,11 +9,12 @@ import { cn } from '@/lib/utils'
 
 interface LogoutButtonProps {
   className?: string
+  formClassName?: string
   isCollapsed?: boolean
   showText?: boolean
 }
 
-export function LogoutButton({ className, isCollapsed, showText = true }: LogoutButtonProps) {
+export function LogoutButton({ className, formClassName, isCollapsed, showText = true }: LogoutButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleLogout = async (e: React.FormEvent) => {
@@ -41,7 +42,7 @@ export function LogoutButton({ className, isCollapsed, showText = true }: Logout
   }
 
   return (
-    <form onSubmit={handleLogout} className="w-full">
+    <form onSubmit={handleLogout} className={cn('w-full', formClassName)}>
       <Button 
         type="submit" 
         variant="ghost" 

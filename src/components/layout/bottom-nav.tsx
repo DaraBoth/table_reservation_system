@@ -61,7 +61,7 @@ export function BottomNav({
   const unitIcon = terms.hasCheckout ? BedDouble : LayoutGrid
 
   const primaryItems = [
-    { href: `/dashboard/${dashSlug}`, label: t('common.dashboard'), icon: Home, exact: true },
+    { href: `/dashboard/${dashSlug}`, label: t('nav.overview'), icon: Home, exact: true },
     { href: `/dashboard/${dashSlug}/units`, label: terms.units, icon: unitIcon, exact: false },
     { href: `/dashboard/${dashSlug}/reservations`, label: terms.bookings, icon: CalendarDays, exact: false },
     { href: `/dashboard/${dashSlug}/customers`, label: t('common.customers'), icon: BookUser, exact: false },
@@ -146,7 +146,7 @@ export function BottomNav({
                 className={cn('w-6 h-6 transition-all duration-300', isActive && 'scale-110 drop-shadow-[0_0_8px_rgba(139,92,246,0.6)]')}
                 fill={isActive ? 'currentColor' : 'none'}
               />
-              <span className={cn('text-[10px] font-bold tracking-wide transition-colors', isActive ? 'text-violet-400' : 'text-muted-foreground')}>
+              <span className={cn('max-w-14 truncate text-center text-[10px] font-bold leading-none tracking-wide transition-colors', isActive ? 'text-violet-400' : 'text-muted-foreground')}>
                 {item.label}
               </span>
             </Link>

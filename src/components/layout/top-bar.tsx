@@ -1,17 +1,19 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LogoutButton } from '@/components/auth/logout-button'
 
 import { Button } from '@/components/ui/button'
-import { ChevronRight, PanelLeft } from 'lucide-react'
+import { ChevronLeft, ChevronRight, PanelLeft } from 'lucide-react'
 import { NotificationBell } from '@/components/notification-bell'
 import { RestaurantSwitcher } from './restaurant-switcher'
 import { useSidebar } from './sidebar-provider'
 import { PWAInstallBanner } from '@/components/pwa-install'
 import { LanguageSwitcher } from './language-switcher'
 import { useTranslation } from 'react-i18next'
+import { cn } from '@/lib/utils'
 
 interface TopBarProps {
   brandName: string
@@ -42,6 +44,7 @@ export function TopBar({
   const { t } = useTranslation()
   const pathname = usePathname()
   const { toggleSidebar } = useSidebar()
+  const [mobileActionsOpen, setMobileActionsOpen] = useState(false)
 
   // Find the exact active membership based on current URL to pass dashSlug everywhere
   const activeMembership = memberships?.find(m => m.restaurant_id === restaurantId)
@@ -49,6 +52,10 @@ export function TopBar({
 
   const isEditing = pathname.includes('/edit-') || pathname.includes('/create-') || pathname.includes('/setup')
   const hasMultiple = memberships && memberships.length > 1
+
+  useEffect(() => {
+    setMobileActionsOpen(false)
+  }, [pathname])
 
   return (
     <>
@@ -101,7 +108,7 @@ export function TopBar({
           {/* User Identity - Navigates to Account Settings */}
           <Link 
             href={`/dashboard/${dashSlug}/account`}
-            className="flex items-center gap-2 p-1.5 sm:px-3 rounded-2xl bg-violet-600/5 border border-violet-500/10 hover:bg-violet-600/10 transition-all group cursor-pointer active:scale-95 shadow-sm"
+            className="flex items-center gap-2 p-1.5 sm:px-3 rounded-2xl bg-violet-600/5 border border-violet-500/10 hover:bg-violet-600/10 transition-all group cursor-pointer active:scale-95 shadow-sm shrink-0"
           >
             {/* Hidden on mobile to save space */}
             <div className="hidden sm:flex flex-col items-end min-w-0 max-w-20 xs:max-w-none">
@@ -117,10 +124,40 @@ export function TopBar({
             </div>
           </Link>
 
-          <div className="flex items-center gap-1.5 sm:gap-3">
-            <LanguageSwitcher />
-            <NotificationBell restaurantId={restaurantId} />
-            <LogoutButton isCollapsed={false} showText={false} className="w-9 h-9" />
+          <div className="hidden sm:flex items-center gap-1.5 sm:gap-3">
+            <LanguageSwitcher className="h-9" />
+            <NotificationBell restaurantId={restaurantId} className="h-9 w-9" />
+            <LogoutButton isCollapsed={false} showText={false} className="w-9 h-9" formClassName="w-auto" />
+          </div>
+
+          <div className="sm:hidden flex items-center min-w-0">
+            <div
+              className={cn(
+                'flex items-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden transition-all duration-300 ease-out',
+                mobileActionsOpen ? 'max-w-62 opacity-100 mr-1.5' : 'max-w-0 opacity-0 mr-0 pointer-events-none'
+              )}
+            >
+              <div className="flex items-center gap-1.5 pr-1">
+                <LanguageSwitcher showLabel className="h-9 min-w-24 justify-between px-2" />
+                <NotificationBell restaurantId={restaurantId} className="h-9 w-9 shrink-0" />
+                <LogoutButton
+                  isCollapsed={false}
+                  showText={false}
+                  className="w-9 h-9 shrink-0"
+                  formClassName="w-auto shrink-0"
+                />
+              </div>
+            </div>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={mobileActionsOpen ? t('common.closeActions', { defaultValue: 'Close actions' }) : t('common.openActions', { defaultValue: 'Open actions' })}
+              onClick={() => setMobileActionsOpen((prev) => !prev)}
+              className="h-9 w-9 rounded-xl border border-border/60 bg-card/50 text-muted-foreground hover:bg-muted/40 hover:text-foreground shrink-0"
+            >
+              <ChevronLeft className={cn('h-4 w-4 transition-transform duration-300', mobileActionsOpen && 'rotate-180')} />
+            </Button>
           </div>
         </div>
       </header>

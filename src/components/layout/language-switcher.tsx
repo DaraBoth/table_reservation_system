@@ -37,7 +37,12 @@ function Flag({ countryCode, alt }: { countryCode: string; alt: string }) {
   )
 }
 
-export function LanguageSwitcher() {
+interface LanguageSwitcherProps {
+  className?: string
+  showLabel?: boolean
+}
+
+export function LanguageSwitcher({ className, showLabel = false }: LanguageSwitcherProps) {
   const { i18n, t } = useTranslation()
 
   const current = (SUPPORTED_LANGUAGES.includes(i18n.language as AppLanguage)
@@ -54,9 +59,13 @@ export function LanguageSwitcher() {
           <Button
             variant="ghost"
             aria-label={t('language.label')}
-            className="h-8 min-w-0 gap-1 rounded-xl border border-border/60 bg-card/40 px-1.5 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+            className={[
+              'h-8 min-w-0 gap-1 rounded-xl border border-border/60 bg-card/40 px-1.5 text-muted-foreground hover:bg-muted/40 hover:text-foreground',
+              className,
+            ].filter(Boolean).join(' ')}
           >
             <Flag countryCode={selected.countryCode} alt={t(selected.translatedKey)} />
+            {showLabel ? <span className="max-w-18 truncate text-[11px] font-semibold">{selected.nativeLabel}</span> : null}
             <ChevronDown className="h-3 w-3 opacity-70" />
           </Button>
         }
