@@ -10,6 +10,8 @@ import { NotificationBell } from '@/components/notification-bell'
 import { RestaurantSwitcher } from './restaurant-switcher'
 import { useSidebar } from './sidebar-provider'
 import { PWAInstallBanner } from '@/components/pwa-install'
+import { LanguageSwitcher } from './language-switcher'
+import { useTranslation } from 'react-i18next'
 
 interface TopBarProps {
   brandName: string
@@ -37,6 +39,7 @@ export function TopBar({
   isSpecialAdmin,
   specialFeatures
 }: TopBarProps) {
+  const { t } = useTranslation()
   const pathname = usePathname()
   const { toggleSidebar } = useSidebar()
 
@@ -67,7 +70,7 @@ export function TopBar({
               className="flex items-center gap-1 text-violet-400 text-sm font-semibold"
             >
               <ChevronRight className="w-4 h-4 rotate-180" />
-              Back
+              {t('common.back')}
             </Link>
           ) : hasMultiple && restaurantId && memberships ? (
             <RestaurantSwitcher 
@@ -78,7 +81,7 @@ export function TopBar({
             />
           ) : (
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center overflow-hidden">
+              <div className="w-7 h-7 rounded-lg bg-linear-to-br from-violet-600 to-indigo-600 flex items-center justify-center overflow-hidden">
                 {logoUrl ? (
                   <img src={logoUrl} alt={brandName} className="w-full h-full object-cover" />
                 ) : (
@@ -101,11 +104,11 @@ export function TopBar({
             className="flex items-center gap-2 p-1.5 sm:px-3 rounded-2xl bg-violet-600/5 border border-violet-500/10 hover:bg-violet-600/10 transition-all group cursor-pointer active:scale-95 shadow-sm"
           >
             {/* Hidden on mobile to save space */}
-            <div className="hidden sm:flex flex-col items-end min-w-0 max-w-[80px] xs:max-w-none">
+            <div className="hidden sm:flex flex-col items-end min-w-0 max-w-20 xs:max-w-none">
               <span className="text-[10px] font-black text-foreground italic uppercase tracking-tighter leading-none truncate w-full">{userName}</span>
-              <span className="text-[9px] text-violet-500 font-black uppercase tracking-widest mt-0.5 group-hover:text-violet-400 transition-colors">View Profile</span>
+              <span className="text-[9px] text-violet-500 font-black uppercase tracking-widest mt-0.5 group-hover:text-violet-400 transition-colors">{t('common.viewProfile')}</span>
             </div>
-            <div className="w-8 h-8 rounded-xl bg-linear-to-br from-violet-600 to-indigo-700 border border-violet-500/20 flex items-center justify-center text-[10px] font-black italic text-white shadow-xl overflow-hidden flex-shrink-0 group-hover:shadow-violet-500/20 transition-all">
+            <div className="w-8 h-8 rounded-xl bg-linear-to-br from-violet-600 to-indigo-700 border border-violet-500/20 flex items-center justify-center text-[10px] font-black italic text-white shadow-xl overflow-hidden shrink-0 group-hover:shadow-violet-500/20 transition-all">
                {avatarUrl ? (
                  <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
                ) : (
@@ -114,7 +117,8 @@ export function TopBar({
             </div>
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3">
+            <LanguageSwitcher />
             <NotificationBell restaurantId={restaurantId} />
             <LogoutButton isCollapsed={false} showText={false} className="w-9 h-9" />
           </div>

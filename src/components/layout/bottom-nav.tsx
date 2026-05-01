@@ -20,6 +20,7 @@ import { PlusCircle } from 'lucide-react'
 
 import { useState, useMemo } from 'react'
 import { Search, ChevronDown, ChevronUp, Check } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface BottomNavProps {
   isAdmin?: boolean
@@ -44,6 +45,7 @@ export function BottomNav({
   memberships = [],
   avatarUrl
 }: BottomNavProps) {
+  const { t } = useTranslation()
   const pathname = usePathname()
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -59,14 +61,14 @@ export function BottomNav({
   const unitIcon = terms.hasCheckout ? BedDouble : LayoutGrid
 
   const primaryItems = [
-    { href: `/dashboard/${dashSlug}`, label: 'Dashboard', icon: Home, exact: true },
+    { href: `/dashboard/${dashSlug}`, label: t('common.dashboard'), icon: Home, exact: true },
     { href: `/dashboard/${dashSlug}/units`, label: terms.units, icon: unitIcon, exact: false },
     { href: `/dashboard/${dashSlug}/reservations`, label: terms.bookings, icon: CalendarDays, exact: false },
-    { href: `/dashboard/${dashSlug}/customers`, label: 'Customers', icon: BookUser, exact: false },
+    { href: `/dashboard/${dashSlug}/customers`, label: t('common.customers'), icon: BookUser, exact: false },
   ]
 
   const currentMembership = memberships.find(m => m.restaurant_id === restaurantId)
-  const currentRestaurantName = currentMembership?.restaurants?.name || 'Menu'
+  const currentRestaurantName = currentMembership?.restaurants?.name || t('common.menu')
 
   const filteredMemberships = useMemo(() => {
     if (!searchQuery) return memberships
@@ -136,7 +138,7 @@ export function BottomNav({
               href={item.href}
               prefetch={true}
               className={cn(
-                'flex flex-col items-center justify-start flex-1 gap-1.5 transition-all duration-200 relative min-w-[4rem]',
+                'flex flex-col items-center justify-start flex-1 gap-1.5 transition-all duration-200 relative min-w-16',
                 isActive ? 'text-violet-400' : 'text-muted-foreground'
               )}
             >
@@ -163,7 +165,7 @@ export function BottomNav({
             render={
               <button
                 className={cn(
-                  'flex flex-col items-center justify-start flex-1 gap-1.5 transition-all duration-200 relative min-w-[4rem]',
+                  'flex flex-col items-center justify-start flex-1 gap-1.5 transition-all duration-200 relative min-w-16',
                   isPortfolioOpen || pathname.includes(`${dashSlug}/account`) || pathname.includes(`${dashSlug}/staff`) || pathname.includes(`${dashSlug}/reports`) || pathname === manageUnitsPath || pathname.startsWith(`${manageUnitsPath}/`) ? 'text-violet-400' : 'text-muted-foreground'
                 )}
               >
@@ -178,7 +180,7 @@ export function BottomNav({
                   "text-[10px] font-bold tracking-wide transition-colors",
                   (isPortfolioOpen || pathname.includes(`${dashSlug}/account`) || pathname.includes(`${dashSlug}/staff`) || pathname.includes(`${dashSlug}/reports`) || pathname === manageUnitsPath || pathname.startsWith(`${manageUnitsPath}/`)) ? 'text-violet-400' : 'text-muted-foreground'
                 )}>
-                  More
+                  {t('common.menu')}
                 </span>
               </button>
             }
@@ -191,7 +193,7 @@ export function BottomNav({
                   className="flex items-center justify-between w-full group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-600/20 group-hover:scale-105 transition-transform">
+                    <div className="w-10 h-10 rounded-xl bg-linear-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-600/20 group-hover:scale-105 transition-transform">
                       <span className="text-foreground font-black text-[12px] uppercase">
                         {currentRestaurantName.slice(0, 2)}
                       </span>
@@ -201,7 +203,7 @@ export function BottomNav({
                         {currentRestaurantName}
                       </SheetTitle>
                       <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest mt-1">
-                        {isPortfolioOpen ? 'Close Portfolio' : 'Switch Brand'}
+                        {isPortfolioOpen ? t('common.closePortfolio') : t('common.switchBrand')}
                       </span>
                     </div>
                   </div>
@@ -221,7 +223,7 @@ export function BottomNav({
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 group-focus-within:text-violet-400 transition-colors" />
                       <input
                         autoFocus
-                        placeholder="Find Brand..."
+                        placeholder={t('common.findBrand')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full h-11 pl-11 pr-12 rounded-2xl bg-card border border-border/50 text-[11px] text-foreground font-bold placeholder:text-muted-foreground focus:outline-none focus:border-violet-500/50 focus:ring-4 focus:ring-violet-500/5 transition-all"
@@ -276,7 +278,7 @@ export function BottomNav({
                           className="w-full flex items-center justify-center gap-3 p-5 rounded-[2rem] bg-violet-600/10 text-violet-400 border border-violet-500/20 hover:bg-violet-600/20 hover:border-violet-500/40 transition-all font-black text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-violet-600/5 group/new"
                         >
                           <PlusCircle className="w-5 h-5 group-hover/new:rotate-90 transition-transform duration-500" />
-                          Add Business
+                          {t('common.addBusiness')}
                         </Link>
                       </div>
                     )}
@@ -295,20 +297,20 @@ export function BottomNav({
                         <>
                           <div className="px-2 pt-1 pb-2">
                             <span className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
-                              Insights
+                              {t('nav.insights')}
                             </span>
                           </div>
                           <MenuLink
                             href={`/dashboard/${dashSlug}/reports`}
                             icon={BarChart3}
-                            label="Reports"
+                            label={t('common.reports')}
                             active={pathname.startsWith(`/dashboard/${dashSlug}/reports`) && !additionalHrefs.some(h => h !== `/dashboard/${dashSlug}/reports` && h.startsWith(`/dashboard/${dashSlug}/reports`) && pathname.startsWith(h))}
                             onClick={() => setOpen(false)}
                           />
                           {(isAdmin || isStaff) && (
                             <div className="px-2 pt-4 pb-2">
                               <span className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
-                                Configuration
+                                {t('nav.configuration')}
                               </span>
                             </div>
                           )}
@@ -316,7 +318,7 @@ export function BottomNav({
                             <MenuLink
                               href={`/dashboard/${dashSlug}/units/manage`}
                               icon={Settings}
-                              label={`Manage ${terms.units}`}
+                              label={t('nav.manageUnits', { units: terms.units })}
                               active={pathname === `/dashboard/${dashSlug}/units/manage` || (pathname.startsWith(`/dashboard/${dashSlug}/units/manage`) && !additionalHrefs.some(h => h !== `/dashboard/${dashSlug}/units/manage` && h.startsWith(`/dashboard/${dashSlug}/units/manage`) && pathname.startsWith(h)))}
                               onClick={() => setOpen(false)}
                             />
@@ -325,7 +327,7 @@ export function BottomNav({
                             <MenuLink
                               href={`/dashboard/${dashSlug}/staff`}
                               icon={Users}
-                              label="Staff"
+                              label={t('nav.staff')}
                               active={pathname.startsWith(`/dashboard/${dashSlug}/staff`) && !additionalHrefs.some(h => h !== `/dashboard/${dashSlug}/staff` && h.startsWith(`/dashboard/${dashSlug}/staff`) && pathname.startsWith(h))}
                               onClick={() => setOpen(false)}
                             />
@@ -333,14 +335,14 @@ export function BottomNav({
 
                           <div className="px-2 pt-4 pb-2">
                             <span className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
-                              System
+                              {t('nav.system')}
                             </span>
                           </div>
 
                           <MenuLink
                             href={`/dashboard/${dashSlug}/account`}
                             icon={avatarUrl ? () => <div className="w-5 h-5 rounded-md overflow-hidden"><img src={avatarUrl} className="w-full h-full object-cover" /></div> : UserCircle}
-                            label="Settings"
+                            label={t('common.settings')}
                             active={pathname.startsWith(`/dashboard/${dashSlug}/account`) && !additionalHrefs.some(h => h !== `/dashboard/${dashSlug}/account` && h.startsWith(`/dashboard/${dashSlug}/account`) && pathname.startsWith(h))}
                             onClick={() => setOpen(false)}
                           />
@@ -356,7 +358,7 @@ export function BottomNav({
                           className="w-full flex items-center justify-center gap-4 p-4 rounded-2xl text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all font-bold text-sm border border-transparent hover:border-red-500/20"
                         >
                           <LogOut className="w-5 h-5" />
-                          Sign Out
+                          {t('common.signOut')}
                         </button>
                       </form>
                     </div>
@@ -369,7 +371,7 @@ export function BottomNav({
                   BookJM
                 </p>
                 <p className="text-[9px] text-muted-foreground font-semibold tracking-wider italic">
-                  VERSION 1.0.0 • © 2026
+                  {t('common.version', { version: '1.0.0', year: '2026' })}
                 </p>
               </div>
             </div>

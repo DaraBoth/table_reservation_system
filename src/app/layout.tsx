@@ -70,6 +70,7 @@ export const viewport: Viewport = {
 import { MuiProvider } from '@/components/providers/mui-provider'
 import { AuthProvider } from '@/components/providers/auth-provider'
 import { ThemeProvider } from '@/components/providers/theme-provider'
+import { I18nProvider } from '@/components/providers/i18n-provider'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -82,23 +83,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${notoSansKhmer.variable} ${notoSansKhmer.className} antialiased`} suppressHydrationWarning>
 
         <ThemeProvider>
-        <MuiProvider>
-          <AuthProvider>
-            <NextTopLoader 
-              color="#7c3aed" 
-              initialPosition={0.08}
-              crawlSpeed={200}
-              height={3}
-              crawl={true}
-              showSpinner={false}
-              easing="ease"
-              speed={200}
-              shadow="0 0 10px #7c3aed,0 0 5px #7c3aed"
-            />
-            {children}
-            <Toaster richColors position="top-right" />
-          </AuthProvider>
-        </MuiProvider>
+          <I18nProvider>
+            <MuiProvider>
+              <AuthProvider>
+                <NextTopLoader 
+                  color="#7c3aed" 
+                  initialPosition={0.08}
+                  crawlSpeed={200}
+                  height={3}
+                  crawl={true}
+                  showSpinner={false}
+                  easing="ease"
+                  speed={200}
+                  shadow="0 0 10px #7c3aed,0 0 5px #7c3aed"
+                />
+                {children}
+                <Toaster richColors position="top-right" />
+              </AuthProvider>
+            </MuiProvider>
+          </I18nProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Camera, Store } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 interface LogoUploadProps {
   currentLogoUrl?: string | null
@@ -16,6 +17,7 @@ interface LogoUploadProps {
 }
 
 export function LogoUpload({ currentLogoUrl, businessName, onUpload, disabled }: LogoUploadProps) {
+  const { t } = useTranslation()
   const [image, setImage] = useState<string | null>(null)
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
@@ -94,7 +96,7 @@ export function LogoUpload({ currentLogoUrl, businessName, onUpload, disabled }:
       }
     } catch (error) {
       console.error(error)
-      toast.error('Could not crop logo')
+      toast.error(t('media.cropLogoFailed'))
     } finally {
       setIsUploading(false)
     }
@@ -113,7 +115,7 @@ export function LogoUpload({ currentLogoUrl, businessName, onUpload, disabled }:
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-card to-muted/30">
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-linear-to-br from-card to-muted/30">
             <Store className="w-10 h-10 text-muted-foreground/20" />
             <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">{businessName.slice(0, 3)}</span>
           </div>
@@ -126,7 +128,7 @@ export function LogoUpload({ currentLogoUrl, businessName, onUpload, disabled }:
             className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-2 backdrop-blur-[2px]"
           >
             <Camera className="w-8 h-8 text-white" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-white/80">Edit Logo</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/80">{t('media.editLogo')}</span>
           </button>
         )}
       </div>
@@ -140,15 +142,15 @@ export function LogoUpload({ currentLogoUrl, businessName, onUpload, disabled }:
       />
 
       <Dialog open={isDialogOpen} onOpenChange={(open) => !isUploading && setIsDialogOpen(open)}>
-        <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[90vh] bg-card border-border/50 rounded-3xl p-0 overflow-hidden shadow-2xl flex flex-col">
-          <DialogHeader className="p-6 pb-0 flex-shrink-0">
+        <DialogContent className="w-[95vw] sm:max-w-125 max-h-[90vh] bg-card border-border/50 rounded-3xl p-0 overflow-hidden shadow-2xl flex flex-col">
+          <DialogHeader className="p-6 pb-0 shrink-0">
             <DialogTitle className="text-xl font-black italic uppercase tracking-tighter text-foreground">
-              Edit Logo
+              {t('media.editLogo')}
             </DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto">
-            <div className="relative w-full h-[300px] sm:aspect-square bg-black/20 mt-6 border-y border-border/20">
+            <div className="relative w-full h-75 sm:aspect-square bg-black/20 mt-6 border-y border-border/20">
               {image && (
                 <Cropper
                   image={image}
@@ -169,7 +171,7 @@ export function LogoUpload({ currentLogoUrl, businessName, onUpload, disabled }:
           <div className="p-8 space-y-8 bg-card">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Zoom</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">{t('media.zoom')}</span>
                 <span className="text-[10px] font-black text-violet-500">{Math.round(zoom * 100)}%</span>
               </div>
               <input
@@ -179,7 +181,7 @@ export function LogoUpload({ currentLogoUrl, businessName, onUpload, disabled }:
                 max={3}
                 step={0.1}
                 onChange={(e) => setZoom(Number(e.target.value))}
-                className="w-full h-1.5 bg-muted rounded-full appearance-none cursor-pointer accent-violet-600 appearance-none bg-border/20 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-violet-600 [&::-webkit-slider-thumb]:shadow-xl [&::-webkit-slider-thumb]:shadow-violet-500/40"
+                className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-violet-600 bg-border/20 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-violet-600 [&::-webkit-slider-thumb]:shadow-xl [&::-webkit-slider-thumb]:shadow-violet-500/40"
               />
             </div>
 
@@ -191,7 +193,7 @@ export function LogoUpload({ currentLogoUrl, businessName, onUpload, disabled }:
                 disabled={isUploading}
                 className="flex-1 sm:flex-none h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest text-muted-foreground"
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button
                 type="button"
@@ -199,7 +201,7 @@ export function LogoUpload({ currentLogoUrl, businessName, onUpload, disabled }:
                 disabled={isUploading}
                 className="flex-1 sm:flex-none h-12 px-8 bg-violet-600 hover:bg-violet-500 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-500/20"
               >
-                {isUploading ? 'Saving...' : 'Save Logo'}
+                {isUploading ? t('common.saving') : t('media.saveLogo')}
               </Button>
             </DialogFooter>
             </div>

@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Camera } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 interface AvatarUploadProps {
   currentAvatarUrl?: string | null
@@ -16,6 +17,7 @@ interface AvatarUploadProps {
 }
 
 export function AvatarUpload({ currentAvatarUrl, userName, onUpload, disabled }: AvatarUploadProps) {
+  const { t } = useTranslation()
   const [image, setImage] = useState<string | null>(null)
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
@@ -94,7 +96,7 @@ export function AvatarUpload({ currentAvatarUrl, userName, onUpload, disabled }:
       }
     } catch (error) {
       console.error(error)
-      toast.error('Could not crop photo')
+      toast.error(t('media.cropPhotoFailed'))
     } finally {
       setIsUploading(false)
     }
@@ -125,7 +127,7 @@ export function AvatarUpload({ currentAvatarUrl, userName, onUpload, disabled }:
             className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-2"
           >
             <Camera className="w-6 h-6 text-white" />
-            <span className="text-[8px] font-black uppercase tracking-widest text-white/80">Edit Photo</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-white/80">{t('media.editPhoto')}</span>
           </button>
         )}
       </div>
@@ -142,7 +144,7 @@ export function AvatarUpload({ currentAvatarUrl, userName, onUpload, disabled }:
         <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[90vh] bg-card border-border/50 rounded-3xl p-0 overflow-hidden shadow-2xl flex flex-col">
           <DialogHeader className="p-6 pb-0 flex-shrink-0">
             <DialogTitle className="text-xl font-black italic uppercase tracking-tighter text-foreground">
-              Edit Photo
+              {t('media.editPhoto')}
             </DialogTitle>
           </DialogHeader>
 
@@ -168,7 +170,7 @@ export function AvatarUpload({ currentAvatarUrl, userName, onUpload, disabled }:
           <div className="p-8 space-y-8 bg-card">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Zoom</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">{t('media.zoom')}</span>
                 <span className="text-[10px] font-black text-violet-500">{Math.round(zoom * 100)}%</span>
               </div>
               <input
@@ -190,7 +192,7 @@ export function AvatarUpload({ currentAvatarUrl, userName, onUpload, disabled }:
                 disabled={isUploading}
                 className="flex-1 sm:flex-none h-12 rounded-2xl text-[10px] font-black uppercase tracking-widest text-muted-foreground"
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button
                 type="button"
@@ -198,7 +200,7 @@ export function AvatarUpload({ currentAvatarUrl, userName, onUpload, disabled }:
                 disabled={isUploading}
                 className="flex-1 sm:flex-none h-12 px-8 bg-violet-600 hover:bg-violet-500 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-500/20"
               >
-                {isUploading ? 'Saving...' : 'Save Photo'}
+                {isUploading ? t('common.saving') : t('media.savePhoto')}
               </Button>
             </DialogFooter>
             </div>

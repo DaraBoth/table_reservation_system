@@ -14,6 +14,7 @@ import type { BusinessType } from '@/lib/business-type'
 import type { Tables } from '@/lib/types/database'
 import { toast } from 'sonner'
 import { countAvailableUnits } from '@/lib/dashboard-utils'
+import { useTranslation } from 'react-i18next'
 
 interface DashboardClientProps {
   restaurantId: string
@@ -37,16 +38,8 @@ const statusColors: Record<string, string> = {
   no_show: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
 }
 
-const statusLabels: Record<string, string> = {
-  pending: 'Waiting',
-  confirmed: 'Confirmed',
-  arrived: 'Arrived',
-  cancelled: 'Cancelled',
-  completed: 'Done',
-  no_show: 'No Show',
-}
-
 export function DashboardClient({ initialData, restaurantId, activeSlug }: DashboardClientProps) {
+  const { t } = useTranslation()
   const [stats, setStats] = useState(initialData)
   const [liveMessage, setLiveMessage] = useState<string | null>(null)
   const { totalToday, pendingCount, availableUnits, upcomingReservations, businessType, todayStr } = stats
@@ -106,16 +99,18 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
         if (payload.eventType === 'INSERT') {
           const guestName = typeof payload.new.guest_name === 'string' ? payload.new.guest_name : 'New guest'
           const startTime = typeof payload.new.start_time === 'string' ? payload.new.start_time.slice(0, 5) : null
-          const message = startTime ? `${guestName} at ${startTime}` : guestName
-          showLiveMessage(`New booking: ${message}`)
-          toast.success(`New booking: ${message}`)
+          const message = startTime
+            ? t('dashboard.newBookingAt', { guestName, startTime })
+            : t('dashboard.newBookingPlain', { guestName })
+          showLiveMessage(message)
+          toast.success(message)
         } else {
-          showLiveMessage('Bookings updated')
+          showLiveMessage(t('dashboard.bookingsUpdated'))
         }
         void fetchLatestOverview()
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'physical_tables', filter: `restaurant_id=eq.${restaurantId}` }, () => {
-        showLiveMessage(`${terms.units} updated`)
+        showLiveMessage(t('dashboard.unitsUpdated', { units: terms.units }))
         void fetchLatestOverview()
       })
       .subscribe()
@@ -123,7 +118,7 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [fetchLatestOverview, restaurantId, showLiveMessage, supabase, terms.units])
+  }, [fetchLatestOverview, restaurantId, showLiveMessage, supabase, t, terms.units])
 
   useEffect(() => {
     return () => {
@@ -186,7 +181,7 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
       >
         <p className="text-muted-foreground text-sm font-medium tracking-tight uppercase">{todayStr}</p>
         <div className="mt-1 flex items-center gap-3">
-          <h1 className="text-3xl font-black text-foreground italic tracking-tighter">Today&apos;s Overview</h1>
+          <h1 className="text-3xl font-black text-foreground italic tracking-tighter">{t('dashboard.todayOverview')}</h1>
           <AnimatePresence>
             {liveMessage ? (
               <motion.div
@@ -207,9 +202,9 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
       {/* Stats Row with Magic Card Glow */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: `Total ${terms.bookings}`, count: totalToday, icon: CalendarDays, color: 'violet', href: `/dashboard/${dashSlug}/reservations` },
-          { label: 'Waiting', count: pendingCount, icon: Clock, color: 'amber', href: `/dashboard/${dashSlug}/reservations` },
-          { label: `Available ${terms.units}`, count: availableUnits, icon: UnitIcon, color: 'emerald', href: `/dashboard/${dashSlug}/units` }
+          { label: t('dashboard.totalBookings', { bookings: terms.bookings }), count: totalToday, icon: CalendarDays, color: 'violet', href: `/dashboard/${dashSlug}/reservations` },
+          { label: t('dashboard.waiting'), count: pendingCount, icon: Clock, color: 'amber', href: `/dashboard/${dashSlug}/reservations` },
+          { label: t('dashboard.availableUnits', { units: terms.units }), count: availableUnits, icon: UnitIcon, color: 'emerald', href: `/dashboard/${dashSlug}/units` }
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
@@ -256,11 +251,11 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
       >
         <Link
           href={`/dashboard/${dashSlug}/reservations/new`}
-          className="relative group flex items-center justify-between w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-foreground rounded-2xl p-4 shadow-lg shadow-violet-500/25 transition-all active:scale-[0.98] overflow-hidden"
+          className="relative group flex items-center justify-between w-full bg-linear-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-foreground rounded-2xl p-4 shadow-lg shadow-violet-500/25 transition-all active:scale-[0.98] overflow-hidden"
         >
           {/* Animated Shine Layer */}
           <motion.div 
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 translate-x-[-100%]"
+            className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -skew-x-12 -translate-x-full"
             animate={{ translateX: ['100%', '300%'] }}
             transition={{ duration: 3, repeat: Infinity, ease: 'linear', repeatDelay: 4 }}
           />
@@ -270,8 +265,8 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
               <Plus className="w-5 h-5" />
             </div>
             <div>
-              <p className="font-black text-base leading-tight italic tracking-tight">New {terms.booking}</p>
-              <p className="text-foreground/70 text-[10px] uppercase font-bold tracking-tight mt-0.5">Add a new {terms.unitLower} {terms.bookingLower}</p>
+              <p className="font-black text-base leading-tight italic tracking-tight">{t('dashboard.newBooking', { booking: terms.booking })}</p>
+              <p className="text-foreground/70 text-[10px] uppercase font-bold tracking-tight mt-0.5">{t('dashboard.addNewBooking', { unitLower: terms.unitLower, bookingLower: terms.bookingLower })}</p>
             </div>
           </div>
           <ChevronRight className="w-5 h-5 text-foreground/60 group-hover:translate-x-1 transition-transform" />
@@ -281,9 +276,9 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
       {/* Upcoming Bookings with Staggered List Animation */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-black text-foreground uppercase tracking-widest italic">Upcoming {terms.bookings}</h2>
+          <h2 className="text-base font-black text-foreground uppercase tracking-widest italic">{t('dashboard.upcomingBookings', { bookings: terms.bookings })}</h2>
           <Link href={`/dashboard/${dashSlug}/reservations`} className="text-[10px] text-violet-400 font-black uppercase tracking-widest hover:text-violet-300 transition-colors">
-            See all →
+            {t('dashboard.seeAll')} →
           </Link>
         </div>
 
@@ -307,7 +302,7 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
                       className="flex items-center gap-4 p-4 rounded-2xl bg-card/40 border border-border/60 hover:border-border/80 hover:bg-card/60 active:scale-[0.99] transition-all group"
                     >
                       {/* Avatar */}
-                      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-600/20 to-indigo-600/20 border border-violet-500/10 flex items-center justify-center text-lg font-black text-violet-300 flex-shrink-0 group-hover:scale-105 transition-transform">
+                      <div className="w-11 h-11 rounded-xl bg-linear-to-br from-violet-600/20 to-indigo-600/20 border border-violet-500/10 flex items-center justify-center text-lg font-black text-violet-300 shrink-0 group-hover:scale-105 transition-transform">
                         {res.guest_name.slice(0, 1).toUpperCase()}
                       </div>
 
@@ -320,9 +315,9 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
                       </div>
 
                       {/* Time + Status */}
-                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <div className="flex flex-col items-end gap-1 shrink-0">
                         <Badge className={cn('text-[9px] font-black px-2 py-0.5 border rounded-lg uppercase tracking-widest', statusColors[res.status] ?? '')}>
-                          {statusLabels[res.status] ?? res.status}
+                          {t(`status.${res.status}`, { defaultValue: res.status })}
                         </Badge>
                         <span className="text-[10px] text-muted-foreground/60 font-bold">
                           {dateDisplay} · {timeDisplay}
@@ -339,12 +334,12 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
                 className="text-center py-12 bg-card/30 rounded-3xl border border-border border-dashed"
               >
                 <Clock className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-50" />
-                <p className="text-muted-foreground text-xs font-black uppercase tracking-widest italic">No {terms.bookingsLower} yet today</p>
+                <p className="text-muted-foreground text-xs font-black uppercase tracking-widest italic">{t('dashboard.noBookingsToday', { bookingsLower: terms.bookingsLower })}</p>
                 <Link
                   href={`/dashboard/${dashSlug}/reservations/new`}
                   className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-violet-600/10 text-violet-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-violet-600/20 transition-all"
                 >
-                  Create One <ChevronRight className="w-3 h-3" />
+                  {t('dashboard.createOne')} <ChevronRight className="w-3 h-3" />
                 </Link>
               </motion.div>
             )}

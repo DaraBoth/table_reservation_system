@@ -16,6 +16,7 @@ import {
 import { usePathname, useRouter } from 'next/navigation'
 
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 
 interface RestaurantSwitcherProps {
   currentRestaurantId: string
@@ -25,13 +26,14 @@ interface RestaurantSwitcherProps {
 }
 
 export function RestaurantSwitcher({ currentRestaurantId, memberships, isSpecialAdmin, specialFeatures }: RestaurantSwitcherProps) {
+  const { t } = useTranslation()
   const [open, setOpen] = React.useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const [isPending, setIsPending] = React.useState(false)
 
   const activeMembership = memberships.find(m => m.restaurant_id === currentRestaurantId)
-  const currentName = activeMembership?.restaurants?.name || "Select Restaurant"
+  const currentName = activeMembership?.restaurants?.name || t('common.menu')
   const dashSlug = activeMembership?.restaurants?.slug || currentRestaurantId
 
   const buildTargetPath = React.useCallback((nextRestaurantId: string) => {
@@ -70,7 +72,7 @@ export function RestaurantSwitcher({ currentRestaurantId, memberships, isSpecial
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       {isPending && (
-        <div className="fixed top-0 left-0 right-0 h-[3px] z-[100] bg-violet-950/30 overflow-hidden">
+          <div className="fixed top-0 left-0 right-0 h-0.75 z-100 bg-violet-950/30 overflow-hidden">
           <div className="animate-progress-bar bg-violet-400 h-full w-full" />
         </div>
       )}
@@ -92,7 +94,7 @@ export function RestaurantSwitcher({ currentRestaurantId, memberships, isSpecial
               )}
             </div>
             <span className="text-sm font-semibold truncate max-w-30">
-              {isPending ? "Switching..." : currentName}
+              {isPending ? t('common.switching') : currentName}
             </span>
             <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
           </Button>
@@ -104,7 +106,7 @@ export function RestaurantSwitcher({ currentRestaurantId, memberships, isSpecial
       >
         <DropdownMenuGroup>
           <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold px-2 py-1.5">
-            Your Restaurants
+            {t('common.yourRestaurants')}
           </DropdownMenuLabel>
           {memberships.map((membership) => (
             <DropdownMenuItem
@@ -156,7 +158,7 @@ export function RestaurantSwitcher({ currentRestaurantId, memberships, isSpecial
                 <div className="w-6 h-6 rounded-md bg-violet-600 text-foreground flex items-center justify-center text-[10px] font-black">
                    +
                 </div>
-                <span className="text-[10px] font-black text-violet-500 uppercase tracking-widest group-hover/new:text-violet-400">ADD BUSINESS</span>
+                <span className="text-[10px] font-black text-violet-500 uppercase tracking-widest group-hover/new:text-violet-400">{t('common.addBusiness')}</span>
               </div>
             </DropdownMenuItem>
           </>

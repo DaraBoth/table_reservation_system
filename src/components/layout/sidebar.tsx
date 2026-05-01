@@ -25,6 +25,7 @@ import {
 import { LogoutButton } from '@/components/auth/logout-button'
 import { login } from '@/app/actions/auth'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 
 interface SidebarProps {
@@ -63,6 +64,7 @@ export function Sidebar({
   specialFeatures = {},
   logoUrl = ''
 }: SidebarProps) {
+  const { t } = useTranslation()
   const pathname = usePathname()
   const router = useRouter()
   const { isCollapsed } = useSidebar()
@@ -106,41 +108,41 @@ export function Sidebar({
   const navGroups = type === 'superadmin' 
     ? [
         {
-          label: 'System',
+          label: t('nav.system'),
           items: [
-            { href: '/superadmin', label: 'Overview', icon: LayoutDashboard },
-            { href: '/superadmin/restaurants', label: 'Restaurants', icon: Utensils },
-            { href: '/superadmin/users', label: 'User Management', icon: Users },
-            { href: '/superadmin/admins', label: 'Admin Accounts', icon: ShieldCheck },
+            { href: '/superadmin', label: t('nav.overview'), icon: LayoutDashboard },
+            { href: '/superadmin/restaurants', label: t('nav.restaurants'), icon: Utensils },
+            { href: '/superadmin/users', label: t('nav.userManagement'), icon: Users },
+            { href: '/superadmin/admins', label: t('nav.adminAccounts'), icon: ShieldCheck },
           ]
         }
       ]
     : [
         {
-          label: 'Operations',
+          label: t('nav.operations'),
           items: [
-            { href: `/dashboard/${dashSlug}`, label: 'Overview', icon: LayoutDashboard },
+            { href: `/dashboard/${dashSlug}`, label: t('nav.overview'), icon: LayoutDashboard },
             { href: `/dashboard/${dashSlug}/units`, label: terms.units, icon: Grid2X2 },
             { href: `/dashboard/${dashSlug}/reservations`, label: terms.bookings, icon: CalendarDays },
-            { href: `/dashboard/${dashSlug}/customers`, label: 'Customers', icon: BookUser },
-            { href: `/dashboard/${dashSlug}/reports`, label: 'Reports', icon: BarChart3 },
+            { href: `/dashboard/${dashSlug}/customers`, label: t('common.customers'), icon: BookUser },
+            { href: `/dashboard/${dashSlug}/reports`, label: t('common.reports'), icon: BarChart3 },
           ]
         },
         ...(isAdmin || isStaff ? [
           {
-            label: 'Configuration',
+            label: t('nav.configuration'),
             items: [
-              { href: `/dashboard/${dashSlug}/units/manage`, label: `Manage ${terms.units}`, icon: Settings2 },
+              { href: `/dashboard/${dashSlug}/units/manage`, label: t('nav.manageUnits', { units: terms.units }), icon: Settings2 },
               ...(isAdmin ? [
-                { href: `/dashboard/${dashSlug}/staff`, label: 'Staff Management', icon: Users },
+                { href: `/dashboard/${dashSlug}/staff`, label: t('nav.staffManagement'), icon: Users },
               ] : []),
             ]
           }
         ] : []),
         {
-          label: 'System',
+          label: t('nav.system'),
           items: [
-            { href: `/dashboard/${dashSlug}/account`, label: 'Account Settings', icon: UserCircle },
+            { href: `/dashboard/${dashSlug}/account`, label: t('nav.accountSettings'), icon: UserCircle },
           ]
         }
       ]
@@ -150,7 +152,7 @@ export function Sidebar({
   return (
     <aside 
       className={cn(
-        "relative flex flex-col bg-card/40 backdrop-blur-xl border-r border-border/60 transition-all duration-300 ease-in-out group z-40 hidden md:flex h-full",
+        "relative max-md:hidden md:flex flex-col bg-card/40 backdrop-blur-xl border-r border-border/60 transition-all duration-300 ease-in-out group z-40 h-full",
         isCollapsed ? "w-20" : "w-66"
       )}
     >
@@ -160,9 +162,9 @@ export function Sidebar({
         
         {/* Active User Section */}
         <div className="flex items-center gap-3 group/profile">
-          <div className="relative flex-shrink-0">
+          <div className="relative shrink-0">
             <div className={cn(
-              "w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center shadow-xl shadow-violet-500/20 overflow-hidden ring-2 ring-violet-500/20 transition-transform duration-300",
+              "w-11 h-11 rounded-2xl bg-linear-to-br from-violet-600 to-indigo-700 flex items-center justify-center shadow-xl shadow-violet-500/20 overflow-hidden ring-2 ring-violet-500/20 transition-transform duration-300",
               !isCollapsed && "group-hover/profile:scale-105"
             )}>
               {avatarUrl ? (
@@ -177,7 +179,7 @@ export function Sidebar({
           {!isCollapsed && (
             <div className="flex-1 flex flex-col min-w-0 animate-in fade-in slide-in-from-left-2 duration-300">
               <span className="font-black text-foreground text-sm tracking-tight truncate">{user.name}</span>
-              <span className="text-[10px] uppercase tracking-widest font-black text-violet-500">{role}</span>
+              <span className="text-[10px] uppercase tracking-widest font-black text-violet-500">{t(`roles.${role}`, { defaultValue: role })}</span>
             </div>
           )}
         </div>
@@ -191,7 +193,7 @@ export function Sidebar({
                 onClick={() => handleAccountSwitch(account)}
                 disabled={isPending}
                 className="relative group/acc w-8 h-8 rounded-xl bg-muted border border-border flex items-center justify-center transition-all hover:scale-110 active:scale-95 disabled:opacity-50 overflow-hidden"
-                title={`Switch to ${account.name}`}
+                title={`${t('common.switchBrand')}: ${account.name}`}
               >
                 {switchingId === account.identifier ? (
                   <Loader2 className="w-4 h-4 animate-spin text-violet-500" />
@@ -207,7 +209,7 @@ export function Sidebar({
             <Link 
               href="/login"
               className="w-8 h-8 rounded-xl bg-violet-600/10 border border-violet-500/30 flex items-center justify-center text-violet-500 hover:bg-violet-600/20 transition-all hover:scale-110 active:scale-95 group/add"
-              title="Add another account"
+              title={t('common.addAccount')}
             >
               <Plus className="w-4 h-4 transition-transform group-hover/add:rotate-90" />
             </Link>
@@ -252,7 +254,7 @@ export function Sidebar({
                     >
                       <Icon 
                         className={cn(
-                          "h-5 w-5 transition-transform duration-300 group-hover/nav:scale-110 flex-shrink-0",
+                          "h-5 w-5 transition-transform duration-300 group-hover/nav:scale-110 shrink-0",
                           isActive ? "text-violet-400" : "text-muted-foreground group-hover/nav:text-foreground/70"
                         )} 
                       />
