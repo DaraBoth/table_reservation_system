@@ -283,11 +283,11 @@ export function UnitsClient({
   )
 
 
-  const renderTableItem = (t: TableWithZone, idx: number, busyInfo: BusyInfo | undefined, isBusy: boolean, isOffline: boolean, isTappable: boolean) => (
-    <React.Fragment key={t.id}>
+  const renderTableItem = (tableItem: TableWithZone, idx: number, busyInfo: BusyInfo | undefined, isBusy: boolean, isOffline: boolean, isTappable: boolean) => (
+    <React.Fragment key={tableItem.id}>
       {viewStyle === 'compact' && (
         <motion.div
-          id={`table-compact-${t.id}`}
+          id={`table-compact-${tableItem.id}`}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: idx * 0.02 }}
@@ -296,7 +296,7 @@ export function UnitsClient({
           <div className={cn("absolute inset-0 z-0 opacity-40", isOffline ? "bg-muted" : isBusy ? "bg-rose-500/10" : "bg-emerald-500/5 hover:bg-emerald-500/10")} />
           <div className={cn("relative z-10 p-3 h-full flex flex-col justify-between border-t-2", isOffline ? "border-muted" : isBusy ? "border-rose-500" : "border-emerald-500")}>
             <div className="min-w-0 leading-none">
-              <p className="text-[11px] font-black text-foreground truncate uppercase italic">{t.table_name}</p>
+              <p className="text-[11px] font-black text-foreground truncate uppercase italic">{tableItem.table_name}</p>
               {isBusy && busyInfo && (
                 <div className="flex flex-col gap-0.5 min-w-0">
                   <p className="text-[11px] font-black text-rose-400 truncate uppercase tracking-tighter">{busyInfo.guestName?.split(' ')[0]} ({busyInfo.partySize}p)</p>
@@ -305,7 +305,7 @@ export function UnitsClient({
               )}
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[9px] text-muted-foreground font-black uppercase tracking-tighter">{t.capacity}p</span>
+              <span className="text-[9px] text-muted-foreground font-black uppercase tracking-tighter">{tableItem.capacity}p</span>
               {isBusy && busyInfo && (
                   <div className="flex items-center gap-1">
                     <span className="text-[8px] font-black text-rose-400/50 uppercase tracking-tighter">
@@ -320,9 +320,9 @@ export function UnitsClient({
             </div>
           </div>
           {mode === 'management' ? (
-            <EditUnitSheet table={t} businessType={businessType} canManage={canManage} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${t.table_name}`} className="absolute inset-0 z-20 cursor-pointer w-full h-full" />} />
+            <EditUnitSheet table={tableItem} businessType={businessType} canManage={canManage} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${tableItem.table_name}`} className="absolute inset-0 z-20 cursor-pointer w-full h-full" />} />
           ) : isTappable ? (
-            <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}`} className="absolute inset-0 z-20" />
+            <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${tableItem.id}`} className="absolute inset-0 z-20" />
           ) : (
             <div className="absolute inset-0 z-20" />
           )}
@@ -338,7 +338,7 @@ export function UnitsClient({
 
       {viewStyle === 'list' && (
         <motion.div
-          id={`table-list-${t.id}`}
+          id={`table-list-${tableItem.id}`}
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: idx * 0.02 }}
@@ -347,8 +347,8 @@ export function UnitsClient({
           <div className={cn("w-2.5 h-2.5 rounded-full", isOffline ? "bg-muted" : isBusy ? "bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.4)]" : "bg-emerald-500")} />
           <div className="flex-1 min-w-0 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <p className="text-base font-black italic tracking-tighter truncate pr-2">{t.table_name}</p>
-              <span className="px-2 py-0.5 rounded-lg bg-muted text-[10px] font-black text-muted-foreground uppercase">{t.capacity} {terms.capacityUnit}</span>
+              <p className="text-base font-black italic tracking-tighter truncate pr-2">{tableItem.table_name}</p>
+              <span className="px-2 py-0.5 rounded-lg bg-muted text-[10px] font-black text-muted-foreground uppercase">{tableItem.capacity} {terms.capacityUnit}</span>
             </div>
             <div className="hidden sm:flex flex-1 items-center gap-4 truncate">
               {isBusy && busyInfo?.guestName && (
@@ -376,9 +376,9 @@ export function UnitsClient({
             </div>
           </div>
           {mode === 'management' ? (
-            <EditUnitSheet table={t} businessType={businessType} canManage={canManage} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${t.table_name}`} className="absolute inset-0 z-10 cursor-pointer w-full h-full" />} />
+            <EditUnitSheet table={tableItem} businessType={businessType} canManage={canManage} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${tableItem.table_name}`} className="absolute inset-0 z-10 cursor-pointer w-full h-full" />} />
           ) : isTappable ? (
-            <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}&date=${selectedDate}`} className="absolute inset-0 z-10" />
+            <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${tableItem.id}&date=${selectedDate}`} className="absolute inset-0 z-10" />
 
           ) : (
             <div className="absolute inset-0 z-10" />
@@ -389,7 +389,7 @@ export function UnitsClient({
       {viewStyle === 'grid' && (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.03 }}>
           <UnitCard 
-            table={t} 
+            table={tableItem} 
             busyInfo={busyInfo} 
             isBusy={isBusy} 
             isOffline={isOffline} 
