@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils'
 import { Settings2 } from 'lucide-react'
 import type { Tables } from '@/lib/types/database'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useTranslation } from 'react-i18next'
 
 interface EditUnitSheetProps {
   table: Tables<'physical_tables'>
@@ -23,6 +24,7 @@ interface EditUnitSheetProps {
 }
 
 export function EditUnitSheet({ table, businessType = 'restaurant', canManage, trigger, zones = [] }: EditUnitSheetProps) {
+  const { t } = useTranslation()
   const [state, action, pending] = useActionState(updatePhysicalTable, null)
   const [deleteState, deleteAction, deletePending] = useActionState(deletePhysicalTable, null)
   const router = useRouter()
@@ -35,8 +37,8 @@ export function EditUnitSheet({ table, businessType = 'restaurant', canManage, t
   const [open, setOpen] = useState(false)
   const [selectedZone, setSelectedZone] = useState<string | null>(table.zone_id || 'none')
   const selectedZoneLabel = selectedZone === 'none'
-    ? 'No Zone'
-    : zones.find(zone => zone.id === selectedZone)?.name || 'Select Zone'
+    ? t('dashboard.noZone', { defaultValue: 'No Zone' })
+    : zones.find(zone => zone.id === selectedZone)?.name || t('dashboard.selectZone', { defaultValue: 'Select Zone' })
 
   React.useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -88,7 +90,7 @@ export function EditUnitSheet({ table, businessType = 'restaurant', canManage, t
         )}
       >
         <SheetHeader className={cn("p-0 font-black italic tracking-tighter uppercase", isMobile ? "mb-4" : "mb-6")}>
-          <SheetTitle className={cn("text-foreground", isMobile ? "text-lg" : "text-xl")}>Edit {terms.unit}: {table.table_name}</SheetTitle>
+          <SheetTitle className={cn("text-foreground", isMobile ? "text-lg" : "text-xl")}>{t('dashboard.editUnit', { defaultValue: 'Edit {{unit}}', unit: terms.unit })}: {table.table_name}</SheetTitle>
         </SheetHeader>
 
         <div className={cn("pb-8", isMobile ? "space-y-4" : "space-y-6 pb-12")}>
@@ -106,7 +108,7 @@ export function EditUnitSheet({ table, businessType = 'restaurant', canManage, t
 
             {isHotel ? (
               <div className="space-y-1.5">
-                <Label className="text-foreground/70 text-sm font-bold uppercase tracking-widest px-1">Number of {terms.capacityUnit} *</Label>
+                <Label className="text-foreground/70 text-sm font-bold uppercase tracking-widest px-1">{t('dashboard.numberOfCapacityUnit', { defaultValue: 'Number of {{capacityUnit}} *', capacityUnit: terms.capacityUnit })}</Label>
                 <div className="flex gap-2">
                   {[1, 2, 3].map((num) => (
                     <button
@@ -135,20 +137,20 @@ export function EditUnitSheet({ table, businessType = 'restaurant', canManage, t
             )}
 
             <div className="space-y-1.5">
-              <Label className="text-muted-foreground text-[10px] font-black uppercase tracking-widest px-1">Description</Label>
+              <Label className="text-muted-foreground text-[10px] font-black uppercase tracking-widest px-1">{t('dashboard.description', { defaultValue: 'Description' })}</Label>
               <Textarea name="description" defaultValue={table.description || ''}
                 className={cn("bg-card border-border text-foreground focus:border-violet-500 resize-none rounded-2xl p-4", isMobile ? "text-sm min-h-[84px]" : "text-base min-h-[100px]")} rows={3} />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-muted-foreground text-[10px] font-black uppercase tracking-widest px-1">Assignment Zone (Optional)</Label>
+              <Label className="text-muted-foreground text-[10px] font-black uppercase tracking-widest px-1">{t('dashboard.assignmentZoneOptional', { defaultValue: 'Assignment Zone (Optional)' })}</Label>
               <Select value={selectedZone} onValueChange={setSelectedZone}>
                 <input type="hidden" name="zoneId" value={selectedZone === 'none' ? '' : (selectedZone ?? '')} />
                 <SelectTrigger className={cn("w-full bg-card border-border text-foreground rounded-2xl px-4 font-semibold shadow-sm", isMobile ? "h-12 text-sm" : "h-14 text-base")}>
                   <SelectValue>{selectedZoneLabel}</SelectValue>
                 </SelectTrigger>
                 <SelectContent className="bg-background/95 border-border rounded-2xl p-1 shadow-2xl backdrop-blur-md">
-                  <SelectItem value="none" className="min-h-11 rounded-xl px-3 font-semibold">No Zone</SelectItem>
+                  <SelectItem value="none" className="min-h-11 rounded-xl px-3 font-semibold">{t('dashboard.noZone', { defaultValue: 'No Zone' })}</SelectItem>
                   {zones.map(z => (
                     <SelectItem key={z.id} value={z.id} className="min-h-11 rounded-xl px-3 font-semibold">{z.name}</SelectItem>
                   ))}
@@ -159,8 +161,8 @@ export function EditUnitSheet({ table, businessType = 'restaurant', canManage, t
             {/* Active Status Toggle */}
             <div className={cn("flex items-center justify-between bg-background/50 border border-border rounded-2xl", isMobile ? "p-3" : "p-4")}>
               <div>
-                <p className="text-sm font-bold text-foreground">Active Status</p>
-                <p className="text-xs text-muted-foreground">Enable or disable this {terms.unitLower} for {terms.bookingsLower}</p>
+                <p className="text-sm font-bold text-foreground">{t('dashboard.activeStatus', { defaultValue: 'Active Status' })}</p>
+                <p className="text-xs text-muted-foreground">{t('dashboard.enableDisableUnitForBookings', { defaultValue: 'Enable or disable this {{unitLower}} for {{bookingsLower}}', unitLower: terms.unitLower, bookingsLower: terms.bookingsLower })}</p>
               </div>
               <button
                 type="button"
@@ -182,14 +184,14 @@ export function EditUnitSheet({ table, businessType = 'restaurant', canManage, t
 
             <Button type="submit" disabled={pending || deletePending}
               className={cn("w-full bg-gradient-to-r from-violet-600 to-indigo-600 border-0 rounded-2xl font-black shadow-lg shadow-violet-500/20", isMobile ? "h-12 text-sm" : "h-14 text-base")}>
-              {pending ? 'Saving Changes...' : `Update ${terms.unit}`}
+              {pending ? t('dashboard.savingChanges', { defaultValue: 'Saving Changes...' }) : t('dashboard.updateUnit', { defaultValue: 'Update {{unit}}', unit: terms.unit })}
             </Button>
           </form>
 
           {/* Danger Zone for Admins - Kept outside main form to fix nesting */}
           {canManage && (
             <div className={cn("border-t border-border", isMobile ? "pt-4 space-y-3" : "pt-6 space-y-4")}>
-              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] px-1">Danger Zone</p>
+              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] px-1">{t('dashboard.dangerZone', { defaultValue: 'Danger Zone' })}</p>
 
               {!showConfirmDelete ? (
                 <Button
@@ -198,7 +200,7 @@ export function EditUnitSheet({ table, businessType = 'restaurant', canManage, t
                   onClick={() => setShowConfirmDelete(true)}
                   className={cn("w-full rounded-2xl border border-rose-500/20 text-rose-400 font-bold hover:bg-rose-500/10 hover:text-rose-400 transition-all", isMobile ? "h-11" : "h-12")}
                 >
-                  Delete {terms.unit}
+                  {t('dashboard.deleteUnit', { defaultValue: 'Delete {{unit}}', unit: terms.unit })}
                 </Button>
               ) : (
                 <div className={cn("bg-rose-500/5 border border-rose-500/10 rounded-2xl animate-in fade-in slide-in-from-bottom-2 duration-300", isMobile ? "space-y-3 p-3" : "space-y-4 p-4")}>
@@ -209,7 +211,7 @@ export function EditUnitSheet({ table, businessType = 'restaurant', canManage, t
                       onClick={() => setShowConfirmDelete(false)}
                       className={cn("flex-1 rounded-2xl bg-muted text-foreground/70 font-bold border-0", isMobile ? "h-11" : "h-12")}
                     >
-                      Cancel
+                      {t('common.cancel', { defaultValue: 'Cancel' })}
                     </Button>
                     <form action={deleteAction} className="flex-1">
                       <input type="hidden" name="tableId" value={table.id} />
@@ -219,7 +221,7 @@ export function EditUnitSheet({ table, businessType = 'restaurant', canManage, t
                         disabled={deletePending}
                         className={cn("w-full rounded-2xl bg-rose-600 text-foreground font-black hover:bg-rose-700 border-0 shadow-lg shadow-rose-900/20", isMobile ? "h-11" : "h-12")}
                       >
-                        {deletePending ? 'Deleting...' : 'Confirm'}
+                        {deletePending ? t('dashboard.deleting', { defaultValue: 'Deleting...' }) : t('dashboard.confirm', { defaultValue: 'Confirm' })}
                       </Button>
                     </form>
                   </div>

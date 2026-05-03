@@ -10,6 +10,7 @@ import { User, Settings2, Activity } from 'lucide-react'
 import { motion, useMotionValue, useTransform } from 'framer-motion'
 import type { Tables } from '@/lib/types/database'
 import { getTerms } from '@/lib/business-type'
+import { useTranslation } from 'react-i18next'
 
 type TableWithZone = Tables<'physical_tables'> & { zones?: { name?: string | null } | null }
 
@@ -49,8 +50,11 @@ export function UnitCard({
   currentSlug,
   selectedDate
 }: UnitCardProps) {
+  const { t } = useTranslation()
   const terms = getTerms(businessType)
-  const occupiedLabel = terms.hasCheckout ? 'Occupied' : 'Booked'
+  const occupiedLabel = terms.hasCheckout
+    ? t('dashboard.occupied', { defaultValue: 'Occupied' })
+    : t('dashboard.booked', { defaultValue: 'Booked' })
 
   // ✨ Magic UI: Mouse position for follow-glow
   const mouseX = useMotionValue(0)
@@ -167,12 +171,12 @@ export function UnitCard({
                   : isBusy ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
                     : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
               )}>
-                {isOffline ? 'Offline' : isBusy ? occupiedLabel : 'Available'}
+                {isOffline ? t('dashboard.offline', { defaultValue: 'Offline' }) : isBusy ? occupiedLabel : t('dashboard.available', { defaultValue: 'Available' })}
               </Badge>
             ) : (
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-muted/40 border border-border/60">
                  <div className="w-1.5 h-1.5 rounded-full bg-violet-500/40" />
-                 <span className="text-[9px] font-black text-muted-foreground/60 uppercase tracking-widest">{(table as TableWithZone).zones?.name || 'Unassigned'}</span>
+                 <span className="text-[9px] font-black text-muted-foreground/60 uppercase tracking-widest">{(table as TableWithZone).zones?.name || t('dashboard.unassigned', { defaultValue: 'Unassigned' })}</span>
               </div>
             )}
 
@@ -203,7 +207,7 @@ export function UnitCard({
                 )}
               </div>
               <p className="text-[8px] text-muted-foreground/40 font-bold uppercase tracking-widest leading-none ml-4">
-                By {busyInfo.createdByName || 'Staff'}
+                {t('dashboard.byName', { defaultValue: 'By {{name}}', name: busyInfo.createdByName || t('roles.staff', { defaultValue: 'Staff' }) })}
               </p>
             </div>
           )}

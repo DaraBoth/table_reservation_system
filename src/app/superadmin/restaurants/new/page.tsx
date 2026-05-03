@@ -15,44 +15,6 @@ import { useTranslation } from 'react-i18next'
 
 type BusinessType = 'restaurant' | 'hotel' | 'guesthouse'
 
-const TYPES: Array<{
-  value: BusinessType
-  icon: LucideIcon
-  label: string
-  desc: string
-  color: string
-  border: string
-  dot: string
-}> = [
-  {
-    value: 'restaurant',
-    icon: UtensilsCrossed,
-    label: 'Restaurant / Café',
-    desc: 'Table booking, meal reservations, dine-in management',
-    color: 'from-orange-500/20 to-amber-500/20',
-    border: 'border-orange-500/40',
-    dot: 'bg-orange-400',
-  },
-  {
-    value: 'hotel',
-    icon: Building2,
-    label: 'Hotel / Resort',
-    desc: 'Room booking with check-in and check-out dates',
-    color: 'from-blue-500/20 to-indigo-500/20',
-    border: 'border-blue-500/40',
-    dot: 'bg-blue-400',
-  },
-  {
-    value: 'guesthouse',
-    icon: Home,
-    label: 'Guest House / B&B',
-    desc: 'Small lodging with room reservations and guest tracking',
-    color: 'from-emerald-500/20 to-teal-500/20',
-    border: 'border-emerald-500/40',
-    dot: 'bg-emerald-400',
-  },
-]
-
 export default function NewRestaurantPage() {
   const { t } = useTranslation()
   const router = useRouter()
@@ -60,7 +22,45 @@ export default function NewRestaurantPage() {
   const [state, setState] = useState<{ error?: string; success?: string } | null>(null)
   const [businessType, setBusinessType] = useState<BusinessType>('restaurant')
 
-  const selectedType = TYPES.find(t => t.value === businessType)!
+  const types: Array<{
+    value: BusinessType
+    icon: LucideIcon
+    label: string
+    desc: string
+    color: string
+    border: string
+    dot: string
+  }> = [
+    {
+      value: 'restaurant',
+      icon: UtensilsCrossed,
+      label: t('setup.typeRestaurantLabel', { defaultValue: 'Restaurant / Cafe' }),
+      desc: t('setup.typeRestaurantDesc', { defaultValue: 'Table booking, meal reservations, dine-in management' }),
+      color: 'from-orange-500/20 to-amber-500/20',
+      border: 'border-orange-500/40',
+      dot: 'bg-orange-400',
+    },
+    {
+      value: 'hotel',
+      icon: Building2,
+      label: t('setup.typeHotelLabel', { defaultValue: 'Hotel / Resort' }),
+      desc: t('setup.typeHotelDesc', { defaultValue: 'Room booking with check-in and check-out dates' }),
+      color: 'from-blue-500/20 to-indigo-500/20',
+      border: 'border-blue-500/40',
+      dot: 'bg-blue-400',
+    },
+    {
+      value: 'guesthouse',
+      icon: Home,
+      label: t('setup.typeGuesthouseLabel', { defaultValue: 'Guest House / B&B' }),
+      desc: t('setup.typeGuesthouseDesc', { defaultValue: 'Small lodging with room reservations and guest tracking' }),
+      color: 'from-emerald-500/20 to-teal-500/20',
+      border: 'border-emerald-500/40',
+      dot: 'bg-emerald-400',
+    },
+  ]
+
+  const selectedType = types.find(typeItem => typeItem.value === businessType)!
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -91,7 +91,7 @@ export default function NewRestaurantPage() {
           <ArrowLeft className="w-4 h-4" />
         </Link>
         <div>
-          <h1 className="text-xl font-black text-foreground">New {selectedType.label.split('/')[0].trim()}</h1>
+          <h1 className="text-xl font-black text-foreground">{t('setup.newTypeTitle', { defaultValue: 'New {{type}}', type: selectedType.label.split('/')[0].trim() })}</h1>
           <p className="text-xs text-muted-foreground">{t('setup.newTenantAdmin', { defaultValue: 'Set up a new tenant and admin account' })}</p>
         </div>
       </div>
@@ -101,33 +101,33 @@ export default function NewRestaurantPage() {
         {/* ── Step 1: Choose business type ── */}
         <section className="bg-card border border-border rounded-3xl p-5 space-y-3">
           <h2 className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-            Step 1 · What kind of business?
+            {t('setup.step1BusinessType', { defaultValue: 'Step 1 · What kind of business?' })}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {TYPES.map(t => (
+            {types.map(typeItem => (
               <button
-                key={t.value}
+                key={typeItem.value}
                 type="button"
-                onClick={() => setBusinessType(t.value)}
+                onClick={() => setBusinessType(typeItem.value)}
                 className={cn(
                   'relative p-4 rounded-2xl border-2 text-left transition-all active:scale-[0.97]',
-                  businessType === t.value
-                    ? cn('bg-gradient-to-br', t.color, t.border)
+                  businessType === typeItem.value
+                    ? cn('bg-gradient-to-br', typeItem.color, typeItem.border)
                     : 'bg-background border-border hover:border-border'
                 )}
               >
-                {businessType === t.value && (
+                {businessType === typeItem.value && (
                   <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
                     <Check className="w-3 h-3 text-foreground" />
                   </span>
                 )}
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2 bg-white/10">
-                  {(() => { const TIcon = t.icon; return <TIcon className="w-5 h-5 text-foreground" /> })()}
+                  {(() => { const TIcon = typeItem.icon; return <TIcon className="w-5 h-5 text-foreground" /> })()}
                 </div>
-                <p className={cn('text-sm font-black', businessType === t.value ? 'text-foreground' : 'text-foreground/70')}>
-                  {t.label}
+                <p className={cn('text-sm font-black', businessType === typeItem.value ? 'text-foreground' : 'text-foreground/70')}>
+                  {typeItem.label}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1 leading-snug">{t.desc}</p>
+                <p className="text-xs text-muted-foreground mt-1 leading-snug">{typeItem.desc}</p>
               </button>
             ))}
           </div>
@@ -136,29 +136,37 @@ export default function NewRestaurantPage() {
         {/* ── Step 2: Business info ── */}
         <section className="bg-card border border-border rounded-3xl p-5 space-y-4">
           <h2 className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-            Step 2 · Business Info
+            {t('setup.step2BusinessInfo', { defaultValue: 'Step 2 · Business Info' })}
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">
-                Name *
+                {t('setup.nameRequired', { defaultValue: 'Name *' })}
               </label>
               <input
                 name="name"
                 required
-                placeholder={businessType === 'restaurant' ? 'The Golden Fork' : businessType === 'hotel' ? 'Grand Palace Hotel' : 'Sunrise Guest House'}
+                placeholder={businessType === 'restaurant'
+                  ? t('setup.namePlaceholderRestaurant', { defaultValue: 'The Golden Fork' })
+                  : businessType === 'hotel'
+                    ? t('setup.namePlaceholderHotel', { defaultValue: 'Grand Palace Hotel' })
+                    : t('setup.namePlaceholderGuesthouse', { defaultValue: 'Sunrise Guest House' })}
                 className="w-full h-12 px-4 rounded-2xl bg-background border border-border text-foreground text-sm font-semibold placeholder:text-muted-foreground/60 focus:outline-none focus:border-violet-500 transition-colors"
               />
             </div>
             <div>
               <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">
-                URL Slug *
+                {t('setup.urlSlugRequired', { defaultValue: 'URL Slug *' })}
               </label>
               <input
                 name="slug"
                 required
-                placeholder={businessType === 'restaurant' ? 'golden-fork' : businessType === 'hotel' ? 'grand-palace' : 'sunrise-guesthouse'}
+                placeholder={businessType === 'restaurant'
+                  ? t('setup.slugPlaceholderRestaurant', { defaultValue: 'golden-fork' })
+                  : businessType === 'hotel'
+                    ? t('setup.slugPlaceholderHotel', { defaultValue: 'grand-palace' })
+                    : t('setup.slugPlaceholderGuesthouse', { defaultValue: 'sunrise-guesthouse' })}
                 className="w-full h-12 px-4 rounded-2xl bg-background border border-border text-foreground text-sm font-semibold placeholder:text-muted-foreground/60 focus:outline-none focus:border-violet-500 transition-colors"
               />
             </div>
@@ -166,38 +174,38 @@ export default function NewRestaurantPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">Email</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">{t('account.email', { defaultValue: 'Email' })}</label>
               <input
                 name="contactEmail"
                 type="email"
-                placeholder="info@business.com"
+                placeholder={t('setup.contactEmailPlaceholder', { defaultValue: 'info@business.com' })}
                 className="w-full h-12 px-4 rounded-2xl bg-background border border-border text-foreground text-sm font-semibold placeholder:text-muted-foreground/60 focus:outline-none focus:border-violet-500 transition-colors"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">Phone</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">{t('account.phone', { defaultValue: 'Phone' })}</label>
               <input
                 name="contactPhone"
-                placeholder="+855 12 345 678"
+                placeholder={t('setup.contactPhonePlaceholder', { defaultValue: '+855 12 345 678' })}
                 className="w-full h-12 px-4 rounded-2xl bg-background border border-border text-foreground text-sm font-semibold placeholder:text-muted-foreground/60 focus:outline-none focus:border-violet-500 transition-colors"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">Address</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">{t('account.address', { defaultValue: 'Address' })}</label>
             <div className="relative">
               <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 name="address"
-                placeholder="123 Main Street, Phnom Penh"
+                placeholder={t('setup.addressPlaceholder', { defaultValue: '123 Main Street, Phnom Penh' })}
                 className="w-full h-12 pl-11 pr-4 rounded-2xl bg-background border border-border text-foreground text-sm font-semibold placeholder:text-muted-foreground/60 focus:outline-none focus:border-violet-500 transition-colors"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">Subscription Expires</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">{t('setup.subscriptionExpires', { defaultValue: 'Subscription Expires' })}</label>
             <div className="relative">
               <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
@@ -216,38 +224,38 @@ export default function NewRestaurantPage() {
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
             </div>
             <h2 className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-              Step 3 · Admin Account
+              {t('setup.step3AdminAccount', { defaultValue: 'Step 3 · Admin Account' })}
             </h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">Full Name *</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">{t('auth.fullName', { defaultValue: 'Full Name' })} *</label>
               <input
                 name="adminFullName"
                 required
-                placeholder="Owner Name"
+                placeholder={t('setup.ownerNamePlaceholder', { defaultValue: 'Owner Name' })}
                 className="w-full h-12 px-4 rounded-2xl bg-background border border-border text-foreground text-sm font-semibold placeholder:text-muted-foreground/60 focus:outline-none focus:border-violet-500 transition-colors"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">Email / Username *</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">{t('setup.emailOrUsernameRequired', { defaultValue: 'Email / Username *' })}</label>
               <input
                 name="adminUsername"
                 required
-                placeholder="admin@hotel.com"
+                placeholder={t('setup.adminUsernamePlaceholder', { defaultValue: 'admin@hotel.com' })}
                 className="w-full h-12 px-4 rounded-2xl bg-background border border-border text-foreground text-sm font-semibold placeholder:text-muted-foreground/60 focus:outline-none focus:border-violet-500 transition-colors"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">Password *</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">{t('auth.password', { defaultValue: 'Password' })} *</label>
             <input
               name="adminPassword"
               type="password"
               required
-              placeholder="••••••••"
+              placeholder={t('setup.passwordMask', { defaultValue: '••••••••' })}
               className="w-full h-12 px-4 rounded-2xl bg-background border border-border text-foreground text-sm font-semibold placeholder:text-muted-foreground/60 focus:outline-none focus:border-violet-500 transition-colors"
             />
           </div>

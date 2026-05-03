@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 interface Zone {
   id: string
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [zones, setZones] = useState<Zone[]>([])
@@ -57,7 +59,7 @@ export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props)
       .order('sort_order', { ascending: true })
     
     if (error) {
-      toast.error('Failed to load zones')
+      toast.error(t('dashboard.failedToLoadZones', { defaultValue: 'Failed to load zones' }))
     } else {
       const nextZones = data || []
       setZones(nextZones)
@@ -88,7 +90,7 @@ export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props)
     const firstError = updateResults.find((result) => result.error)?.error
 
     if (firstError) {
-      toast.error(firstError.message || 'Failed to save order')
+      toast.error(firstError.message || t('dashboard.failedToSaveOrder', { defaultValue: 'Failed to save order' }))
       await fetchZones()
       return
     }
@@ -120,9 +122,9 @@ export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props)
       .single()
 
     if (error) {
-      toast.error('Failed to create zone')
+      toast.error(t('dashboard.failedToCreateZone', { defaultValue: 'Failed to create zone' }))
     } else {
-      toast.success('Zone created')
+      toast.success(t('dashboard.zoneCreated', { defaultValue: 'Zone created' }))
       setNewName('')
       await fetchZones()
       await onUpdate?.()
@@ -139,9 +141,9 @@ export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props)
       .eq('id', id)
 
     if (error) {
-      toast.error('Failed to update zone')
+      toast.error(t('dashboard.failedToUpdateZone', { defaultValue: 'Failed to update zone' }))
     } else {
-      toast.success('Zone updated')
+      toast.success(t('dashboard.zoneUpdated', { defaultValue: 'Zone updated' }))
       setEditingId(null)
       await fetchZones()
       await onUpdate?.()
@@ -150,14 +152,14 @@ export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props)
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure? Units in this zone will be unassigned.')) return
+    if (!confirm(t('dashboard.confirmDeleteZone', { defaultValue: 'Are you sure? Units in this zone will be unassigned.' }))) return
     setLoading(true)
     const { error } = await supabase.from('zones').delete().eq('id', id)
 
     if (error) {
-      toast.error('Failed to delete zone')
+      toast.error(t('dashboard.failedToDeleteZone', { defaultValue: 'Failed to delete zone' }))
     } else {
-      toast.success('Zone deleted')
+      toast.success(t('dashboard.zoneDeleted', { defaultValue: 'Zone deleted' }))
       await fetchZones()
       await onUpdate?.()
     }
@@ -193,7 +195,7 @@ export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props)
         render={
           (trigger as React.ReactElement) || (
             <Button variant="outline" className="h-10 px-4 bg-card border border-border rounded-xl text-foreground/70 text-[10px] font-black uppercase tracking-widest hover:border-violet-500/50 hover:text-violet-300 transition-all shadow-lg gap-2">
-              <Layers className="w-4 h-4" /> Manage Zones
+              <Layers className="w-4 h-4" /> {t('dashboard.manageZones', { defaultValue: 'Manage Zones' })}
             </Button>
           )
         }
@@ -207,18 +209,18 @@ export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props)
       >
         <div className="flex flex-col h-full bg-background/40">
           <SheetHeader className={cn("text-left border-b border-border/50", isMobile ? "p-5 pb-3" : "p-8 pb-4")}>
-            <SheetTitle className="text-lg sm:text-xl font-black uppercase italic tracking-tighter">Zones</SheetTitle>
+            <SheetTitle className="text-lg sm:text-xl font-black uppercase italic tracking-tighter">{t('dashboard.zones', { defaultValue: 'Zones' })}</SheetTitle>
             <SheetDescription className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-relaxed mt-1">
-              Group your tables by area.
+              {t('dashboard.groupTablesByArea', { defaultValue: 'Group your tables by area.' })}
             </SheetDescription>
           </SheetHeader>
 
           <div className={cn("flex-1 overflow-y-auto overscroll-contain custom-scrollbar space-y-6", isMobile ? "p-4" : "p-8")}>
             <div className="space-y-2.5">
-              <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">Add Zone</Label>
+              <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">{t('dashboard.addZone', { defaultValue: 'Add Zone' })}</Label>
               <div className="flex gap-2">
                 <Input 
-                  placeholder="Zone name" 
+                  placeholder={t('dashboard.zoneName', { defaultValue: 'Zone name' })} 
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   className="h-11 bg-card/70 border-border rounded-2xl font-semibold px-4 text-sm"
@@ -229,20 +231,20 @@ export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props)
                   disabled={loading || !newName.trim()}
                   className="h-11 px-4 rounded-2xl bg-violet-600 hover:bg-violet-500 shadow-lg shadow-violet-500/20 text-[10px] font-black uppercase tracking-[0.18em]"
                 >
-                  <Plus className="w-4 h-4 mr-1" /> Add
+                  <Plus className="w-4 h-4 mr-1" /> {t('dashboard.add', { defaultValue: 'Add' })}
                 </Button>
               </div>
             </div>
 
             <div className="space-y-3">
-               <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">Zones</Label>
+               <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">{t('dashboard.zones', { defaultValue: 'Zones' })}</Label>
                {zones.length > 4 && (
                  <div className="relative">
                    <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50" />
                    <Input
                      value={searchQuery}
                      onChange={(e) => setSearchQuery(e.target.value)}
-                     placeholder="Search zones"
+                     placeholder={t('dashboard.searchZones', { defaultValue: 'Search zones' })}
                      className="h-10 rounded-2xl border-border bg-card/50 pl-9 pr-4 text-sm font-medium"
                    />
                  </div>
@@ -257,7 +259,7 @@ export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props)
                      onClick={() => setSearchQuery('')}
                      className="text-[9px] font-black uppercase tracking-[0.18em] text-violet-400"
                    >
-                     Clear
+                     {t('dashboard.clear', { defaultValue: 'Clear' })}
                    </button>
                  )}
                </div>
@@ -338,12 +340,12 @@ export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props)
                 
                 {zones.length === 0 && !loading && (
                   <div className="text-center py-14 bg-muted/10 border border-dashed border-border rounded-2xl opacity-50">
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] italic">No zones yet</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] italic">{t('dashboard.noZonesYet', { defaultValue: 'No zones yet' })}</p>
                   </div>
                 )}
                 {zones.length > 0 && filteredZones.length === 0 && !loading && (
                   <div className="text-center py-14 bg-muted/10 border border-dashed border-border rounded-2xl opacity-60">
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] italic">No matches</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] italic">{t('dashboard.noMatches', { defaultValue: 'No matches' })}</p>
                   </div>
                 )}
                </div>
@@ -352,7 +354,7 @@ export function ZoneManagementDialog({ restaurantId, onUpdate, trigger }: Props)
           
           <SheetFooter className={cn("bg-card/5 border-t border-border/50 mt-auto", isMobile ? "p-4" : "p-8")}>
              <Button variant="ghost" className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground rounded-2xl" onClick={() => setOpen(false)}>
-                Done
+               {t('status.completed', { defaultValue: 'Done' })}
              </Button>
           </SheetFooter>
         </div>

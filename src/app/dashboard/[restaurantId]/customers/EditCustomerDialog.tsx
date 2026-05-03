@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Pencil } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface EditCustomerDialogProps {
   restaurantId: string
@@ -18,6 +19,7 @@ interface EditCustomerDialogProps {
 }
 
 export function EditCustomerDialog({ customer, restaurantId }: EditCustomerDialogProps) {
+  const { t } = useTranslation()
   const [state, action, pending] = useActionState(updateCommonCustomer, null)
   const [open, setOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -46,43 +48,43 @@ export function EditCustomerDialog({ customer, restaurantId }: EditCustomerDialo
       />
       <SheetContent side={isMobile ? 'bottom' : 'right'} className={`bg-card border-border text-foreground p-6 ${isMobile ? 'rounded-t-3xl' : ''}`}>
         <SheetHeader className="p-0 mb-4">
-          <SheetTitle className="text-foreground text-lg font-black italic tracking-tight">Edit Customer Reference</SheetTitle>
+          <SheetTitle className="text-foreground text-lg font-black italic tracking-tight">{t('dashboard.editCustomerReference', { defaultValue: 'Edit Customer Reference' })}</SheetTitle>
         </SheetHeader>
         <form action={action} className="space-y-4 mt-2">
           <input type="hidden" name="id" value={customer.id} />
           <input type="hidden" name="restaurantId" value={restaurantId} />
           
           <div className="space-y-1.5">
-            <Label className="text-foreground/70 text-sm">Full Name *</Label>
+            <Label className="text-foreground/70 text-sm">{t('auth.fullName', { defaultValue: 'Full Name' })} *</Label>
             <Input 
               name="name" 
               required 
               defaultValue={customer.name}
-              placeholder="e.g. Sokha Chan"
+              placeholder={t('dashboard.customerNameExample', { defaultValue: 'e.g. Sokha Chan' })}
               className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500" 
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-foreground/70 text-sm">Phone</Label>
+            <Label className="text-foreground/70 text-sm">{t('account.phone', { defaultValue: 'Phone' })}</Label>
             <Input 
               name="phone" 
               type="tel"
               defaultValue={customer.phone || ''}
-              placeholder="e.g. 012 345 678"
+              placeholder={t('dashboard.customerPhoneExample', { defaultValue: 'e.g. 012 345 678' })}
               className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500" 
             />
           </div>
 
           {state && 'error' in state && (
             <p className="text-red-400 text-xs bg-red-400/10 border border-red-400/20 rounded-lg p-2.5">
-              ⚠️ {state.error}
+              {t('common.error', { defaultValue: 'Error' })}: {state.error}
             </p>
           )}
 
           <Button type="submit" disabled={pending}
             className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 border-0 shadow-lg shadow-violet-500/20 h-11 font-bold">
-            {pending ? 'Saving Changes...' : 'Save Changes'}
+            {pending ? t('dashboard.savingChanges', { defaultValue: 'Saving Changes...' }) : t('dashboard.saveChanges', { defaultValue: 'Save Changes' })}
           </Button>
         </form>
       </SheetContent>

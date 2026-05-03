@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { ActionHub } from '@/components/dashboard/ActionHub'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 interface BusyInfo {
   guestName: string
@@ -71,6 +72,7 @@ export function UnitsClient({
   mode = 'monitoring',
   currentSlug
 }: UnitsClientProps) {
+  const { t } = useTranslation()
   const [tables, setTables] = useState<TableWithZone[]>(initialTables as TableWithZone[])
   const [zones, setZones] = useState<{ id: string; name: string; sort_order: number }[]>([])
   const [busyRows, setBusyRows] = useState(initialBusyRows)
@@ -83,8 +85,10 @@ export function UnitsClient({
   const supabase = useMemo(() => createClient(), [])
   const terms = getTerms(businessType)
   const dashboardSlug = currentSlug || restaurantId
-  const availableLabel = 'Available'
-  const occupiedLabel = terms.hasCheckout ? 'Occupied' : 'Booked'
+  const availableLabel = t('dashboard.available', { defaultValue: 'Available' })
+  const occupiedLabel = terms.hasCheckout
+    ? t('dashboard.occupied', { defaultValue: 'Occupied' })
+    : t('dashboard.booked', { defaultValue: 'Booked' })
   const selectedDateLabel = format(parseISO(selectedDate), 'MMMM d')
   const unitGridClass = viewStyle === 'grid'
     ? 'grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
@@ -179,19 +183,21 @@ export function UnitsClient({
       .channel(`tables-realtime-${restaurantId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'reservations', filter: `restaurant_id=eq.${restaurantId}` }, (payload: { eventType: string; new: Record<string, unknown> }) => {
         if (payload.eventType === 'INSERT') {
-          const guestName = typeof payload.new.guest_name === 'string' ? payload.new.guest_name : 'Guest'
+          const guestName = typeof payload.new.guest_name === 'string' ? payload.new.guest_name : t('dashboard.guest', { defaultValue: 'Guest' })
           const tableId = typeof payload.new.table_id === 'string' ? payload.new.table_id : null
           const tableName = tableId ? tables.find((table) => table.id === tableId)?.table_name : null
-          const message = tableName ? `${tableName} booked for ${guestName}` : `${guestName} booked`
+          const message = tableName
+            ? t('dashboard.tableBookedForGuest', { defaultValue: '{{tableName}} booked for {{guestName}}', tableName, guestName })
+            : t('dashboard.guestBooked', { defaultValue: '{{guestName}} booked', guestName })
           showLiveMessage(message)
           toast.success(message)
         } else {
-          showLiveMessage(`${occupiedLabel} status updated`)
+          showLiveMessage(t('dashboard.occupiedStatusUpdated', { defaultValue: '{{occupiedLabel}} status updated', occupiedLabel }))
         }
         void fetchLatestBusyRows()
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'physical_tables', filter: `restaurant_id=eq.${restaurantId}` }, () => { showLiveMessage(`${terms.units} updated`); void fetchLatestTables() })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'zones', filter: `restaurant_id=eq.${restaurantId}` }, () => { showLiveMessage('Zones updated'); void fetchZones() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'physical_tables', filter: `restaurant_id=eq.${restaurantId}` }, () => { showLiveMessage(t('dashboard.unitsUpdated', { defaultValue: '{{units}} updated', units: terms.units })); void fetchLatestTables() })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'zones', filter: `restaurant_id=eq.${restaurantId}` }, () => { showLiveMessage(t('dashboard.zonesUpdated', { defaultValue: 'Zones updated' })); void fetchZones() })
       .subscribe()
 
     return () => {
@@ -255,7 +261,7 @@ export function UnitsClient({
       map.set(row.table_id, {
         guestName: row.guest_name,
         guestPhone: row.guest_phone ?? undefined,
-        createdByName: row.profiles?.full_name || 'Staff',
+        createdByName: row.profiles?.full_name || t('roles.staff', { defaultValue: 'Staff' }),
         status: row.status,
         partySize: row.party_size || 0,
         reservationDate: row.reservation_date ?? undefined,
@@ -294,7 +300,7 @@ export function UnitsClient({
               {isBusy && busyInfo && (
                 <div className="flex flex-col gap-0.5 min-w-0">
                   <p className="text-[11px] font-black text-rose-400 truncate uppercase tracking-tighter">{busyInfo.guestName?.split(' ')[0]} ({busyInfo.partySize}p)</p>
-                  <p className="text-[7px] text-muted-foreground/50 font-bold truncate italic leading-none">Created by {busyInfo.createdByName}</p>
+                  <p className="text-[7px] text-muted-foreground/50 font-bold truncate italic leading-none">{t('dashboard.createdByName', { defaultValue: 'Created by {{name}}', name: busyInfo.createdByName })}</p>
                 </div>
               )}
             </div>
@@ -360,7 +366,7 @@ export function UnitsClient({
             </div>
             <div className="flex items-center gap-2 relative z-30 justify-end">
               <Badge className={cn('text-[9px] font-black px-2 py-0.5 rounded-lg border uppercase tracking-widest', isOffline ? 'bg-muted text-muted-foreground/60 border-border' : isBusy ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20')}>
-                {isOffline ? 'OFF' : isBusy ? occupiedLabel : availableLabel.toUpperCase()}
+                {isOffline ? t('dashboard.off', { defaultValue: 'OFF' }) : isBusy ? occupiedLabel : availableLabel.toUpperCase()}
               </Badge>
               {mode === 'management' && (
                 <div className="w-8 h-8 flex items-center justify-center bg-background border border-border/50 rounded-xl text-muted-foreground shadow-sm">
@@ -411,7 +417,9 @@ export function UnitsClient({
         <div className="flex flex-col gap-3 sm:gap-4">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-3 pt-1">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-foreground italic tracking-tighter uppercase leading-none">
-              {mode === 'management' ? `Manage ${terms.units}` : `${terms.units} Status`}
+              {mode === 'management'
+                ? t('dashboard.manageUnits', { defaultValue: 'Manage {{units}}', units: terms.units })
+                : t('dashboard.unitsStatus', { defaultValue: '{{units}} Status', units: terms.units })}
             </h1>
             
             {mode === 'monitoring' && (
@@ -453,7 +461,7 @@ export function UnitsClient({
                   type="button"
                   className="flex-1 h-10 rounded-xl bg-violet-600 text-white text-[10px] font-black uppercase tracking-[0.18em] shadow-lg shadow-violet-500/20"
                 >
-                  Add {terms.unit}
+                  {t('dashboard.addUnit', { defaultValue: 'Add {{unit}}', unit: terms.unit })}
                 </button>
               )}
             />
@@ -465,7 +473,7 @@ export function UnitsClient({
                   type="button"
                   className="h-10 px-4 rounded-xl border border-border bg-card text-muted-foreground text-[10px] font-black uppercase tracking-[0.18em]"
                 >
-                  Zones
+                  {t('dashboard.zones', { defaultValue: 'Zones' })}
                 </button>
               )}
             />
@@ -475,7 +483,7 @@ export function UnitsClient({
         {mode === 'management' && (
           <div className="flex md:hidden items-center justify-between gap-3 px-1">
             <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.18em]">
-              View
+              {t('dashboard.view', { defaultValue: 'View' })}
             </span>
             <ViewSwitcher currentStyle={viewStyle} onStyleChange={handleUpdateViewStyle} />
           </div>
@@ -511,7 +519,9 @@ export function UnitsClient({
               <div className="flex items-center gap-2 min-w-0">
                 <Activity className="w-3.5 h-3.5 text-muted-foreground" />
                 <h2 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest truncate">
-                  {selectedDate === initialDate ? `${terms.units} For Today` : `${terms.units} For ${format(parseISO(selectedDate), 'MMM dd')}`}
+                  {selectedDate === initialDate
+                    ? t('dashboard.unitsForToday', { defaultValue: '{{units}} For Today', units: terms.units })
+                    : t('dashboard.unitsForDate', { defaultValue: '{{units}} For {{date}}', units: terms.units, date: format(parseISO(selectedDate), 'MMM dd') })}
                 </h2>
               </div>
               <ViewSwitcher currentStyle={viewStyle} onStyleChange={handleUpdateViewStyle} />
@@ -530,8 +540,8 @@ export function UnitsClient({
                 </div>
                 {zoneTables.length === 0 ? (
                   <div className="rounded-3xl border border-dashed border-border bg-card/20 px-6 py-10 text-center">
-                    <p className="text-sm font-black italic tracking-tight text-muted-foreground">No {terms.unitsLower} assigned yet</p>
-                    <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">Use Add {terms.unit} or edit an existing one to place it in this zone</p>
+                    <p className="text-sm font-black italic tracking-tight text-muted-foreground">{t('dashboard.noUnitsAssignedYet', { defaultValue: 'No {{unitsLower}} assigned yet', unitsLower: terms.unitsLower })}</p>
+                      <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">{t('dashboard.useAddUnitToPlaceInZone', { defaultValue: 'Use Add {{unit}} or edit an existing one to place it in this zone', unit: terms.unit })}</p>
                   </div>
                 ) : (
                   <div className={cn("grid gap-4", unitGridClass)}>
@@ -625,7 +635,7 @@ export function UnitsClient({
             <div id="zone-unassigned" className="space-y-4">
               <div className="flex items-center gap-3 px-1">
                 <div className="h-6 w-1 rounded-full bg-muted" />
-                <h2 className="text-sm font-black text-muted-foreground uppercase tracking-[0.2em] italic">Unassigned</h2>
+                <h2 className="text-sm font-black text-muted-foreground uppercase tracking-[0.2em] italic">{t('dashboard.unassigned', { defaultValue: 'Unassigned' })}</h2>
                 <div className="h-px flex-1 bg-gradient-to-r from-border/50 to-transparent" />
               </div>
               <div className={cn("grid gap-4", unitGridClass)}>
@@ -636,8 +646,8 @@ export function UnitsClient({
 
           {tables.length === 0 && (
             <div className="text-center py-20 bg-card/30 rounded-[2.5rem] border border-border border-dashed backdrop-blur-sm">
-              <p className="text-muted-foreground font-black text-lg italic tracking-tight">No {terms.unitsLower} yet</p>
-              <p className="text-muted-foreground/60 text-xs mt-1 mb-8 font-bold uppercase tracking-widest">Add your first {terms.unitLower} to start live operations</p>
+              <p className="text-muted-foreground font-black text-lg italic tracking-tight">{t('dashboard.noUnitsYet', { defaultValue: 'No {{unitsLower}} yet', unitsLower: terms.unitsLower })}</p>
+              <p className="text-muted-foreground/60 text-xs mt-1 mb-8 font-bold uppercase tracking-widest">{t('dashboard.addFirstUnitToStartLiveOps', { defaultValue: 'Add your first {{unitLower}} to start live operations', unitLower: terms.unitLower })}</p>
             </div>
           )}
         </div>
@@ -645,7 +655,7 @@ export function UnitsClient({
 
       <div className="hidden sm:flex text-center space-y-2 pt-8 pb-4 opacity-50 flex-col items-center">
         <Activity className="w-4 h-4 text-emerald-500 animate-pulse mb-1" />
-        <p className="text-[10px] text-muted-foreground/60 font-black uppercase tracking-[0.2em] leading-relaxed px-8">Everything updates live as it happens.</p>
+        <p className="text-[10px] text-muted-foreground/60 font-black uppercase tracking-[0.2em] leading-relaxed px-8">{t('dashboard.everythingUpdatesLive', { defaultValue: 'Everything updates live as it happens.' })}</p>
       </div>
 
       {mode === 'management' && (
@@ -653,19 +663,19 @@ export function UnitsClient({
         <ActionHub 
           actions={[
             { 
-              label: `Add ${terms.unit}`, 
+              label: t('dashboard.addUnit', { defaultValue: 'Add {{unit}}', unit: terms.unit }), 
               icon: <Plus className="w-6 h-6" />, 
               color: 'bg-violet-600 text-white',
               component: <CreateUnitDialog businessType={businessType} restaurantId={restaurantId} zones={zones} />
             },
             { 
-              label: 'Manage Zones', 
+              label: t('dashboard.manageZones', { defaultValue: 'Manage Zones' }), 
               icon: <LayoutList className="w-5 h-5" />, 
               color: 'bg-emerald-600 text-white',
               component: <ZoneManagementDialog restaurantId={restaurantId} onUpdate={fetchZones} />
             },
             { 
-              label: 'View Reports', 
+              label: t('dashboard.viewReports', { defaultValue: 'View Reports' }), 
               icon: <BarChart3 className="w-5 h-5" />, 
               color: 'bg-blue-600 text-white',
               onClick: () => window.location.href = `/dashboard/${dashboardSlug}/reports`

@@ -17,44 +17,6 @@ import { useTranslation } from 'react-i18next'
 
 type BusinessType = 'restaurant' | 'hotel' | 'guesthouse'
 
-const TYPES: Array<{
-  value: BusinessType
-  icon: LucideIcon
-  label: string
-  desc: string
-  color: string
-  border: string
-  dot: string
-}> = [
-  {
-    value: 'restaurant',
-    icon: UtensilsCrossed,
-    label: 'Restaurant / Café',
-    desc: 'Table booking, meal reservations, dine-in management',
-    color: 'from-orange-500/20 to-amber-500/20',
-    border: 'border-orange-500/40',
-    dot: 'bg-orange-400',
-  },
-  {
-    value: 'hotel',
-    icon: Building2,
-    label: 'Hotel / Resort',
-    desc: 'Room booking with check-in and check-out dates',
-    color: 'from-blue-500/20 to-indigo-500/20',
-    border: 'border-blue-500/40',
-    dot: 'bg-blue-400',
-  },
-  {
-    value: 'guesthouse',
-    icon: Home,
-    label: 'Guest House / B&B',
-    desc: 'Small lodging with room reservations and guest tracking',
-    color: 'from-emerald-500/20 to-teal-500/20',
-    border: 'border-emerald-500/40',
-    dot: 'bg-emerald-400',
-  },
-]
-
 export default function GlobalSetupPage() {
   const { t } = useTranslation()
   const router = useRouter()
@@ -62,6 +24,44 @@ export default function GlobalSetupPage() {
   const [businessType, setBusinessType] = useState<BusinessType>('restaurant')
   const [mounted, setMounted] = useState(false)
   const [status, setStatus] = useState<{ count: number; max: number; isSpecial: boolean; isSuper: boolean } | null>(null)
+
+  const types: Array<{
+    value: BusinessType
+    icon: LucideIcon
+    label: string
+    desc: string
+    color: string
+    border: string
+    dot: string
+  }> = [
+    {
+      value: 'restaurant',
+      icon: UtensilsCrossed,
+      label: t('setup.typeRestaurantLabel', { defaultValue: 'Restaurant / Cafe' }),
+      desc: t('setup.typeRestaurantDesc', { defaultValue: 'Table booking, meal reservations, dine-in management' }),
+      color: 'from-orange-500/20 to-amber-500/20',
+      border: 'border-orange-500/40',
+      dot: 'bg-orange-400',
+    },
+    {
+      value: 'hotel',
+      icon: Building2,
+      label: t('setup.typeHotelLabel', { defaultValue: 'Hotel / Resort' }),
+      desc: t('setup.typeHotelDesc', { defaultValue: 'Room booking with check-in and check-out dates' }),
+      color: 'from-blue-500/20 to-indigo-500/20',
+      border: 'border-blue-500/40',
+      dot: 'bg-blue-400',
+    },
+    {
+      value: 'guesthouse',
+      icon: Home,
+      label: t('setup.typeGuesthouseLabel', { defaultValue: 'Guest House / B&B' }),
+      desc: t('setup.typeGuesthouseDesc', { defaultValue: 'Small lodging with room reservations and guest tracking' }),
+      color: 'from-emerald-500/20 to-teal-500/20',
+      border: 'border-emerald-500/40',
+      dot: 'bg-emerald-400',
+    },
+  ]
 
   useEffect(() => {
     setMounted(true)
@@ -129,7 +129,7 @@ export default function GlobalSetupPage() {
                 {t('setup.establishBrand', { defaultValue: 'Establish Brand' })}
               </h1>
               <p className="text-muted-foreground/60 text-[10px] font-bold uppercase tracking-[0.3em] leading-relaxed max-w-sm mx-auto">
-                Deploying high-density business logic to your portfolio context
+                {t('setup.deployingBusinessLogic', { defaultValue: 'Deploying high-density business logic to your portfolio context' })}
               </p>
             </div>
           </div>
@@ -140,37 +140,37 @@ export default function GlobalSetupPage() {
               <div className="w-8 h-8 rounded-xl bg-card border border-border flex items-center justify-center">
                 <Layers className="w-4 h-4 text-violet-500" />
               </div>
-              <h2 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">Module Identification</h2>
+              <h2 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">{t('setup.moduleIdentification', { defaultValue: 'Module Identification' })}</h2>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full lg:max-w-4xl lg:mx-auto">
-              {TYPES.map(t => (
+              {types.map(typeItem => (
                 <button
-                  key={t.value}
+                  key={typeItem.value}
                   type="button"
-                  onClick={() => setBusinessType(t.value)}
+                  onClick={() => setBusinessType(typeItem.value)}
                   className={cn(
                     'relative group flex flex-col gap-5 p-7 rounded-[2.5rem] border transition-all duration-500 active:scale-[0.98] text-left w-full',
-                    businessType === t.value
+                    businessType === typeItem.value
                       ? 'bg-violet-600/10 border-violet-500/50 shadow-[0_30px_60px_rgba(0,0,0,0.3)]'
                       : 'bg-card/40 border-border/50 hover:bg-card hover:border-border'
                   )}
                 >
                   <div className={cn(
                     "w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 shrink-0",
-                    businessType === t.value ? "bg-violet-600 text-foreground shadow-xl shadow-violet-600/40" : "bg-muted text-muted-foreground/60 group-hover:scale-110"
+                    businessType === typeItem.value ? "bg-violet-600 text-foreground shadow-xl shadow-violet-600/40" : "bg-muted text-muted-foreground/60 group-hover:scale-110"
                   )}>
-                    {(() => { const TIcon = t.icon; return <TIcon className="w-7 h-7" /> })()}
+                    {(() => { const TIcon = typeItem.icon; return <TIcon className="w-7 h-7" /> })()}
                   </div>
                   <div>
-                    <p className={cn('text-[14px] font-black uppercase tracking-tight', businessType === t.value ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground transition-colors')}>
-                      {t.label}
+                    <p className={cn('text-[14px] font-black uppercase tracking-tight', businessType === typeItem.value ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground transition-colors')}>
+                      {typeItem.label}
                     </p>
                     <p className="text-[10px] text-muted-foreground/60 font-bold mt-2 leading-relaxed opacity-80">
-                      {t.desc}
+                      {typeItem.desc}
                     </p>
                   </div>
-                  {businessType === t.value && (
+                  {businessType === typeItem.value && (
                     <div className="absolute top-8 right-8 w-6 h-6 rounded-full bg-violet-600 flex items-center justify-center shadow-lg shadow-violet-600/50 animate-in zoom-in duration-300">
                       <Check className="w-4 h-4 text-foreground" />
                     </div>
@@ -186,7 +186,7 @@ export default function GlobalSetupPage() {
               <div className="w-8 h-8 rounded-xl bg-card border border-border flex items-center justify-center">
                 <Globe className="w-4 h-4 text-violet-500" />
               </div>
-              <h2 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">Registry Protocol</h2>
+              <h2 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] italic">{t('setup.registryProtocol', { defaultValue: 'Registry Protocol' })}</h2>
             </div>
 
             <div className="w-full lg:max-w-4xl lg:mx-auto glassmorphic-card rounded-[3rem] p-8 md:p-12 space-y-10 border border-border/50 bg-card/20 shadow-2xl relative overflow-hidden">
@@ -194,60 +194,60 @@ export default function GlobalSetupPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest ml-1">Brand Identity</label>
+                  <label className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest ml-1">{t('setup.brandIdentity', { defaultValue: 'Brand Identity' })}</label>
                   <input
                     name="name"
                     required
-                    placeholder="e.g. Noir Bistro"
+                    placeholder={t('setup.brandIdentityPlaceholder', { defaultValue: 'e.g. Noir Bistro' })}
                     className="w-full h-14 px-8 rounded-3xl bg-background border border-border text-sm text-foreground font-bold placeholder:text-muted-foreground/20 focus:outline-none focus:border-violet-500 transition-all shadow-inner uppercase tracking-wider"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest ml-1">Slug Identifier</label>
+                  <label className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest ml-1">{t('setup.slugIdentifier', { defaultValue: 'Slug Identifier' })}</label>
                   <div className="relative">
                     <Globe className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                       name="slug"
                       required
-                      placeholder="noir-bistro"
+                      placeholder={t('setup.slugIdentifierPlaceholder', { defaultValue: 'noir-bistro' })}
                       className="w-full h-14 pl-14 pr-8 rounded-3xl bg-background border border-border text-sm text-foreground font-bold placeholder:text-muted-foreground/20 focus:outline-none focus:border-violet-500 transition-all shadow-inner lowercase italic"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest ml-1">Primary Contact Email</label>
+                  <label className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest ml-1">{t('setup.primaryContactEmail', { defaultValue: 'Primary Contact Email' })}</label>
                   <div className="relative">
                     <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                       name="contactEmail"
                       type="email"
-                      placeholder="hello@noir.com"
+                      placeholder={t('setup.primaryContactEmailPlaceholder', { defaultValue: 'hello@noir.com' })}
                       className="w-full h-14 pl-14 pr-8 rounded-3xl bg-background border border-border text-sm text-foreground font-bold placeholder:text-muted-foreground/20 focus:outline-none focus:border-violet-500 transition-all shadow-inner"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest ml-1">Phone Registry</label>
+                  <label className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest ml-1">{t('setup.phoneRegistry', { defaultValue: 'Phone Registry' })}</label>
                   <div className="relative">
                     <Phone className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                       name="contactPhone"
-                      placeholder="+855 12 345 678"
+                      placeholder={t('setup.phoneRegistryPlaceholder', { defaultValue: '+855 12 345 678' })}
                       className="w-full h-14 pl-14 pr-8 rounded-3xl bg-background border border-border text-sm text-foreground font-bold placeholder:text-muted-foreground/20 focus:outline-none focus:border-violet-500 transition-all shadow-inner"
                     />
                   </div>
                 </div>
 
                 <div className="md:col-span-2 space-y-2">
-                  <label className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest ml-1">Deployment Address</label>
+                  <label className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest ml-1">{t('setup.deploymentAddress', { defaultValue: 'Deployment Address' })}</label>
                   <div className="relative">
                     <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                       name="address"
-                      placeholder="Signature Square, Central Park, Level 4"
+                      placeholder={t('setup.deploymentAddressPlaceholder', { defaultValue: 'Signature Square, Central Park, Level 4' })}
                       className="w-full h-14 pl-14 pr-8 rounded-3xl bg-background border border-border text-sm text-foreground font-bold placeholder:text-muted-foreground/20 focus:outline-none focus:border-violet-500 transition-all shadow-inner"
                     />
                   </div>
@@ -271,13 +271,13 @@ export default function GlobalSetupPage() {
                 <Loader2 className="w-6 h-6 animate-spin" />
               ) : (
                 <>
-                  Establish Brand Context
+                  {t('setup.establishBrandContext', { defaultValue: 'Establish Brand Context' })}
                   <ShieldCheck className="w-6 h-6 group-hover:scale-110 transition-transform" />
                 </>
               )}
             </button>
             <p className="text-center text-[9px] text-muted-foreground font-bold uppercase tracking-[0.3em] mt-8 opacity-40 italic">
-               Enterprise Security Protocol • Global Brand Deployment v2.4 
+              {t('setup.enterpriseSecurityProtocol', { defaultValue: 'Enterprise Security Protocol' })} • {t('setup.globalBrandDeploymentVersion', { defaultValue: 'Global Brand Deployment v2.4' })}
             </p>
           </div>
         </div>

@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ActionHub } from '@/components/dashboard/ActionHub'
 import { BarChart3 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface Reservation extends Tables<'reservations'> {
   physical_tables: Pick<Tables<'physical_tables'>, 'table_name' | 'capacity'> | null
@@ -75,6 +76,7 @@ export function ReservationsClient({
   businessType, 
   tables 
 }: Props) {
+  const { t } = useTranslation()
   const dashboardSlug = currentSlug || restaurantId
   const [selectedDate, setSelectedDate] = useState(initialDate)
   const [bookings, setBookings] = useState<Reservation[]>(initialBookings)
@@ -130,10 +132,12 @@ export function ReservationsClient({
     )
     const { sortedZones, grouped, unassigned } = groupAndSortTables(tables, uniqueZones)
     
-    const availableLabel = 'Available'
-    const occupiedLabel = terms.hasCheckout ? 'Occupied' : 'Booked'
+    const availableLabel = t('dashboard.available', { defaultValue: 'Available' })
+    const occupiedLabel = terms.hasCheckout
+      ? t('dashboard.occupied', { defaultValue: 'Occupied' })
+      : t('dashboard.booked', { defaultValue: 'Booked' })
 
-    let text = `Date: ${dateStr} As of ${timeStr}\n\n`
+    let text = `${t('dashboard.dateAsOf', { defaultValue: 'Date: {{date}} As of {{time}}', date: dateStr, time: timeStr })}\n\n`
     
     text += `${availableLabel.toUpperCase()} (${tables.filter(t => !occupiedTableIds.includes(t.id)).length}):\n`
     
@@ -162,7 +166,7 @@ export function ReservationsClient({
     })
     
     if (unassigned.filter(t => !occupiedTableIds.includes(t.id)).length > 0) {
-      text += `[Unassigned]\n`
+      text += `[${t('dashboard.unassigned', { defaultValue: 'Unassigned' })}]\n`
       unassigned.filter(t => !occupiedTableIds.includes(t.id)).forEach(t => { text += renderTableStatus(t, true) })
     }
     
@@ -177,20 +181,23 @@ export function ReservationsClient({
     })
 
     if (unassigned.filter(t => occupiedTableIds.includes(t.id)).length > 0) {
-      text += `[Unassigned]\n`
+      text += `[${t('dashboard.unassigned', { defaultValue: 'Unassigned' })}]\n`
       unassigned.filter(t => occupiedTableIds.includes(t.id)).forEach(t => { text += renderTableStatus(t, false) })
     }
     
     try {
       await navigator.clipboard.writeText(text.trim())
-      toast.success('Status report copied!')
+      toast.success(t('dashboard.statusReportCopied', { defaultValue: 'Status report copied!' }))
     } catch {
-      toast.error('Failed to copy status')
+      toast.error(t('dashboard.failedToCopyStatus', { defaultValue: 'Failed to copy status' }))
     }
   }
 
   const supabase = useMemo(() => createClient(), [])
   const terms = getTerms(businessType)
+  const getStatusLabel = useCallback((status: string) => {
+    return t(`status.${status}`, { defaultValue: statusLabels[status] ?? status })
+  }, [t])
   // Compute today from the browser's timezone — server may run in UTC and give the wrong date
   // at midnight-1AM in UTC+ timezones (e.g. UTC+7 at 12:51AM = April 8 local, April 7 UTC)
   const clientTodayIso = useMemo(() => format(new Date(), 'yyyy-MM-dd'), [])
@@ -233,13 +240,13 @@ export function ReservationsClient({
         },
         (payload: { eventType: string; new: Record<string, unknown> }) => {
           if (payload.eventType === 'INSERT') {
-            const guestName = typeof payload.new.guest_name === 'string' ? payload.new.guest_name : 'New guest'
+            const guestName = typeof payload.new.guest_name === 'string' ? payload.new.guest_name : t('dashboard.newGuest', { defaultValue: 'New guest' })
             const startTime = typeof payload.new.start_time === 'string' ? payload.new.start_time.slice(0, 5) : null
             const message = startTime ? `${guestName} at ${startTime}` : guestName
-            showLiveMessage(`New booking: ${message}`)
-            toast.success(`New booking: ${message}`)
+            showLiveMessage(t('dashboard.newBookingMessage', { defaultValue: 'New booking: {{message}}', message }))
+            toast.success(t('dashboard.newBookingMessage', { defaultValue: 'New booking: {{message}}', message }))
           } else {
-            showLiveMessage('Bookings updated')
+            showLiveMessage(t('dashboard.bookingsUpdated', { defaultValue: 'Bookings updated' }))
           }
           void fetchLatestData()
         }
@@ -324,7 +331,7 @@ export function ReservationsClient({
               onClick={handleShareStatus}
               className="h-9 rounded-xl px-3 border-violet-500/30 bg-violet-600/10 text-violet-300 shadow-sm shadow-violet-950/20 hover:bg-violet-600 hover:text-white hover:border-violet-500 transition-all gap-1.5 text-[9px] font-black uppercase tracking-[0.18em] active:scale-95"
             >
-              Share Status
+              {t('dashboard.shareStatus', { defaultValue: 'Share Status' })}
             </Button>
           </div>
         </div>
@@ -338,7 +345,7 @@ export function ReservationsClient({
               'w-full sm:w-auto bg-gradient-to-r from-violet-600 to-indigo-600 border-0 rounded-xl gap-1.5 font-black text-foreground shadow-lg shadow-violet-500/20 h-10 px-4 transition-all duration-300 active:scale-95'
             )}
           >
-            <Plus className="w-4 h-4" /> New {terms.booking}
+            <Plus className="w-4 h-4" /> {t('dashboard.newBooking', { defaultValue: 'New {{booking}}', booking: terms.booking })}
           </Link>
         </div>
       </div>
@@ -357,7 +364,10 @@ export function ReservationsClient({
           <div className="flex items-center gap-2">
             <ClipboardList className="w-3.5 h-3.5 text-muted-foreground" />
             <h2 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-              Booked for {isSelectedToday ? 'Today' : format(parseISO(selectedDate), 'MMM dd')}
+              {t('dashboard.bookedFor', {
+                defaultValue: 'Booked for {{day}}',
+                day: isSelectedToday ? t('dashboard.today', { defaultValue: 'Today' }) : format(parseISO(selectedDate), 'MMM dd')
+              })}
             </h2>
           </div>
           <ViewSwitcher currentStyle={viewStyle} onStyleChange={handleViewChange} />
@@ -403,7 +413,9 @@ export function ReservationsClient({
                                })}
                              </p>
                              <span className="text-[9px] text-muted-foreground/40 font-bold px-1.5 py-0.5 rounded-lg border border-border bg-card/50 truncate max-w-[100px]">
-                               {String(res.created_by) === String(currentUserId) ? 'Created by you' : `Created by ${res.profiles?.full_name || 'Staff'}`}
+                               {String(res.created_by) === String(currentUserId)
+                                 ? t('dashboard.createdByYou', { defaultValue: 'Created by you' })
+                                 : t('dashboard.createdByName', { defaultValue: 'Created by {{name}}', name: res.profiles?.full_name || t('roles.staff', { defaultValue: 'Staff' }) })}
                              </span>
                           </div>
                         </div>
@@ -412,12 +424,12 @@ export function ReservationsClient({
                           <p className="text-xs font-bold text-foreground/80 truncate">{res.unit_name || res.physical_tables?.table_name || '—'}</p>
                         </div>
                         <div className="hidden sm:block">
-                          <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Party</p>
+                          <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{t('dashboard.party', { defaultValue: 'Party' })}</p>
                           <p className="text-xs font-bold text-foreground/80">{res.party_size || 0} {terms.partyUnit}</p>
                         </div>
                         <div className="flex justify-end">
                            <Badge className={cn('text-[9px] font-black px-2 py-0.5 border rounded-lg uppercase tracking-widest', statusColors[res.status] ?? '')}>
-                            {statusLabels[res.status] ?? res.status}
+                            {getStatusLabel(res.status)}
                           </Badge>
                         </div>
                       </div>
@@ -453,7 +465,9 @@ export function ReservationsClient({
                           })}
                         </p>
                         <p className="text-[8px] text-muted-foreground/60 font-medium truncate italic mt-1 pr-1 border-l pl-1 border-border/20">
-                          {String(res.created_by) === String(currentUserId) ? 'You' : (res.profiles?.full_name?.split(' ')[0] || 'Staff')}
+                          {String(res.created_by) === String(currentUserId)
+                            ? t('dashboard.you', { defaultValue: 'You' })
+                            : (res.profiles?.full_name?.split(' ')[0] || t('roles.staff', { defaultValue: 'Staff' }))}
                         </p>
                       </div>
                       <div className="mt-auto pt-2 border-t border-border/20 flex items-center justify-between">
@@ -481,8 +495,8 @@ export function ReservationsClient({
         ) : (
           <div className="py-20 text-center bg-card/30 rounded-[2.5rem] border border-border border-dashed backdrop-blur-sm">
             <ClipboardList className="w-8 h-8 text-muted-foreground mx-auto mb-3 opacity-20" />
-            <p className="text-muted-foreground font-black text-lg italic tracking-tight">No {terms.bookingsLower} for this day</p>
-            <p className="text-muted-foreground/60 text-[10px] font-bold uppercase tracking-widest mt-1">Check another day or create a new booking</p>
+            <p className="text-muted-foreground font-black text-lg italic tracking-tight">{t('dashboard.noBookingsForDay', { defaultValue: 'No {{bookingsLower}} for this day', bookingsLower: terms.bookingsLower })}</p>
+            <p className="text-muted-foreground/60 text-[10px] font-bold uppercase tracking-widest mt-1">{t('dashboard.checkAnotherDayOrCreateBooking', { defaultValue: 'Check another day or create a new booking' })}</p>
           </div>
         )}
       </section>
@@ -490,13 +504,13 @@ export function ReservationsClient({
         <ActionHub 
           actions={[
             { 
-              label: `New ${terms.booking}`, 
+              label: t('dashboard.newBooking', { defaultValue: 'New {{booking}}', booking: terms.booking }), 
               icon: <Plus className="w-6 h-6" />, 
               color: 'bg-violet-600 text-white',
               onClick: () => window.location.href = `/dashboard/${dashboardSlug}/reservations/new`
             },
             { 
-              label: 'View Reports', 
+              label: t('dashboard.viewReports', { defaultValue: 'View Reports' }), 
               icon: <BarChart3 className="w-5 h-5" />, 
               color: 'bg-blue-600 text-white',
               onClick: () => window.location.href = `/dashboard/${dashboardSlug}/reports`
@@ -509,6 +523,7 @@ export function ReservationsClient({
 }
 
 function BookingCard({ res, dashboardSlug, todayIso, currentUserId }: { res: Reservation; dashboardSlug: string; todayIso: string; currentUserId?: string }) {
+  const { t } = useTranslation()
   const start = res.start_time
     ? new Date(`${res.reservation_date}T${res.start_time}`)
     : null
@@ -536,7 +551,7 @@ function BookingCard({ res, dashboardSlug, todayIso, currentUserId }: { res: Res
           {res.guest_name?.slice(0, 1).toUpperCase() || '?'}
         </div>
         <Badge className={cn('text-[10px] font-black px-2 py-0.5 border rounded-xl whitespace-nowrap leading-none transition-all', statusColors[res.status] ?? '')}>
-          {statusLabels[res.status] ?? res.status}
+          {getStatusLabel(res.status)}
         </Badge>
       </div>
       <div>
@@ -558,14 +573,16 @@ function BookingCard({ res, dashboardSlug, todayIso, currentUserId }: { res: Res
                <CalendarDays className="w-3 h-3 text-muted-foreground/60" /> {timeStr}
              </p>
              <p className="text-[9px] text-muted-foreground/50 font-bold truncate italic">
-               {String(res.created_by) === String(currentUserId) ? 'Created by you' : (res.profiles?.full_name || 'Staff')}
+               {String(res.created_by) === String(currentUserId)
+                 ? t('dashboard.createdByYou', { defaultValue: 'Created by you' })
+                 : (res.profiles?.full_name || t('roles.staff', { defaultValue: 'Staff' }))}
              </p>
           </div>
 
           {/* Premium Range Badge for Multi-day stays */}
           {res.reservation_date && res.checkout_date && res.reservation_date !== res.checkout_date && (
             <div className="flex items-center gap-1 text-[9px] font-black text-violet-400 bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded-lg w-fit uppercase tracking-tighter shadow-sm">
-              <span className="opacity-70">Stay:</span>
+              <span className="opacity-70">{t('dashboard.stay', { defaultValue: 'Stay:' })}</span>
               {format(parseISO(res.reservation_date), 'MMM d')}
               <span className="opacity-40 px-0.5">→</span>
               {format(parseISO(res.checkout_date), 'MMM d')}
@@ -576,7 +593,7 @@ function BookingCard({ res, dashboardSlug, todayIso, currentUserId }: { res: Res
       {canEdit && (
         <div className="flex items-center justify-end">
           <span className="text-[10px] text-muted-foreground/60 font-black uppercase tracking-tighter flex items-center gap-0.5">
-            Manage <ChevronRight className="w-3 h-3" />
+            {t('dashboard.manage', { defaultValue: 'Manage' })} <ChevronRight className="w-3 h-3" />
           </span>
         </div>
       )}

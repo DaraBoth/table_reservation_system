@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { KeyRound, Eye, EyeOff } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export function StaffPasswordResetButton({ userId, name }: { userId: string; name: string }) {
+  const { t } = useTranslation()
   const [state, action, pending] = useActionState(resetUserPassword, null)
   const [showPassword, setShowPassword] = useState(false)
 
@@ -25,8 +27,8 @@ export function StaffPasswordResetButton({ userId, name }: { userId: string; nam
           <div className="w-12 h-12 rounded-2xl bg-violet-600/20 flex items-center justify-center mb-1">
             <KeyRound className="w-6 h-6 text-violet-400" />
           </div>
-          <SheetTitle className="text-lg font-black text-foreground italic tracking-tight">Access Recovery</SheetTitle>
-          <p className="text-sm text-muted-foreground">Set a new password for <span className="text-foreground font-bold">{name}</span></p>
+          <SheetTitle className="text-lg font-black text-foreground italic tracking-tight">{t('dashboard.accessRecovery', { defaultValue: 'Access Recovery' })}</SheetTitle>
+          <p className="text-sm text-muted-foreground">{t('dashboard.setNewPasswordFor', { defaultValue: 'Set a new password for' })} <span className="text-foreground font-bold">{name}</span></p>
         </SheetHeader>
 
         <form action={action} className="space-y-4 mt-1">
@@ -34,14 +36,14 @@ export function StaffPasswordResetButton({ userId, name }: { userId: string; nam
 
           <div>
             <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-2 px-1">
-              New Password
+              {t('account.newPassword', { defaultValue: 'New Password' })}
             </label>
             <div className="relative group">
               <Input
                 name="newPassword"
                 type={showPassword ? "text" : "password"}
                 required
-                placeholder="At least 6 characters"
+                placeholder={t('dashboard.min6CharactersSentence', { defaultValue: 'At least 6 characters' })}
                 className="bg-card border-border text-foreground placeholder:text-muted-foreground/60 focus:border-violet-500 h-14 rounded-2xl text-base px-4 font-medium pr-12"
               />
               <button
@@ -70,7 +72,7 @@ export function StaffPasswordResetButton({ userId, name }: { userId: string; nam
             disabled={pending}
             className="w-full h-14 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 rounded-2xl font-bold text-base"
           >
-            {pending ? 'Setting Password...' : 'Set New Password'}
+            {pending ? t('dashboard.settingPassword', { defaultValue: 'Setting Password...' }) : t('dashboard.setNewPassword', { defaultValue: 'Set New Password' })}
           </Button>
         </form>
       </SheetContent>

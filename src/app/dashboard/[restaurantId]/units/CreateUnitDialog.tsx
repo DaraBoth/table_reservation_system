@@ -10,6 +10,7 @@ import { Confetti } from '@/components/magicui/confetti'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getTerms } from '@/lib/business-type'
+import { useTranslation } from 'react-i18next'
 
 export function CreateUnitDialog({
   businessType = 'restaurant',
@@ -22,6 +23,7 @@ export function CreateUnitDialog({
   zones?: { id: string, name: string }[]
   trigger?: React.ReactNode
 }) {
+  const { t } = useTranslation()
   const [state, action, pending] = useActionState(createPhysicalTable, null)
   const [open, setOpen] = useState(false)
   const [selectedZone, setSelectedZone] = useState<string | null>('none')
@@ -35,8 +37,8 @@ export function CreateUnitDialog({
   const terms = getTerms(businessType)
   const hasSuccess = Boolean(state && 'success' in state && state.success)
   const selectedZoneLabel = selectedZone === 'none'
-    ? 'No Zone'
-    : zones.find(zone => zone.id === selectedZone)?.name || 'Select Zone'
+    ? t('dashboard.noZone', { defaultValue: 'No Zone' })
+    : zones.find(zone => zone.id === selectedZone)?.name || t('dashboard.selectZone', { defaultValue: 'Select Zone' })
 
   // 🎉 Success Surprise!
   useEffect(() => {
@@ -57,14 +59,14 @@ export function CreateUnitDialog({
         render={
           (trigger as React.ReactElement) || (
             <Button className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 shadow-lg shadow-violet-500/25 text-foreground h-12 rounded-xl text-[11px] font-black uppercase tracking-widest px-6 active:scale-95 transition-all">
-              + Add {terms.unit}
+              + {t('dashboard.addUnit', { defaultValue: 'Add {{unit}}', unit: terms.unit })}
             </Button>
           )
         }
       />
       <SheetContent side={isMobile ? 'bottom' : 'right'} className={`bg-background border-border text-foreground p-6 h-[85vh] overflow-y-auto custom-scrollbar ${isMobile ? 'rounded-t-3xl' : ''}`}>
         <SheetHeader className="p-0 mb-6 font-black italic tracking-tighter uppercase">
-          <SheetTitle className="text-foreground text-xl">Add New {terms.unit}</SheetTitle>
+          <SheetTitle className="text-foreground text-xl">{t('dashboard.addNewUnit', { defaultValue: 'Add New {{unit}}', unit: terms.unit })}</SheetTitle>
         </SheetHeader>
         <form action={action} className="space-y-6 mt-2">
           <input type="hidden" name="restaurantId" value={restaurantId} />
@@ -72,7 +74,7 @@ export function CreateUnitDialog({
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label className="text-muted-foreground text-[10px] font-black uppercase tracking-widest px-1">{terms.unit} Name *</Label>
-              <Input name="tableName" required placeholder="Ex: T01, VIP Room 1..." 
+              <Input name="tableName" required placeholder={t('dashboard.unitNamePlaceholder', { defaultValue: 'Ex: T01, VIP Room 1...' })} 
                 className="bg-card border-border text-foreground focus:border-violet-500 rounded-2xl h-14 text-base px-4 font-bold" />
             </div>
 
@@ -85,20 +87,20 @@ export function CreateUnitDialog({
             )}
 
             <div className="space-y-1.5">
-              <Label className="text-muted-foreground text-[10px] font-black uppercase tracking-widest px-1">Description (Optional)</Label>
-              <Textarea name="description" placeholder="Notes for staff..."
+              <Label className="text-muted-foreground text-[10px] font-black uppercase tracking-widest px-1">{t('dashboard.descriptionOptional', { defaultValue: 'Description (Optional)' })}</Label>
+              <Textarea name="description" placeholder={t('dashboard.notesForStaff', { defaultValue: 'Notes for staff...' })}
                 className="bg-card border-border text-foreground focus:border-violet-500 resize-none rounded-2xl text-base p-4 min-h-[100px] font-bold" rows={3} />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-muted-foreground text-[10px] font-black uppercase tracking-widest px-1">Assignment Zone (Optional)</Label>
+              <Label className="text-muted-foreground text-[10px] font-black uppercase tracking-widest px-1">{t('dashboard.assignmentZoneOptional', { defaultValue: 'Assignment Zone (Optional)' })}</Label>
               <Select value={selectedZone} onValueChange={setSelectedZone}>
                 <input type="hidden" name="zoneId" value={selectedZone === 'none' ? '' : (selectedZone ?? '')} />
                 <SelectTrigger className="w-full bg-card border-border text-foreground h-14 rounded-2xl text-base px-4 font-bold shadow-sm">
                   <SelectValue>{selectedZoneLabel}</SelectValue>
                 </SelectTrigger>
                 <SelectContent className="bg-background/95 border-border rounded-2xl p-1 shadow-2xl backdrop-blur-md">
-                  <SelectItem value="none" className="min-h-11 rounded-xl px-3 font-semibold">No Zone</SelectItem>
+                  <SelectItem value="none" className="min-h-11 rounded-xl px-3 font-semibold">{t('dashboard.noZone', { defaultValue: 'No Zone' })}</SelectItem>
                   {zones.map(z => (
                     <SelectItem key={z.id} value={z.id} className="min-h-11 rounded-xl px-3 font-semibold">{z.name}</SelectItem>
                   ))}
@@ -112,7 +114,7 @@ export function CreateUnitDialog({
           
           <Button type="submit" disabled={pending}
             className="w-full h-14 bg-gradient-to-r from-violet-600 to-indigo-600 border-0 text-foreground font-black rounded-2xl text-base shadow-lg shadow-violet-500/20 active:scale-95 transition-all">
-            {pending ? 'Creating Infrastructure...' : `Create ${terms.unit}`}
+            {pending ? t('dashboard.creatingInfrastructure', { defaultValue: 'Creating Infrastructure...' }) : t('dashboard.createUnit', { defaultValue: 'Create {{unit}}', unit: terms.unit })}
           </Button>
         </form>
       </SheetContent>

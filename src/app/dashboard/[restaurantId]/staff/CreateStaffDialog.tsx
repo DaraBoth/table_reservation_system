@@ -7,8 +7,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Eye, EyeOff, Plus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export function CreateStaffDialog({ restaurantId }: { restaurantId: string }) {
+  const { t } = useTranslation()
   const [state, action, pending] = useActionState(createStaffAccount, null)
   const [showPassword, setShowPassword] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -24,35 +26,35 @@ export function CreateStaffDialog({ restaurantId }: { restaurantId: string }) {
         render={
           <Button className="h-11 px-6 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 text-foreground font-bold shadow-lg shadow-violet-500/20 active:scale-95 transition-all flex items-center gap-2 group">
             <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
-            <span className="text-sm">Add Staff</span>
+            <span className="text-sm">{t('dashboard.addStaff', { defaultValue: 'Add Staff' })}</span>
           </Button>
         }
       />
       <SheetContent side={isMobile ? 'bottom' : 'right'} className={`bg-background border-border text-foreground p-6 ${isMobile ? 'rounded-t-3xl' : ''}`}>
         <SheetHeader className="p-0 mb-4">
-          <SheetTitle className="text-foreground text-lg font-black italic tracking-tight">Expand Your Crew</SheetTitle>
-          <p className="text-xs text-muted-foreground font-bold">Create a secure login for a new team member</p>
+          <SheetTitle className="text-foreground text-lg font-black italic tracking-tight">{t('dashboard.expandYourCrew', { defaultValue: 'Expand Your Crew' })}</SheetTitle>
+          <p className="text-xs text-muted-foreground font-bold">{t('dashboard.createSecureStaffLogin', { defaultValue: 'Create a secure login for a new team member' })}</p>
         </SheetHeader>
         <form action={action} className="space-y-4 mt-2">
           <input type="hidden" name="restaurantId" value={restaurantId} />
           <div className="space-y-1.5">
-            <Label className="text-foreground/70 text-sm font-bold uppercase tracking-widest px-1">Full Name *</Label>
-            <Input name="fullName" required placeholder="Jane Doe"
+            <Label className="text-foreground/70 text-sm font-bold uppercase tracking-widest px-1">{t('auth.fullName', { defaultValue: 'Full Name' })} *</Label>
+            <Input name="fullName" required placeholder={t('dashboard.staffNameExample', { defaultValue: 'Jane Doe' })}
               className="bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500 h-14 rounded-2xl text-base px-4 font-medium" />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-foreground/70 text-sm font-bold uppercase tracking-widest px-1">Username *</Label>
-            <Input name="username" required placeholder="jane or jane@email.com"
+            <Label className="text-foreground/70 text-sm font-bold uppercase tracking-widest px-1">{t('account.username', { defaultValue: 'Username' })} *</Label>
+            <Input name="username" required placeholder={t('dashboard.staffUsernameExample', { defaultValue: 'jane or jane@email.com' })}
               className="bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500 h-14 rounded-2xl text-base px-4 font-medium" />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-foreground/70 text-sm font-bold uppercase tracking-widest px-1">Password *</Label>
+            <Label className="text-foreground/70 text-sm font-bold uppercase tracking-widest px-1">{t('auth.password', { defaultValue: 'Password' })} *</Label>
             <div className="relative group">
               <Input
                 name="password"
                 type={showPassword ? "text" : "password"}
                 required
-                placeholder="min 6 characters"
+                placeholder={t('dashboard.min6Characters', { defaultValue: 'min 6 characters' })}
                 className="bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500 h-14 rounded-2xl text-base px-4 font-medium pr-12"
               />
               <button
@@ -68,7 +70,7 @@ export function CreateStaffDialog({ restaurantId }: { restaurantId: string }) {
           {state?.success && <p className="text-emerald-400 text-sm">{state.success}</p>}
           <Button type="submit" disabled={pending}
             className="w-full h-14 bg-gradient-to-r from-violet-600 to-indigo-600 border-0 text-foreground font-black rounded-2xl text-base shadow-lg shadow-violet-500/20">
-            {pending ? 'Creating...' : 'Create Staff Account'}
+            {pending ? t('setup.creating', { defaultValue: 'Creating...' }) : t('dashboard.createStaffAccount', { defaultValue: 'Create Staff Account' })}
           </Button>
         </form>
       </SheetContent>

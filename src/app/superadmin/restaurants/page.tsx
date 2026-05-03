@@ -20,7 +20,7 @@ import { getServerT } from '@/i18n/server'
 export const metadata = createPrivateMetadata('Restaurants', 'Manage restaurant accounts, subscriptions, and activity status.')
 
 export default async function RestaurantsPage() {
-  await getServerT()
+  const { t } = await getServerT()
   const supabase = await createClient()
   const { data: raw } = await supabase
     .from('restaurants')
@@ -35,9 +35,13 @@ export default async function RestaurantsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
         <div className="space-y-1">
-          <h1 className="text-3xl font-black text-foreground uppercase tracking-tight">Properties</h1>
+          <h1 className="text-3xl font-black text-foreground uppercase tracking-tight">{t('superadmin.properties', { defaultValue: 'Properties' })}</h1>
           <p className="text-muted-foreground text-sm font-medium">
-            {restaurants.length} Registered · <span className="text-emerald-400 font-bold">{activeCount} active</span>
+            {t('superadmin.propertiesSummary', {
+              defaultValue: '{{total}} registered · {{active}} active',
+              total: restaurants.length,
+              active: activeCount,
+            })}
           </p>
         </div>
         <Link
@@ -45,7 +49,7 @@ export default async function RestaurantsPage() {
           className="flex items-center gap-2 h-12 px-6 bg-violet-600 hover:bg-violet-500 text-foreground rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-violet-500/10 transition-all"
         >
           <Plus className="w-4 h-4" />
-          Add Property
+          {t('superadmin.addProperty', { defaultValue: 'Add Property' })}
         </Link>
       </div>
 
@@ -53,11 +57,11 @@ export default async function RestaurantsPage() {
         <Table>
           <TableHeader className="bg-white/5 border-b border-border">
             <TableRow className="hover:bg-transparent border-none h-12">
-              <TableHead className="pl-6 text-[9px] font-black text-muted-foreground uppercase tracking-widest w-[240px]">Property</TableHead>
-              <TableHead className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Administrator</TableHead>
-              <TableHead className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Type</TableHead>
-              <TableHead className="text-[9px] font-black text-muted-foreground uppercase tracking-widest text-center">Status</TableHead>
-              <TableHead className="pr-6 text-right text-[9px] font-black text-muted-foreground uppercase tracking-widest">Actions</TableHead>
+              <TableHead className="pl-6 text-[9px] font-black text-muted-foreground uppercase tracking-widest w-[240px]">{t('superadmin.property', { defaultValue: 'Property' })}</TableHead>
+              <TableHead className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{t('superadmin.administrator', { defaultValue: 'Administrator' })}</TableHead>
+              <TableHead className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{t('superadmin.type', { defaultValue: 'Type' })}</TableHead>
+              <TableHead className="text-[9px] font-black text-muted-foreground uppercase tracking-widest text-center">{t('superadmin.status', { defaultValue: 'Status' })}</TableHead>
+              <TableHead className="pr-6 text-right text-[9px] font-black text-muted-foreground uppercase tracking-widest">{t('superadmin.actions', { defaultValue: 'Actions' })}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -65,8 +69,8 @@ export default async function RestaurantsPage() {
               const isExpired = r.subscription_expires_at && new Date(r.subscription_expires_at) < new Date()
               const expireDate = r.subscription_expires_at
                 ? new Date(r.subscription_expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                : 'Lifetime'
-              const leadAdmin = r.account_memberships?.find((m: any) => m.role === 'admin')?.profiles?.full_name || 'Unassigned'
+                : t('superadmin.lifetime', { defaultValue: 'Lifetime' })
+              const leadAdmin = r.account_memberships?.find((m: any) => m.role === 'admin')?.profiles?.full_name || t('superadmin.unassigned', { defaultValue: 'Unassigned' })
               
               const businessType = r.business_type || 'restaurant'
               const TypeIcon = businessType === 'hotel' ? Building2 : businessType === 'guesthouse' ? Home : UtensilsCrossed
@@ -111,7 +115,11 @@ export default async function RestaurantsPage() {
                           : r.is_active ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                           : 'bg-muted text-muted-foreground border-border'
                       )}>
-                        {isExpired ? 'Expired' : r.is_active ? 'Active' : 'Suspended'}
+                        {isExpired
+                          ? t('superadmin.expired', { defaultValue: 'Expired' })
+                          : r.is_active
+                            ? t('superadmin.active', { defaultValue: 'Active' })
+                            : t('superadmin.suspended', { defaultValue: 'Suspended' })}
                       </Badge>
                       <span className="text-[8px] text-muted-foreground/60 font-bold uppercase tracking-tight opacity-40">{expireDate}</span>
                     </div>
@@ -125,7 +133,7 @@ export default async function RestaurantsPage() {
                         "h-8 px-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 border border-transparent hover:border-white/5 transition-all group/btn gap-1.5 font-black uppercase tracking-widest text-[9px]"
                       )}
                     >
-                      Config
+                      {t('common.settings', { defaultValue: 'Config' })}
                       <ArrowRight className="w-3 h-3 transition-transform group-hover/btn:translate-x-1" />
                     </Link>
                   </TableCell>
@@ -139,14 +147,14 @@ export default async function RestaurantsPage() {
              <div className="w-20 h-20 rounded-[2rem] bg-white/5 flex items-center justify-center mx-auto mb-6">
               <Store className="w-10 h-10 text-muted-foreground" />
             </div>
-            <p className="text-foreground/70 font-black uppercase tracking-widest text-xs mb-1">No properties established</p>
-            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mb-6">Start by establishing your first restaurant or hotel brand</p>
+            <p className="text-foreground/70 font-black uppercase tracking-widest text-xs mb-1">{t('superadmin.noPropertiesEstablished', { defaultValue: 'No properties established' })}</p>
+            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mb-6">{t('superadmin.startByEstablishingProperty', { defaultValue: 'Start by establishing your first restaurant or hotel brand' })}</p>
             <Link
               href="/superadmin/restaurants/new"
               className="inline-flex items-center gap-2 h-12 px-6 bg-violet-600 text-foreground rounded-2xl font-black text-xs uppercase tracking-widest"
             >
               <Plus className="w-4 h-4" />
-              Build Property
+              {t('superadmin.buildProperty', { defaultValue: 'Build Property' })}
             </Link>
           </div>
         )}

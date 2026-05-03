@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import type { Tables } from '@/lib/types/database'
 import { getTerms } from '@/lib/business-type'
+import { useTranslation } from 'react-i18next'
 
 interface TableTabsProps {
   tables: Tables<'physical_tables'>[]
@@ -21,9 +22,12 @@ interface TableTabsProps {
 }
 
 export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, restaurantId }: TableTabsProps) {
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<'status' | 'settings'>('status')
   const terms = getTerms(businessType)
-  const occupiedLabel = terms.hasCheckout ? 'Occupied' : 'Busy'
+  const occupiedLabel = terms.hasCheckout
+    ? t('dashboard.occupied', { defaultValue: 'Occupied' })
+    : t('dashboard.busy', { defaultValue: 'Busy' })
 
   const freeTables = tables.filter(t => !busyMap.has(t.id) && t.is_active).length
   const busyTables = tables.filter(t => busyMap.has(t.id)).length
@@ -42,7 +46,7 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
           )}
         >
           <LayoutGrid className="w-4 h-4" />
-          Status
+          {t('superadmin.status', { defaultValue: 'Status' })}
         </button>
         <button
           onClick={() => setActiveTab('settings')}
@@ -54,8 +58,8 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
           )}
         >
           <Settings2 className="w-4 h-4" />
-          Settings
-          {!isAdmin && <span title="Staff Edit Access"><ShieldCheck className="w-3 h-3 absolute top-2 right-2 text-violet-400" /></span>}
+          {t('common.settings', { defaultValue: 'Settings' })}
+          {!isAdmin && <span title={t('dashboard.staffEditAccess', { defaultValue: 'Staff Edit Access' })}><ShieldCheck className="w-3 h-3 absolute top-2 right-2 text-violet-400" /></span>}
         </button>
       </div>
 
@@ -69,7 +73,7 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
               </div>
               <div>
                 <p className="text-2xl font-black text-foreground">{freeTables}</p>
-                <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Available Today</p>
+                <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{t('dashboard.availableToday', { defaultValue: 'Available Today' })}</p>
               </div>
             </div>
             <div className="flex-1 bg-card border border-rose-500/20 rounded-2xl p-4 flex items-center gap-3">
@@ -78,7 +82,7 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
               </div>
               <div>
                 <p className="text-2xl font-black text-foreground">{busyTables}</p>
-                <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{occupiedLabel} Today</p>
+                <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{t('dashboard.occupiedToday', { defaultValue: '{{occupiedLabel}} Today', occupiedLabel })}</p>
               </div>
             </div>
           </div>
@@ -107,7 +111,7 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
                         : isBusy ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)] animate-pulse'
                         : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
                     )} />
-                    {isOffline && <span className="text-[10px] text-muted-foreground font-black uppercase">Offline</span>}
+                    {isOffline && <span className="text-[10px] text-muted-foreground font-black uppercase">{t('dashboard.offline', { defaultValue: 'Offline' })}</span>}
                   </div>
 
                   <p className={cn('text-2xl font-black leading-none mb-1', isOffline ? 'text-muted-foreground/60' : isBusy ? 'text-rose-100' : 'text-foreground')}>
@@ -115,7 +119,9 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
                   </p>
 
                   <p className={cn('text-[11px] font-bold', isOffline ? 'text-muted-foreground/60' : 'text-muted-foreground')}>
-                    {businessType === 'restaurant' ? `Up to ${t.capacity} ${terms.partyUnitLower}` : `${t.capacity} ${t.capacity === 1 ? 'Bed' : terms.capacityUnit}`}
+                    {businessType === 'restaurant'
+                      ? t('dashboard.upToPartyUnit', { defaultValue: 'Up to {{capacity}} {{partyUnitLower}}', capacity: t.capacity, partyUnitLower: terms.partyUnitLower })
+                      : `${t.capacity} ${t.capacity === 1 ? t('dashboard.bed', { defaultValue: 'Bed' }) : terms.capacityUnit}`}
                   </p>
 
                   <div className="mt-auto pt-2">
@@ -125,7 +131,7 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
                         : isBusy ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
                         : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                     )}>
-                      {isOffline ? 'Offline' : isBusy ? occupiedLabel : 'Available'}
+                      {isOffline ? t('dashboard.offline', { defaultValue: 'Offline' }) : isBusy ? occupiedLabel : t('dashboard.available', { defaultValue: 'Available' })}
                     </Badge>
                   </div>
 
@@ -151,7 +157,7 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
         /* Management View */
         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
            <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-black text-foreground italic tracking-tight">{unitsLabel} Management</h3>
+              <h3 className="text-sm font-black text-foreground italic tracking-tight">{t('dashboard.unitManagement', { defaultValue: '{{unitsLabel}} Management', unitsLabel })}</h3>
             <CreateUnitDialog businessType={businessType} restaurantId={restaurantId} />
           </div>
 
@@ -170,8 +176,8 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
                       {t.table_name}
                     </p>
                     <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
-                        {businessType === 'restaurant' ? `${t.capacity} ${terms.capacityUnit}` : `${t.capacity} ${t.capacity === 1 ? 'Bed' : terms.capacityUnit}`}
-                       {!t.is_active && " · Offline"}
+                        {businessType === 'restaurant' ? `${t.capacity} ${terms.capacityUnit}` : `${t.capacity} ${t.capacity === 1 ? t('dashboard.bed', { defaultValue: 'Bed' }) : terms.capacityUnit}`}
+                       {!t.is_active && ` · ${t('dashboard.offline', { defaultValue: 'Offline' })}`}
                     </p>
                   </div>
                 </div>

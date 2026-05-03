@@ -19,15 +19,15 @@ import { getServerT } from '@/i18n/server'
 
 export const metadata = createPrivateMetadata('Users', 'Manage platform user accounts, roles, and access.')
 
-const ROLE_THEMES = {
-  superadmin: { label: 'System', icon: ShieldAlert, color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
-  admin:       { label: 'Admin',  icon: Users,       color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-  staff:       { label: 'Staff',  icon: UserIcon,    color: 'bg-muted/40 text-muted-foreground border-border/20' },
-} as const
-
 export default async function UsersPage() {
-  await getServerT()
+  const { t } = await getServerT()
   const supabase = await createClient()
+
+  const roleThemes = {
+    superadmin: { label: t('superadmin.system', { defaultValue: 'System' }), icon: ShieldAlert, color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
+    admin: { label: t('roles.admin', { defaultValue: 'Admin' }), icon: Users, color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+    staff: { label: t('roles.staff', { defaultValue: 'Staff' }), icon: UserIcon, color: 'bg-muted/40 text-muted-foreground border-border/20' },
+  } as const
 
   const { data: membersRaw, error } = await supabase
     .from('account_memberships')
@@ -47,8 +47,8 @@ export default async function UsersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
         <div className="space-y-1">
-          <h1 className="text-3xl font-black text-foreground uppercase tracking-tight">Users</h1>
-          <p className="text-muted-foreground text-sm font-medium">{members.length} Identifiers registered</p>
+          <h1 className="text-3xl font-black text-foreground uppercase tracking-tight">{t('superadmin.userManagement', { defaultValue: 'Users' })}</h1>
+          <p className="text-muted-foreground text-sm font-medium">{t('superadmin.identifiersRegistered', { defaultValue: '{{count}} identifiers registered', count: members.length })}</p>
         </div>
         <CreateUserDialog restaurants={restaurants} />
       </div>
@@ -57,7 +57,7 @@ export default async function UsersPage() {
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 flex items-center gap-3">
           <ShieldAlert className="w-5 h-5 text-red-400" />
-          <p className="text-sm font-bold text-red-400">Security synchronization error: {error.message}</p>
+          <p className="text-sm font-bold text-red-400">{t('superadmin.securitySyncError', { defaultValue: 'Security synchronization error' })}: {error.message}</p>
         </div>
       )}
 
@@ -65,22 +65,22 @@ export default async function UsersPage() {
         <Table>
           <TableHeader className="bg-white/5 border-b border-border">
             <TableRow className="hover:bg-transparent border-none h-12">
-              <TableHead className="pl-6 text-[9px] font-black text-muted-foreground uppercase tracking-widest w-[240px]">Identity</TableHead>
-              <TableHead className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Property</TableHead>
-              <TableHead className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Privilege</TableHead>
-              <TableHead className="text-[9px] font-black text-muted-foreground uppercase tracking-widest text-center">Status</TableHead>
-              <TableHead className="pr-6 text-right text-[9px] font-black text-muted-foreground uppercase tracking-widest w-20">Controls</TableHead>
+              <TableHead className="pl-6 text-[9px] font-black text-muted-foreground uppercase tracking-widest w-[240px]">{t('superadmin.identity', { defaultValue: 'Identity' })}</TableHead>
+              <TableHead className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{t('superadmin.property', { defaultValue: 'Property' })}</TableHead>
+              <TableHead className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{t('superadmin.privilege', { defaultValue: 'Privilege' })}</TableHead>
+              <TableHead className="text-[9px] font-black text-muted-foreground uppercase tracking-widest text-center">{t('superadmin.status', { defaultValue: 'Status' })}</TableHead>
+              <TableHead className="pr-6 text-right text-[9px] font-black text-muted-foreground uppercase tracking-widest w-20">{t('superadmin.controls', { defaultValue: 'Controls' })}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {members.map((m) => {
               const profile = m.profiles as any
-              const name = profile?.full_name || 'System Identity'
+              const name = profile?.full_name || t('superadmin.systemIdentity', { defaultValue: 'System Identity' })
               const initial = name[0]?.toUpperCase() || '?'
               const joinedDate = new Date(m.created_at).toLocaleDateString('en-US', {
                 month: 'short', day: 'numeric'
               })
-              const roleTheme = ROLE_THEMES[m.role as keyof typeof ROLE_THEMES] || ROLE_THEMES.staff
+              const roleTheme = roleThemes[m.role as keyof typeof roleThemes] || roleThemes.staff
               const RoleIcon = roleTheme.icon
 
               return (
@@ -104,7 +104,7 @@ export default async function UsersPage() {
                     {m.restaurants ? (
                        <span className="text-[11px] font-black text-muted-foreground uppercase tracking-tight italic truncate max-w-[120px]">{m.restaurants.name}</span>
                     ) : (
-                      <span className="text-[9px] text-muted-foreground font-black uppercase tracking-widest italic opacity-40">Global</span>
+                      <span className="text-[9px] text-muted-foreground font-black uppercase tracking-widest italic opacity-40">{t('superadmin.global', { defaultValue: 'Global' })}</span>
                     )}
                   </TableCell>
 
@@ -128,7 +128,9 @@ export default async function UsersPage() {
                           ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                           : 'bg-red-500/10 text-red-400 border-red-500/20'
                       )}>
-                        {m.is_active ? 'Online' : 'Locked'}
+                        {m.is_active
+                          ? t('superadmin.online', { defaultValue: 'Online' })
+                          : t('superadmin.locked', { defaultValue: 'Locked' })}
                       </Badge>
                       <span className="text-[8px] text-muted-foreground/60 font-bold uppercase tracking-tight opacity-40">{joinedDate}</span>
                     </div>
@@ -152,8 +154,8 @@ export default async function UsersPage() {
              <div className="w-20 h-20 rounded-[2rem] bg-white/5 flex items-center justify-center mx-auto mb-6">
               <Users className="w-10 h-10 text-muted-foreground" />
             </div>
-            <p className="text-foreground/70 font-black uppercase tracking-widest text-xs mb-1">No identifiers established</p>
-            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Wait for user registration or manually sync identities</p>
+            <p className="text-foreground/70 font-black uppercase tracking-widest text-xs mb-1">{t('superadmin.noIdentifiersEstablished', { defaultValue: 'No identifiers established' })}</p>
+            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">{t('superadmin.waitForUserRegistration', { defaultValue: 'Wait for user registration or manually sync identities' })}</p>
           </div>
         )}
       </div>

@@ -22,7 +22,7 @@ import { getServerT } from '@/i18n/server'
 export const metadata = createPrivateMetadata('Admin Accounts', 'Review admin access and manage elevated account settings.')
 
 export default async function AdminsPage() {
-  await getServerT()
+  const { t } = await getServerT()
   const supabase = await createClient()
 
   const { data: members } = await supabase
@@ -45,9 +45,13 @@ export default async function AdminsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
         <div className="space-y-1">
-          <h1 className="text-3xl font-black text-foreground uppercase tracking-tight">Admins</h1>
+          <h1 className="text-3xl font-black text-foreground uppercase tracking-tight">{t('superadmin.admins', { defaultValue: 'Admins' })}</h1>
           <p className="text-muted-foreground text-sm font-medium">
-            {list.length} Administrators · <span className="text-emerald-400 font-bold">{activeCount} active</span>
+            {t('superadmin.adminsSummary', {
+              defaultValue: '{{total}} administrators · {{active}} active',
+              total: list.length,
+              active: activeCount,
+            })}
           </p>
         </div>
         <CreateAdminDialog restaurants={restaurants} />
@@ -57,16 +61,16 @@ export default async function AdminsPage() {
         <Table>
           <TableHeader className="bg-white/5 border-b border-border">
             <TableRow className="hover:bg-transparent border-none h-12">
-              <TableHead className="pl-6 text-[9px] font-black text-muted-foreground uppercase tracking-widest w-[240px]">Administrator</TableHead>
-              <TableHead className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Property</TableHead>
-              <TableHead className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Status</TableHead>
-              <TableHead className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Modules</TableHead>
-              <TableHead className="pr-6 text-right text-[9px] font-black text-muted-foreground uppercase tracking-widest">Actions</TableHead>
+              <TableHead className="pl-6 text-[9px] font-black text-muted-foreground uppercase tracking-widest w-[240px]">{t('superadmin.administrator', { defaultValue: 'Administrator' })}</TableHead>
+              <TableHead className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{t('superadmin.property', { defaultValue: 'Property' })}</TableHead>
+              <TableHead className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{t('superadmin.status', { defaultValue: 'Status' })}</TableHead>
+              <TableHead className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{t('superadmin.modules', { defaultValue: 'Modules' })}</TableHead>
+              <TableHead className="pr-6 text-right text-[9px] font-black text-muted-foreground uppercase tracking-widest">{t('superadmin.actions', { defaultValue: 'Actions' })}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {list.map((m) => {
-              const name = m.profiles?.full_name || 'System Admin'
+              const name = m.profiles?.full_name || t('superadmin.systemAdmin', { defaultValue: 'System Admin' })
               const initial = name[0]?.toUpperCase() || '?'
               const joinedDate = new Date(m.created_at).toLocaleDateString('en-US', {
                 month: 'short', day: 'numeric'
@@ -83,7 +87,7 @@ export default async function AdminsPage() {
                       </Avatar>
                       <div className="flex flex-col min-w-0">
                         <span className="text-xs font-black text-foreground group-hover:text-violet-400 transition-colors leading-tight truncate">{name}</span>
-                        <span className="text-[9px] text-muted-foreground/60 font-bold uppercase tracking-tight truncate opacity-60">ID: {m.user_id.slice(0, 8)}</span>
+                        <span className="text-[9px] text-muted-foreground/60 font-bold uppercase tracking-tight truncate opacity-60">{t('superadmin.idPrefix', { defaultValue: 'ID' })}: {m.user_id.slice(0, 8)}</span>
                       </div>
                     </div>
                   </TableCell>
@@ -91,7 +95,7 @@ export default async function AdminsPage() {
                   {/* Property */}
                   <TableCell>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] font-black text-muted-foreground uppercase tracking-tight italic truncate max-w-[120px]">{m.restaurants?.name || 'Unassigned'}</span>
+                      <span className="text-[11px] font-black text-muted-foreground uppercase tracking-tight italic truncate max-w-[120px]">{m.restaurants?.name || t('superadmin.unassigned', { defaultValue: 'Unassigned' })}</span>
                     </div>
                   </TableCell>
 
@@ -104,7 +108,9 @@ export default async function AdminsPage() {
                           ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                           : 'bg-red-500/10 text-red-400 border-red-500/20'
                       )}>
-                        {m.is_active ? 'Active' : 'Disabled'}
+                        {m.is_active
+                          ? t('superadmin.active', { defaultValue: 'Active' })
+                          : t('dashboard.disabled', { defaultValue: 'Disabled' })}
                       </Badge>
                       <span className="text-[9px] text-muted-foreground/60 font-bold uppercase hidden xl:inline">· {joinedDate}</span>
                     </div>
@@ -116,7 +122,7 @@ export default async function AdminsPage() {
                       {m.is_special_admin ? (
                          <div className="flex items-center gap-1.5">
                            <Badge className="bg-violet-500/10 text-violet-400 border-violet-500/20 text-[8px] font-black px-2 py-0.5 rounded-lg flex items-center gap-1 uppercase tracking-widest">
-                            <Star className="w-2 h-2 fill-violet-400" /> SPECIAL
+                            <Star className="w-2 h-2 fill-violet-400" /> {t('superadmin.special', { defaultValue: 'SPECIAL' })}
                           </Badge>
                           <div className="flex -space-x-1">
                             {Object.keys(m.special_features || {}).slice(0, 3).map((f: string) => (
@@ -127,7 +133,7 @@ export default async function AdminsPage() {
                           </div>
                          </div>
                       ) : (
-                        <span className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">Standard</span>
+                        <span className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">{t('superadmin.standard', { defaultValue: 'Standard' })}</span>
                       )}
                     </div>
                   </TableCell>
@@ -143,7 +149,7 @@ export default async function AdminsPage() {
                         )}
                       >
                         <Settings2 className="w-3 h-3 transition-transform group-hover/btn:rotate-45" />
-                        Set
+                        {t('superadmin.set', { defaultValue: 'Set' })}
                       </Link>
                       <AdminPasswordResetCard userId={m.user_id} name={name} />
                     </div>
@@ -156,8 +162,8 @@ export default async function AdminsPage() {
         {list.length === 0 && (
           <div className="text-center py-20 bg-card border-t border-border">
             <div className="text-5xl mb-4">🛡️</div>
-            <p className="text-foreground/70 font-black uppercase tracking-widest text-xs mb-1">No privilege accounts yet</p>
-            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Assign an admin to a property to get started</p>
+            <p className="text-foreground/70 font-black uppercase tracking-widest text-xs mb-1">{t('superadmin.noPrivilegeAccountsYet', { defaultValue: 'No privilege accounts yet' })}</p>
+            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">{t('superadmin.assignAdminPrompt', { defaultValue: 'Assign an admin to a property to get started' })}</p>
           </div>
         )}
       </div>
