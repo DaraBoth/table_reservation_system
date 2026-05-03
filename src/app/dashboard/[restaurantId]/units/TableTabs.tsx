@@ -29,8 +29,8 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
     ? t('dashboard.occupied', { defaultValue: 'Occupied' })
     : t('dashboard.busy', { defaultValue: 'Busy' })
 
-  const freeTables = tables.filter(t => !busyMap.has(t.id) && t.is_active).length
-  const busyTables = tables.filter(t => busyMap.has(t.id)).length
+  const freeTables = tables.filter(tbl => !busyMap.has(tbl.id) && tbl.is_active).length
+  const busyTables = tables.filter(tbl => busyMap.has(tbl.id)).length
 
   return (
     <div className="space-y-6">
@@ -89,10 +89,10 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
 
           {/* Table Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-            {tables.map(t => {
-              const busyInfo = busyMap.get(t.id)
+            {tables.map(table => {
+              const busyInfo = busyMap.get(table.id)
               const isBusy = !!busyInfo
-              const isOffline = !t.is_active
+              const isOffline = !table.is_active
               const isTappable = !isBusy && !isOffline
 
               const card = (
@@ -115,13 +115,13 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
                   </div>
 
                   <p className={cn('text-2xl font-black leading-none mb-1', isOffline ? 'text-muted-foreground/60' : isBusy ? 'text-rose-100' : 'text-foreground')}>
-                    {t.table_name}
+                    {table.table_name}
                   </p>
 
                   <p className={cn('text-[11px] font-bold', isOffline ? 'text-muted-foreground/60' : 'text-muted-foreground')}>
                     {businessType === 'restaurant'
-                      ? t('dashboard.upToPartyUnit', { defaultValue: 'Up to {{capacity}} {{partyUnitLower}}', capacity: t.capacity, partyUnitLower: terms.partyUnitLower })
-                      : `${t.capacity} ${t.capacity === 1 ? t('dashboard.bed', { defaultValue: 'Bed' }) : terms.capacityUnit}`}
+                      ? t('dashboard.upToPartyUnit', { defaultValue: 'Up to {{capacity}} {{partyUnitLower}}', capacity: table.capacity, partyUnitLower: terms.partyUnitLower })
+                      : `${table.capacity} ${table.capacity === 1 ? t('dashboard.bed', { defaultValue: 'Bed' }) : terms.capacityUnit}`}
                   </p>
 
                   <div className="mt-auto pt-2">
@@ -144,11 +144,11 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
               )
 
               return isTappable ? (
-                <Link key={t.id} href={`/dashboard/${restaurantId}/reservations/new?tableId=${t.id}`} className="h-full">
+                <Link key={table.id} href={`/dashboard/${restaurantId}/reservations/new?tableId=${table.id}`} className="h-full">
                   {card}
                 </Link>
               ) : (
-                <div key={t.id} className="h-full">{card}</div>
+                <div key={table.id} className="h-full">{card}</div>
               )
             })}
           </div>
@@ -162,27 +162,27 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
           </div>
 
           <div className="space-y-3">
-            {tables.map(t => (
-              <div key={t.id} className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between group">
+            {tables.map(table => (
+              <div key={table.id} className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between group">
                 <div className="flex items-center gap-4">
                   <div className={cn(
                     "w-12 h-12 rounded-xl flex items-center justify-center text-xl font-black",
-                    t.is_active ? "bg-violet-500/15 text-violet-400" : "bg-muted text-muted-foreground/60"
+                    table.is_active ? "bg-violet-500/15 text-violet-400" : "bg-muted text-muted-foreground/60"
                   )}>
-                    {t.table_name.charAt(0)}
+                    {table.table_name.charAt(0)}
                   </div>
                   <div>
-                    <p className={cn("text-base font-black italic tracking-tight pr-2", t.is_active ? "text-foreground" : "text-muted-foreground")}>
-                      {t.table_name}
+                    <p className={cn("text-base font-black italic tracking-tight pr-2", table.is_active ? "text-foreground" : "text-muted-foreground")}>
+                      {table.table_name}
                     </p>
                     <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
-                        {businessType === 'restaurant' ? `${t.capacity} ${terms.capacityUnit}` : `${t.capacity} ${t.capacity === 1 ? t('dashboard.bed', { defaultValue: 'Bed' }) : terms.capacityUnit}`}
-                       {!t.is_active && ` · ${t('dashboard.offline', { defaultValue: 'Offline' })}`}
+                        {businessType === 'restaurant' ? `${table.capacity} ${terms.capacityUnit}` : `${table.capacity} ${table.capacity === 1 ? t('dashboard.bed', { defaultValue: 'Bed' }) : terms.capacityUnit}`}
+                       {!table.is_active && ` · ${t('dashboard.offline', { defaultValue: 'Offline' })}`}
                     </p>
                   </div>
                 </div>
                 
-                <EditUnitSheet table={t} businessType={businessType} canManage={isAdmin} />
+                <EditUnitSheet table={table} businessType={businessType} canManage={isAdmin} />
               </div>
             ))}
           </div>
