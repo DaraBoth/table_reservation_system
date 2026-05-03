@@ -551,7 +551,7 @@ function BookingCard({ res, dashboardSlug, todayIso, currentUserId }: { res: Res
           {res.guest_name?.slice(0, 1).toUpperCase() || '?'}
         </div>
         <Badge className={cn('text-[10px] font-black px-2 py-0.5 border rounded-xl whitespace-nowrap leading-none transition-all', statusColors[res.status] ?? '')}>
-          {getStatusLabel(res.status)}
+          {t(`status.${res.status}`, { defaultValue: statusLabels[res.status] ?? res.status })}
         </Badge>
       </div>
       <div>
