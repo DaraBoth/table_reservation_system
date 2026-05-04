@@ -6,7 +6,13 @@ import { getActiveRestaurant } from '@/lib/restaurant-context'
 import { createPrivateMetadata } from '@/lib/seo'
 import { getServerT } from '@/i18n/server'
 
-export const metadata = createPrivateMetadata('Manage Units', 'Edit tables, rooms, zones, and capacity settings.')
+export async function generateMetadata() {
+  const { t } = await getServerT()
+  return createPrivateMetadata(
+    t('meta.manageUnitsTitle', { defaultValue: 'Manage Units' }),
+    t('meta.manageUnitsDescription', { defaultValue: 'Edit tables, rooms, zones, and capacity settings.' })
+  )
+}
 
 export default async function ManageUnitsPage({ params }: { params: Promise<{ restaurantId: string }> }) {
   await getServerT()

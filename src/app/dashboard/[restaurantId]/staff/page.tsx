@@ -10,7 +10,13 @@ import { UserCheck, UserX, Plus, Users } from 'lucide-react'
 import { createPrivateMetadata } from '@/lib/seo'
 import { getServerT } from '@/i18n/server'
 
-export const metadata = createPrivateMetadata('Staff', 'Add staff accounts, reset passwords, and control access.')
+export async function generateMetadata() {
+  const { t } = await getServerT()
+  return createPrivateMetadata(
+    t('meta.staffTitle', { defaultValue: 'Staff' }),
+    t('meta.staffDescription', { defaultValue: 'Add staff accounts, reset passwords, and control access.' })
+  )
+}
 
 export default async function ({ params }: { params: Promise<{ restaurantId: string }> }) {
   const { t, language } = await getServerT()

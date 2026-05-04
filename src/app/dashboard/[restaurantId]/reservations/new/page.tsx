@@ -5,7 +5,13 @@ import type { BusinessType } from '@/lib/business-type'
 import { createPrivateMetadata } from '@/lib/seo'
 import { getServerT } from '@/i18n/server'
 
-export const metadata = createPrivateMetadata('New Booking', 'Create a new reservation for a guest or walk-in.')
+export async function generateMetadata() {
+  const { t } = await getServerT()
+  return createPrivateMetadata(
+    t('meta.newBookingTitle', { defaultValue: 'New Booking' }),
+    t('meta.newBookingDescription', { defaultValue: 'Create a new reservation for a guest or walk-in.' })
+  )
+}
 
 export default async function NewReservationPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>, searchParams: Promise<{ tableId?: string }> }) {
   const { t } = await getServerT()

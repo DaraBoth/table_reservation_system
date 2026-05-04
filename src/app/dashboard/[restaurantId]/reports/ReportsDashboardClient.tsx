@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { ReportFilters } from './ReportFilters'
 import { getTerms } from '@/lib/business-type'
+import { useTranslation } from 'react-i18next'
 import {
   ChevronLeft,
   Table2,
@@ -47,6 +48,7 @@ export default function ReportsDashboardClient({
   staffPerformance = [],
   currentSlug
 }: Props) {
+  const { t } = useTranslation()
   const { resolvedTheme } = useTheme()
   const terms = getTerms(businessType)
   const textColor = resolvedTheme === 'dark' ? '#e2e8f0' : '#1e293b'
@@ -71,10 +73,16 @@ export default function ReportsDashboardClient({
   // Base 320px, grow up to 450px for high volume (over 20 bookings)
   const trendHeight = Math.min(450, Math.max(320, maxVolume * 12))
 
-  const analyticsTitle = terms.hasCheckout ? 'Reservation Analytics' : 'Booking Analytics'
-  const trendTitle = terms.hasCheckout ? 'Reservation Report' : 'Booking Report'
-  const performanceTitle = `${terms.unit} Performance`
-  const activityLabel = terms.hasCheckout ? 'Stays' : 'Visits'
+  const analyticsTitle = terms.hasCheckout
+    ? t('reports.reservationAnalytics', { defaultValue: 'Reservation Analytics' })
+    : t('reports.bookingAnalytics', { defaultValue: 'Booking Analytics' })
+  const trendTitle = terms.hasCheckout
+    ? t('reports.reservationReport', { defaultValue: 'Reservation Report' })
+    : t('reports.bookingReport', { defaultValue: 'Booking Report' })
+  const performanceTitle = t('reports.unitPerformance', { defaultValue: '{{unit}} Performance', unit: terms.unit })
+  const activityLabel = terms.hasCheckout
+    ? t('reports.stays', { defaultValue: 'Stays' })
+    : t('reports.visits', { defaultValue: 'Visits' })
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto container px-2 py-6 sm:px-6 pb-24 md:pb-6">
@@ -93,7 +101,7 @@ export default function ReportsDashboardClient({
               {isUpdating && (
                 <div className="flex items-center gap-1.5 px-2 py-0.5 bg-violet-600 rounded-lg animate-pulse">
                   <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                  <span className="text-[8px] font-black text-foreground uppercase tracking-widest">LIVE SYNC</span>
+                  <span className="text-[8px] font-black text-foreground uppercase tracking-widest">{t('reports.liveSync', { defaultValue: 'LIVE SYNC' })}</span>
                 </div>
               )}
             </div>
@@ -114,16 +122,16 @@ export default function ReportsDashboardClient({
               <BarChart2 className="w-4 h-4 text-violet-400" />
               <h2 className="text-sm font-black text-foreground uppercase tracking-widest">{trendTitle}</h2>
             </div>
-            <Badge className="bg-violet-500/10 text-violet-400 border-violet-500/20 text-[9px] font-black py-1 px-3 w-fit rounded-full">WEEKLY STATS</Badge>
+            <Badge className="bg-violet-500/10 text-violet-400 border-violet-500/20 text-[9px] font-black py-1 px-3 w-fit rounded-full">{t('reports.weeklyStats', { defaultValue: 'WEEKLY STATS' })}</Badge>
           </div>
 
           {/* Custom Legend for Chart 1 - Grid for Mobile */}
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 px-2">
             {[
-              { label: 'Done', color: '#10b981' },
-              { label: 'Cancel', color: '#ef4444' },
-              { label: 'No Show', color: '#f97316' },
-              { label: 'Other', color: '#445164' }
+              { label: t('status.completed', { defaultValue: 'Done' }), color: '#10b981' },
+              { label: t('status.cancelled', { defaultValue: 'Cancelled' }), color: '#ef4444' },
+              { label: t('status.no_show', { defaultValue: 'No Show' }), color: '#f97316' },
+              { label: t('reports.other', { defaultValue: 'Other' }), color: '#445164' }
             ].map((item) => (
               <div key={item.label} className="flex items-center gap-3 bg-card/40 border border-border/80 p-2.5 rounded-xl">
                 <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: item.color }} />
@@ -140,10 +148,10 @@ export default function ReportsDashboardClient({
                 margin={{ left: -10, right: 10, top: 20, bottom: 0 }}
                 xAxis={[{ scaleType: 'band', dataKey: 'day', tickLabelStyle: { fill: textColor, fontSize: 11, fontWeight: '900' } }]}
                 series={[
-                  { dataKey: 'completed', label: 'Done', color: '#10b981', stack: 'total' },
-                  { dataKey: 'cancelled', label: 'Cancel', color: '#ef4444', stack: 'total' },
-                  { dataKey: 'no_show', label: 'No Show', color: '#f97316', stack: 'total' },
-                  { dataKey: 'others', label: 'Other', color: '#445164', stack: 'total' },
+                  { dataKey: 'completed', label: t('status.completed', { defaultValue: 'Done' }), color: '#10b981', stack: 'total' },
+                  { dataKey: 'cancelled', label: t('status.cancelled', { defaultValue: 'Cancelled' }), color: '#ef4444', stack: 'total' },
+                  { dataKey: 'no_show', label: t('status.no_show', { defaultValue: 'No Show' }), color: '#f97316', stack: 'total' },
+                  { dataKey: 'others', label: t('reports.other', { defaultValue: 'Other' }), color: '#445164', stack: 'total' },
                 ]}
                 grid={{ horizontal: true }}
                 sx={{
@@ -166,13 +174,13 @@ export default function ReportsDashboardClient({
               <Table2 className="w-4 h-4 text-indigo-400" />
               <h2 className="text-sm font-black text-foreground uppercase tracking-widest">{performanceTitle}</h2>
             </div>
-            <Badge className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20 text-[9px] font-black py-1 px-3 w-fit rounded-full">WEEKLY VOLUME</Badge>
+            <Badge className="bg-indigo-500/10 text-indigo-400 border-indigo-500/20 text-[9px] font-black py-1 px-3 w-fit rounded-full">{t('reports.weeklyVolume', { defaultValue: 'WEEKLY VOLUME' })}</Badge>
           </div>
 
           <div className="bg-card/60 border border-border rounded-[32px] p-2 sm:p-8 pt-6">
             <div className="flex items-center gap-2 px-4 text-[9px] text-muted-foreground font-black uppercase tracking-[0.2em] mb-4">
               <TrendingUp className="w-3 h-3 text-indigo-500" />
-              <span>Ranked by busiest {terms.unitsLower} this week</span>
+              <span>{t('reports.rankedByBusiestUnits', { defaultValue: 'Ranked by busiest {{unitsLower}} this week', unitsLower: terms.unitsLower })}</span>
             </div>
 
             {/* Dynamic Height Container: 48px per table, minimum 400px */}
@@ -199,9 +207,9 @@ export default function ReportsDashboardClient({
                 }]}
                 series={[{
                   dataKey: 'volume',
-                  label: 'Total ' + terms.partyUnit,
+                  label: t('reports.totalPartyUnit', { defaultValue: 'Total {{partyUnit}}', partyUnit: terms.partyUnit }),
                   color: '#6366f1', // Professional Indigo
-                  valueFormatter: (v) => `${v} ${terms.partyUnit}`
+                  valueFormatter: (v) => t('reports.valuePartyUnit', { defaultValue: '{{value}} {{partyUnit}}', value: v, partyUnit: terms.partyUnit })
                 }]}
                 grid={{ vertical: true }}
                 sx={{
@@ -229,11 +237,11 @@ export default function ReportsDashboardClient({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
               <div className="flex items-center gap-2 bg-card border border-border p-3 rounded-2xl px-4 w-fit shadow-lg shadow-violet-500/5">
                 <ShieldCheck className="w-4 h-4 text-violet-400" />
-                <h2 className="text-sm font-black text-foreground uppercase tracking-[0.2em]">Team Efficiency Hub</h2>
+                <h2 className="text-sm font-black text-foreground uppercase tracking-[0.2em]">{t('reports.teamEfficiencyHub', { defaultValue: 'Team Efficiency Hub' })}</h2>
               </div>
               <Badge className="bg-red-500/10 text-red-500 border-red-500/20 text-[9px] font-black py-1 px-3 w-fit rounded-full flex items-center gap-1.5 ring-1 ring-red-500/20 leading-none">
                 <div className="w-1 h-1 rounded-full bg-red-500 animate-pulse" />
-                ADMIN ONLY
+                {t('reports.adminOnly', { defaultValue: 'ADMIN ONLY' })}
               </Badge>
             </div>
 
@@ -243,16 +251,16 @@ export default function ReportsDashboardClient({
 
               <div className="flex items-center gap-2 px-4 text-[9px] text-muted-foreground font-black uppercase tracking-[0.2em] mb-10 relative z-10">
                 <Users className="w-3.5 h-3.5 text-violet-500" />
-                <span>Real-time Team Performance Analytics</span>
+                <span>{t('reports.realtimeTeamPerformance', { defaultValue: 'Real-time Team Performance Analytics' })}</span>
               </div>
 
               {/* Legend for Staff Stats */}
               <div className="flex flex-wrap gap-4 px-4 mb-10 relative z-10">
                 {[
-                  { label: 'Done', color: 'bg-emerald-500' },
-                  { label: 'Confirmed', color: 'bg-emerald-500/40' },
-                  { label: 'No Show', color: 'bg-orange-500' },
-                  { label: 'Cancelled', color: 'bg-red-500' }
+                  { label: t('status.completed', { defaultValue: 'Done' }), color: 'bg-emerald-500' },
+                  { label: t('status.confirmed', { defaultValue: 'Confirmed' }), color: 'bg-emerald-500/40' },
+                  { label: t('status.no_show', { defaultValue: 'No Show' }), color: 'bg-orange-500' },
+                  { label: t('status.cancelled', { defaultValue: 'Cancelled' }), color: 'bg-red-500' }
                 ].map(item => (
                   <div key={item.label} className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${item.color}`} />
@@ -288,9 +296,9 @@ export default function ReportsDashboardClient({
                             <div>
                                <p className="text-xs font-black text-foreground uppercase tracking-wider leading-none mb-1 group-hover/item:text-violet-400 transition-colors">{staff.name}</p>
                                <div className="flex items-center gap-1.5 text-[8px] font-black text-muted-foreground/60 uppercase tracking-widest">
-                                  <span>Total {staff.total}</span>
+                                   <span>{t('reports.totalCount', { defaultValue: 'Total {{count}}', count: staff.total })}</span>
                                   <span className="w-1 h-1 rounded-full bg-muted" />
-                                  <span className={successRate > 70 ? 'text-emerald-500' : 'text-orange-500'}>{successRate}% Success</span>
+                                   <span className={successRate > 70 ? 'text-emerald-500' : 'text-orange-500'}>{t('reports.successPercent', { defaultValue: '{{rate}}% Success', rate: successRate })}</span>
                                </div>
                             </div>
                           </div>
@@ -341,7 +349,7 @@ export default function ReportsDashboardClient({
         <section className="space-y-6">
           <div className="flex items-center gap-2 bg-card/50 border border-border p-3 rounded-2xl px-4 w-fit mx-2">
             <Star className="w-4 h-4 text-emerald-400" />
-            <h2 className="text-sm font-black text-foreground uppercase tracking-widest">Loyalty Radar</h2>
+            <h2 className="text-sm font-black text-foreground uppercase tracking-widest">{t('reports.loyaltyRadar', { defaultValue: 'Loyalty Radar' })}</h2>
           </div>
 
           <div className="px-2">
@@ -354,7 +362,7 @@ export default function ReportsDashboardClient({
                         0{idx + 1}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-black text-foreground tracking-tight leading-none mb-1.5 truncate">{cust.name || 'Anonymous'}</p>
+                        <p className="text-sm font-black text-foreground tracking-tight leading-none mb-1.5 truncate">{cust.name || t('reports.anonymous', { defaultValue: 'Anonymous' })}</p>
                         <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-black uppercase tracking-widest">
                           <Phone className="w-3 h-3" /> {cust.key.slice(-4).padStart(cust.key.length, '*')}
                         </div>
@@ -377,14 +385,14 @@ export default function ReportsDashboardClient({
             ) : (
               <div className="py-16 text-center border border-dashed border-border rounded-3xl bg-card/20">
                 <User className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground/60 text-[11px] font-black uppercase tracking-[0.2em]">No guest data records this week</p>
+                <p className="text-muted-foreground/60 text-[11px] font-black uppercase tracking-[0.2em]">{t('reports.noGuestDataThisWeek', { defaultValue: 'No guest data records this week' })}</p>
               </div>
             )}
           </div>
         </section>
       </div>
 
-      <p className="text-center text-[10px] text-muted-foreground font-black uppercase tracking-[0.3em] py-8 italic">Automated Weekly Analytics Engine</p>
+      <p className="text-center text-[10px] text-muted-foreground font-black uppercase tracking-[0.3em] py-8 italic">{t('reports.automatedWeeklyAnalyticsEngine', { defaultValue: 'Automated Weekly Analytics Engine' })}</p>
     </div>
   )
 }

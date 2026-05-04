@@ -6,7 +6,13 @@ import { Sparkles } from 'lucide-react'
 import { createPrivateMetadata } from '@/lib/seo'
 import { getServerT } from '@/i18n/server'
 
-export const metadata = createPrivateMetadata('Business Setup', 'Complete the first-time setup for your restaurant or property.')
+export async function generateMetadata() {
+  const { t } = await getServerT()
+  return createPrivateMetadata(
+    t('meta.businessSetupTitle', { defaultValue: 'Business Setup' }),
+    t('meta.businessSetupDescription', { defaultValue: 'Complete the first-time setup for your restaurant or property.' })
+  )
+}
 
 export default async function ({ params }: { params: Promise<{ restaurantId: string }> }) {
   const { t } = await getServerT()

@@ -7,7 +7,13 @@ import ReportsDashboardClient from './ReportsDashboardClient'
 import { createPrivateMetadata } from '@/lib/seo'
 import { getServerT } from '@/i18n/server'
 
-export const metadata = createPrivateMetadata('Reports', 'Review booking trends, weekly performance, and service outcomes.')
+export async function generateMetadata() {
+  const { t } = await getServerT()
+  return createPrivateMetadata(
+    t('meta.reportsTitle', { defaultValue: 'Reports' }),
+    t('meta.reportsDescription', { defaultValue: 'Review booking trends, weekly performance, and service outcomes.' })
+  )
+}
 
 interface Props {
   searchParams: Promise<{ 
@@ -25,13 +31,8 @@ const statusColors: Record<string, string> = {
   no_show:   'bg-orange-500/20 text-orange-400 border-orange-500/30',
 }
 
-const statusLabels: Record<string, string> = {
-  pending: 'Waiting', confirmed: 'Confirmed', arrived: 'Arrived', cancelled: 'Cancelled',
-  completed: 'Done', no_show: 'No Show',
-}
-
 export default async function ReportsPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>, searchParams: Promise<{ week?: string, status?: string }> }) {
-  await getServerT()
+  const { t } = await getServerT()
   const { restaurantId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -102,14 +103,22 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
         .select('id, full_name')
         .in('id', creatorIds)
       
-      profiles?.forEach(p => { staffNames[p.id] = p.full_name || 'Member' })
+      profiles?.forEach(p => { staffNames[p.id] = p.full_name || t('reports.member', { defaultValue: 'Member' }) })
     }
   }
 
   const validMemberIds = isAdmin && memberList ? new Set(memberList.map(m => m.user_id)) : new Set<string>()
 
   // ── 1. Weekly Status Trend (Mon to Sun) ─────────────────────────────────────
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const days = [
+    t('reports.mon', { defaultValue: 'Mon' }),
+    t('reports.tue', { defaultValue: 'Tue' }),
+    t('reports.wed', { defaultValue: 'Wed' }),
+    t('reports.thu', { defaultValue: 'Thu' }),
+    t('reports.fri', { defaultValue: 'Fri' }),
+    t('reports.sat', { defaultValue: 'Sat' }),
+    t('reports.sun', { defaultValue: 'Sun' }),
+  ]
   const statusTrend = days.map((dayName, i) => {
     const dayDate = addDays(monday, i)
     const dayReservations = weekData.filter(r => isSameDay(parseISO(r.reservation_date), dayDate))
@@ -168,7 +177,7 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
        const uid = r.created_by
        if (!uid || !validMemberIds.has(uid)) return 
        
-       const name = staffNames[uid] || 'Unnamed Member'
+      const name = staffNames[uid] || t('reports.unnamedMember', { defaultValue: 'Unnamed Member' })
        const prev = performanceMap.get(uid) || { id: uid, name, completed: 0, confirmed: 0, cancelled: 0, no_show: 0, total: 0 }
        
        if (r.status === 'completed') prev.completed++
@@ -187,8 +196,16 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
   // ── Overall Stats ───────────────────────────────────────────────────────────
   const totalCompleted = weekData.filter(r => r.status === 'completed').length
   const totalGuests = weekData.filter(r => r.status === 'completed').reduce((s, r) => s + (r.party_size || 0), 0)
+  const statusLabels: Record<string, string> = {
+    pending: t('status.pending', { defaultValue: 'Waiting' }),
+    confirmed: t('status.confirmed', { defaultValue: 'Confirmed' }),
+    arrived: t('status.arrived', { defaultValue: 'Arrived' }),
+    cancelled: t('status.cancelled', { defaultValue: 'Cancelled' }),
+    completed: t('status.completed', { defaultValue: 'Done' }),
+    no_show: t('status.no_show', { defaultValue: 'No Show' }),
+  }
   
-  const dateLabel = `Week of ${format(monday, "MMM dd, yyyy")}`
+  const dateLabel = t('reports.weekOf', { defaultValue: 'Week of {{date}}', date: format(monday, "MMM dd, yyyy") })
 
   return (
     <ReportsDashboardClient

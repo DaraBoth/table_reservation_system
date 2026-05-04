@@ -5,10 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { format, subDays, addDays, parseISO, startOfWeek } from "date-fns"
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react"
 import { TopLoadingBar } from "@/components/dashboard/top-loading-bar"
+import { useTranslation } from 'react-i18next'
 
 import { Button } from "@/components/ui/button"
 
 export function ReportFilters() {
+  const { t } = useTranslation()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = React.useTransition()
@@ -49,7 +51,7 @@ export function ReportFilters() {
           </Button>
           
           <div className="flex-1 flex flex-col items-center">
-            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-0.5">Business Week</span>
+            <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-0.5">{t('reports.businessWeek', { defaultValue: 'Business Week' })}</span>
             <div className="flex items-center gap-2">
               <CalendarDays className="w-3 h-3 text-violet-400" />
               <span className="text-xs font-black text-foreground tracking-tight">
@@ -75,14 +77,14 @@ export function ReportFilters() {
              onClick={() => navigateWeek('current')}
              className="h-10 px-3 text-[10px] font-black text-violet-400 uppercase tracking-widest hover:text-violet-300 hover:bg-violet-500/5 rounded-xl transition-all"
           >
-            Today
+            {t('reports.today', { defaultValue: 'Today' })}
           </Button>
 
           {isPending && (
             <div className="absolute inset-0 bg-card/60 backdrop-blur-sm flex items-center justify-center z-10 animate-in fade-in duration-300">
               <div className="flex items-center gap-2 px-3 py-1 bg-violet-600 rounded-full shadow-lg shadow-violet-500/20">
                 <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                <span className="text-[10px] font-black text-foreground uppercase tracking-widest">Syncing</span>
+                <span className="text-[10px] font-black text-foreground uppercase tracking-widest">{t('reports.syncing', { defaultValue: 'Syncing' })}</span>
               </div>
             </div>
           )}

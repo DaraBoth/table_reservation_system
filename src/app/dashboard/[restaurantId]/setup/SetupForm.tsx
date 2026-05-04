@@ -7,14 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Store, BedDouble, Hotel, AlertTriangle, Mail, Phone, MapPin, Upload, X, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-const typeInfo: Record<string, { label: string; Icon: React.ComponentType<{ className?: string }>; desc: string }> = {
-  restaurant: { label: 'Restaurant', Icon: Store,     desc: 'Dining, tables & cafe' },
-  hotel:      { label: 'Hotel',      Icon: Hotel,     desc: 'Rooms & concierge' },
-  guesthouse: { label: 'Guest house', Icon: BedDouble, desc: 'Simple lodging' },
-}
+import { useTranslation } from 'react-i18next'
 
 export function SetupForm({ restaurant, restaurantId }: { restaurant: any; restaurantId: string }) {
+  const { t } = useTranslation()
   const [state, action, pending] = useActionState(completeRestaurantSetup, null)
   const [name, setName] = useState<string>(restaurant.name ?? '')
   const [contactEmail, setContactEmail] = useState<string>(restaurant.contact_email ?? '')
@@ -26,14 +22,31 @@ export function SetupForm({ restaurant, restaurantId }: { restaurant: any; resta
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const businessType: string = restaurant.business_type || 'restaurant'
-  const type = typeInfo[businessType] ?? typeInfo.restaurant
+  const typedInfo: Record<string, { label: string; Icon: React.ComponentType<{ className?: string }>; desc: string }> = {
+    restaurant: {
+      label: t('setup.typeRestaurant', { defaultValue: 'Restaurant' }),
+      Icon: Store,
+      desc: t('setup.typeRestaurantShortDesc', { defaultValue: 'Dining, tables & cafe' }),
+    },
+    hotel: {
+      label: t('setup.typeHotel', { defaultValue: 'Hotel' }),
+      Icon: Hotel,
+      desc: t('setup.typeHotelShortDesc', { defaultValue: 'Rooms & concierge' }),
+    },
+    guesthouse: {
+      label: t('setup.typeGuesthouse', { defaultValue: 'Guest house' }),
+      Icon: BedDouble,
+      desc: t('setup.typeGuesthouseShortDesc', { defaultValue: 'Simple lodging' }),
+    },
+  }
+  const type = typedInfo[businessType] ?? typedInfo.restaurant
   const TypeIcon = type.Icon
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     if (file.size > 2 * 1024 * 1024) {
-      setUploadError('File must be under 2 MB')
+      setUploadError(t('setup.fileUnder2mb', { defaultValue: 'File must be under 2 MB' }))
       return
     }
     setUploadError(null)
@@ -50,7 +63,7 @@ export function SetupForm({ restaurant, restaurantId }: { restaurant: any; resta
       // Bust cache with timestamp
       setLogoUrl(`${data.publicUrl}?t=${Date.now()}`)
     } catch (err: any) {
-      setUploadError(err.message ?? 'Upload failed')
+      setUploadError(err.message ?? t('setup.uploadFailed', { defaultValue: 'Upload failed' }))
     } finally {
       setUploading(false)
     }
@@ -88,23 +101,23 @@ export function SetupForm({ restaurant, restaurantId }: { restaurant: any; resta
           {logoUrl ? (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={logoUrl} alt="Logo preview" className="w-full h-full object-cover" />
+              <img src={logoUrl} alt={t('setup.logoPreviewAlt', { defaultValue: 'Logo preview' })} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5">
                 <Upload className="w-5 h-5 text-foreground" />
-                <span className="text-foreground text-[9px] font-black uppercase tracking-widest">Change</span>
+                <span className="text-foreground text-[9px] font-black uppercase tracking-widest">{t('common.change', { defaultValue: 'Change' })}</span>
               </div>
             </>
           ) : uploading ? (
             <div className="w-full h-full flex flex-col items-center justify-center gap-2">
               <Loader2 className="w-7 h-7 text-violet-400 animate-spin" />
-              <span className="text-[9px] text-violet-400 font-black uppercase tracking-widest">Uploading</span>
+              <span className="text-[9px] text-violet-400 font-black uppercase tracking-widest">{t('common.uploading', { defaultValue: 'Uploading' })}</span>
             </div>
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-3">
               <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center group-hover:bg-muted transition-colors">
                 <Upload className="w-5 h-5 text-muted-foreground group-hover:text-violet-400 transition-colors" />
               </div>
-              <span className="text-[9px] text-muted-foreground font-black uppercase tracking-widest text-center leading-tight">Tap to upload logo</span>
+              <span className="text-[9px] text-muted-foreground font-black uppercase tracking-widest text-center leading-tight">{t('setup.tapToUploadLogo', { defaultValue: 'Tap to upload logo' })}</span>
               <span className="text-[8px] text-muted-foreground font-bold">PNG · JPG · WEBP</span>
             </div>
           )}
@@ -112,7 +125,7 @@ export function SetupForm({ restaurant, restaurantId }: { restaurant: any; resta
 
         {/* Identity tile */}
         <div className="bg-card border border-border rounded-3xl p-4 flex flex-col justify-between gap-3">
-          <p className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-widest">Identity</p>
+          <p className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-widest">{t('setup.identity', { defaultValue: 'Identity' })}</p>
 
           {/* Business type — read-only */}
           <div className="flex items-center gap-2 p-2 rounded-xl bg-violet-600/10 border border-violet-500/20">
@@ -120,7 +133,7 @@ export function SetupForm({ restaurant, restaurantId }: { restaurant: any; resta
               <TypeIcon className="w-3 h-3 text-foreground" />
             </div>
             <span className="text-foreground font-black text-[10px] flex-1 truncate">{type.label}</span>
-            <span className="text-[8px] text-violet-400 font-black border border-violet-500/30 px-1 py-0.5 rounded shrink-0">Set</span>
+            <span className="text-[8px] text-violet-400 font-black border border-violet-500/30 px-1 py-0.5 rounded shrink-0">{t('common.set', { defaultValue: 'Set' })}</span>
           </div>
 
           {/* Business name */}
@@ -129,7 +142,7 @@ export function SetupForm({ restaurant, restaurantId }: { restaurant: any; resta
             value={name}
             onChange={e => setName(e.target.value)}
             required
-            placeholder="ភោជនីយដ្ឋាន..."
+            placeholder={t('setup.brandNamePlaceholder', { defaultValue: 'Restaurant...' })}
             className="h-10 bg-background border-border text-foreground font-bold rounded-xl focus:border-violet-500 transition-all placeholder:text-muted-foreground text-xs"
           />
         </div>
@@ -142,7 +155,7 @@ export function SetupForm({ restaurant, restaurantId }: { restaurant: any; resta
           onClick={() => { setLogoUrl(''); setUploadError(null) }}
           className="w-full h-8 flex items-center justify-center gap-1.5 rounded-2xl bg-card border border-border text-muted-foreground text-[10px] font-black uppercase tracking-widest hover:text-rose-400 hover:border-rose-500/30 transition-all"
         >
-          <X className="w-3 h-3" /> Remove Logo
+          <X className="w-3 h-3" /> {t('setup.removeLogo', { defaultValue: 'Remove Logo' })}
         </button>
       )}
 
@@ -157,7 +170,7 @@ export function SetupForm({ restaurant, restaurantId }: { restaurant: any; resta
         <div className="bg-card border border-border rounded-3xl p-4 space-y-2.5">
           <div className="flex items-center gap-1.5">
             <Mail className="w-3 h-3 text-muted-foreground" />
-            <p className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-widest">Email</p>
+            <p className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-widest">{t('account.email', { defaultValue: 'Email' })}</p>
           </div>
           <Input
             name="contactEmail"
@@ -171,7 +184,7 @@ export function SetupForm({ restaurant, restaurantId }: { restaurant: any; resta
         <div className="bg-card border border-border rounded-3xl p-4 space-y-2.5">
           <div className="flex items-center gap-1.5">
             <Phone className="w-3 h-3 text-muted-foreground" />
-            <p className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-widest">Phone</p>
+            <p className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-widest">{t('account.phone', { defaultValue: 'Phone' })}</p>
           </div>
           <Input
             name="contactPhone"
@@ -188,13 +201,13 @@ export function SetupForm({ restaurant, restaurantId }: { restaurant: any; resta
       <div className="bg-card border border-border rounded-3xl p-4 space-y-2.5">
         <div className="flex items-center gap-1.5">
           <MapPin className="w-3 h-3 text-muted-foreground" />
-          <p className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-widest">Address</p>
+          <p className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-widest">{t('account.address', { defaultValue: 'Address' })}</p>
         </div>
         <Input
           name="address"
           value={address}
           onChange={e => setAddress(e.target.value)}
-          placeholder="ផ្លូវ 278, សង្កាត់ទន្លេបាសាក់, ភ្នំពេញ"
+          placeholder={t('setup.addressPlaceholder', { defaultValue: 'Street 278, Tonle Basak, Phnom Penh' })}
           className="h-10 bg-background border-border text-foreground font-bold rounded-xl focus:border-violet-500 transition-all placeholder:text-muted-foreground/60 text-sm"
         />
       </div>
@@ -211,7 +224,7 @@ export function SetupForm({ restaurant, restaurantId }: { restaurant: any; resta
           disabled={pending || uploading}
           className="w-full h-14 bg-linear-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 rounded-2xl font-black text-lg shadow-xl shadow-violet-500/30 transition-all active:scale-[0.98]"
         >
-          {pending ? 'Initializing...' : 'Launch Dashboard'}
+          {pending ? t('auth.initializing', { defaultValue: 'Initializing...' }) : t('setup.launchDashboard', { defaultValue: 'Launch Dashboard' })}
         </Button>
       </div>
     </form>

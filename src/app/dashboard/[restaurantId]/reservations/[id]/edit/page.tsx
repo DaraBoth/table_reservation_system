@@ -10,7 +10,13 @@ import { cn } from '@/lib/utils'
 import { createPrivateMetadata } from '@/lib/seo'
 import { getServerT } from '@/i18n/server'
 
-export const metadata = createPrivateMetadata('Edit Booking', 'Update guest details, timing, and assigned tables for a reservation.')
+export async function generateMetadata() {
+  const { t } = await getServerT()
+  return createPrivateMetadata(
+    t('meta.editBookingTitle', { defaultValue: 'Edit Booking' }),
+    t('meta.editBookingDescription', { defaultValue: 'Update guest details, timing, and assigned tables for a reservation.' })
+  )
+}
 
 interface Props {
   params: Promise<{ id: string, restaurantId: string }>
@@ -84,6 +90,9 @@ export default async function EditReservationPage({ params }: Props) {
 
   const canManageStatus = ['admin', 'superadmin', 'staff'].includes(membership.role)
   const canCancel = !['cancelled', 'completed'].includes(reservation.status)
+  const translatedStatusLabel = t(`status.${reservation.status}`, {
+    defaultValue: statusLabels[reservation.status] ?? reservation.status,
+  })
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
@@ -98,7 +107,7 @@ export default async function EditReservationPage({ params }: Props) {
               <div className="flex items-center justify-between">
                 <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">{t('dashboard.changeStatus', { defaultValue: 'Change Status' })}</p>
                 <Badge className={cn('text-xs font-black px-3 py-1 border rounded-xl', statusColors[reservation.status] ?? '')}>
-                  {statusLabels[reservation.status] ?? reservation.status}
+                  {translatedStatusLabel}
                 </Badge>
               </div>
               <UpdateStatusButton reservationId={reservation.id} restaurantId={membership.restaurant_id} currentStatus={reservation.status} />
@@ -111,7 +120,7 @@ export default async function EditReservationPage({ params }: Props) {
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">{t('dashboard.currentStatus', { defaultValue: 'Current Status' })}</p>
                 <Badge className={cn('text-xs font-black px-3 py-1 border rounded-xl', statusColors[reservation.status] ?? '')}>
-                  {statusLabels[reservation.status] ?? reservation.status}
+                  {translatedStatusLabel}
                 </Badge>
               </div>
             )}

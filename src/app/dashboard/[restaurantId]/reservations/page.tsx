@@ -12,7 +12,13 @@ type Reservation = Tables<'reservations'> & {
   profiles?: { full_name: string | null } | null
 }
 
-export const metadata = createPrivateMetadata('Bookings', 'Manage reservations, statuses, and daily service flow.')
+export async function generateMetadata() {
+  const { t } = await getServerT()
+  return createPrivateMetadata(
+    t('meta.bookingsTitle', { defaultValue: 'Bookings' }),
+    t('meta.bookingsDescription', { defaultValue: 'Manage reservations, statuses, and daily service flow.' })
+  )
+}
 
 export default async function ReservationsPage({ params, searchParams }: { params: Promise<{ restaurantId: string }>, searchParams: Promise<{ date?: string }> }) {
   await getServerT()

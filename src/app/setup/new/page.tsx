@@ -109,7 +109,11 @@ export default function GlobalSetupPage() {
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-border">
               <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", isAtLimit ? "bg-amber-500" : "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]")} />
               <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
-                Quota: {status.count}/{status.max === Infinity ? '∞' : status.max}
+                {t('setup.quotaUsage', {
+                  defaultValue: 'Quota: {{count}}/{{max}}',
+                  count: status.count,
+                  max: status.max === Infinity ? '∞' : status.max,
+                })}
               </span>
             </div>
           )}
