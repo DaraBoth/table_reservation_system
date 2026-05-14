@@ -143,7 +143,9 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
           </div>
           <p className="text-foreground/70 font-bold text-base">{t('dashboard.noStaffYet', { defaultValue: 'No staff members yet' })}</p>
           <p className="text-muted-foreground text-sm mt-1 mb-6">{t('dashboard.addFirstStaff', { defaultValue: 'Add your first staff member to get started' })}</p>
-          <CreateStaffDialog restaurantId={currentRestaurantId} />
+          <div className="flex justify-center">
+            <CreateStaffDialog restaurantId={currentRestaurantId} />
+          </div>
         </div>
       )}
     </div>
