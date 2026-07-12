@@ -9,10 +9,6 @@ import { HotelReservationForm } from '../hotel/HotelReservationForm'
 interface Props {
   tables: Tables<'physical_tables'>[]
   zones: { id: string, name: string, sort_order: number }[]
-  // True only while the New Booking flow's client-side tables/zones fetch is
-  // still in flight (see CreateReservationForm) — the Edit flow always
-  // fetches tables/zones server-side before rendering, so it never sets this.
-  tablesLoading?: boolean
   restaurantId: string
   // Raw reservation row — see the timezone-safety comment on this same prop
   // in RestaurantBookingForm/HotelReservationForm. Never pre-parse

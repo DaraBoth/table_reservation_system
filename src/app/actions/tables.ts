@@ -28,36 +28,6 @@ async function getMembershipForRestaurant(
   return membership
 }
 
-/**
- * Read-only lookup used by the New Booking form. Deliberately NOT part of
- * the New Booking page's server-side render — the page renders instantly
- * without waiting on this, and the client form calls it after mount so only
- * the table-picker grid shows a loading state instead of the whole page.
- */
-export async function getTablesAndZonesForBooking(restaurantId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { tables: [], zones: [] }
-
-  const membership = await getMembershipForRestaurant(supabase, user.id, restaurantId)
-  if (!membership) return { tables: [], zones: [] }
-
-  const [{ data: tables }, { data: zones }] = await Promise.all([
-    supabase
-      .from('physical_tables')
-      .select('*')
-      .eq('restaurant_id', restaurantId)
-      .eq('is_active', true),
-    supabase
-      .from('zones')
-      .select('*')
-      .eq('restaurant_id', restaurantId)
-      .order('sort_order', { ascending: true }),
-  ])
-
-  return { tables: tables || [], zones: zones || [] }
-}
-
 export async function createPhysicalTable(_: ActionState, formData: FormData): Promise<ActionState> {
   const restaurantId = String(formData.get('restaurantId') || '')
   if (!restaurantId) return { error: 'Restaurant context missing' }
