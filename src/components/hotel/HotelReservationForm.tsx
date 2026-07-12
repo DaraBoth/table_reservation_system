@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useActionState, useState, useTransition, useMemo, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { format } from 'date-fns'
 import { createReservation, updateReservation } from '@/app/actions/reservations'
 import { getCommonCustomers, getOccupiedTableIds } from '@/app/actions/booking-intelligence'
@@ -13,6 +13,8 @@ import { Textarea } from '@/components/ui/textarea'
 import type { Tables } from '@/lib/types/database'
 import { DateTimePickerV2 } from '@/components/restaurant/date-time-picker-v2'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
+import { useBookingSheet } from '@/components/dashboard/booking-sheet-context'
 import {
   CheckCircle2, ChevronLeft, ChevronRight, ArrowRight, CalendarDays, User,
   Clock, Sparkles, LogOut, Building2, Home
@@ -48,6 +50,8 @@ const slideInLeft = 'animate-[slideInLeft_0.28s_ease-out_forwards]'
 
 export function HotelReservationForm({ tables, zones, restaurantId, initialData, preSelectedTableId, presetDate, businessType }: Props) {
   const { t } = useTranslation()
+  const router = useRouter()
+  const { closeBooking } = useBookingSheet()
   const isEdit = !!initialData
   const [state, action, pending] = useActionState(isEdit ? updateReservation : createReservation, null)
   const [isOccLoading, startOccupancyTransition] = useTransition()
@@ -56,6 +60,20 @@ export function HotelReservationForm({ tables, zones, restaurantId, initialData,
 
   const searchParams = useSearchParams()
   const urlDate = presetDate || searchParams.get('date')
+
+  // createReservation no longer redirects on success — see the comment in
+  // RestaurantBookingForm for why. Close the sheet and refresh in place.
+  useEffect(() => {
+    if (!isEdit && state?.success) {
+      toast.success(state.success)
+      closeBooking()
+      router.refresh()
+    }
+  }, [state, isEdit, closeBooking, router])
+
+  useEffect(() => {
+    if (state?.error) toast.error(state.error)
+  }, [state])
 
   const [step, setStep] = useState(1)
   const [slideDir, setSlideDir] = useState<SlideDir>('right')

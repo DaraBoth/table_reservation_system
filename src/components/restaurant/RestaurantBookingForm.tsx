@@ -2,7 +2,8 @@
 
 import * as React from 'react'
 import { useActionState, useState, useTransition, useMemo, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useBookingSheet } from '@/components/dashboard/booking-sheet-context'
 
 import { format } from 'date-fns'
 import { createReservation, updateReservation } from '@/app/actions/reservations'
@@ -52,6 +53,8 @@ const slideInLeft = 'animate-[slideInLeft_0.28s_ease-out_forwards]'
 
 export function RestaurantBookingForm({ tables, zones, restaurantId, initialData, preSelectedTableId, presetDate, businessType }: Props) {
   const { t } = useTranslation()
+  const router = useRouter()
+  const { closeBooking } = useBookingSheet()
   const isEdit = !!initialData
   const [state, action, pending] = useActionState(isEdit ? updateReservation : createReservation, null)
   const [isOccLoading, startOccupancyTransition] = useTransition()
@@ -63,6 +66,24 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
 
   const searchParams = useSearchParams()
   const urlDate = presetDate || searchParams.get('date')
+
+  // createReservation no longer redirects on success (it can't know whether
+  // it was called from the global booking sheet or a direct page visit) —
+  // it just returns { success }. Close the sheet and refresh the current
+  // page's data in place instead of navigating away.
+  useEffect(() => {
+    if (!isEdit && state?.success) {
+      toast.success(state.success)
+      closeBooking()
+      router.refresh()
+    }
+  }, [state, isEdit, closeBooking, router])
+
+  // Previously silent: `state.error` was never read, so a failed submit
+  // (e.g. the overlap-validation error) looked like nothing happened.
+  useEffect(() => {
+    if (state?.error) toast.error(state.error)
+  }, [state])
 
   // Primary Arrival
   const [startTime, setStartTime] = React.useState<Date>(() => {

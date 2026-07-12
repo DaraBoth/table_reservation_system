@@ -348,7 +348,12 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
   revalidatePath(`/dashboard/${restaurantId}/reservations`)
   revalidatePath(`/dashboard/${restaurantId}/units`)
   revalidatePath(`/dashboard/${restaurantId}`)
-  redirect(`/dashboard/${restaurantId}/units`)
+  // Deliberately NOT a redirect() — this action is now called from the
+  // global booking sheet (BookingSheetProvider), which can be opened from
+  // any dashboard page. Forcing a navigation to /units would fight the
+  // sheet's whole point (create a booking from wherever you are without
+  // leaving). The client closes the sheet and refreshes in place on success.
+  return { success: 'Booking created.' }
 }
 
 // ─── Cancel reservation ───────────────────────────────────────────────────────

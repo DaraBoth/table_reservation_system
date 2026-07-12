@@ -1,43 +1,22 @@
 'use client'
 
-import { createContext, useCallback, useContext, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { ReservationForm } from '@/components/restaurant/reservation-form'
-import type { Tables } from '@/lib/types/database'
+import {
+  BookingSheetContext,
+  type BookingSheetTableRow,
+  type BookingSheetZoneRow,
+  type OpenBookingOptions,
+} from './booking-sheet-context'
 import type { BusinessType } from '@/lib/business-type'
 
-type TableRow = Tables<'physical_tables'>
-type ZoneRow = { id: string, name: string, sort_order: number }
-
-interface OpenBookingOptions {
-  tableId?: string
-  date?: string
-}
-
-interface BookingSheetContextValue {
-  tables: TableRow[]
-  zones: ZoneRow[]
-  openBooking: (options?: OpenBookingOptions) => void
-  closeBooking: () => void
-}
-
-const BookingSheetContext = createContext<BookingSheetContextValue | null>(null)
-
-/**
- * Opens the global "New Booking" bottom sheet from anywhere in the
- * dashboard, using tables/zones already preloaded by the layout — no
- * navigation, no fetch, the sheet appears instantly.
- */
-export function useBookingSheet() {
-  const ctx = useContext(BookingSheetContext)
-  if (!ctx) throw new Error('useBookingSheet must be used within BookingSheetProvider')
-  return ctx
-}
+export { useBookingSheet } from './booking-sheet-context'
 
 interface Props {
   children: React.ReactNode
-  initialTables: TableRow[]
-  initialZones: ZoneRow[]
+  initialTables: BookingSheetTableRow[]
+  initialZones: BookingSheetZoneRow[]
   restaurantId: string
   businessType: BusinessType
 }
