@@ -47,6 +47,67 @@ const ReservationSchema = z.object({
   extraSlots: z.string().optional(),
 })
 
+/**
+ * Checks whether any existing pending/confirmed/arrived reservation on
+ * `tableId` overlaps the given date/time window. Used to gate creates and
+ * updates against double-booking a table — the DB may also have an
+ * exclusion constraint, but that surfaces as an opaque 23P01 error rather
+ * than a clean validation message, so this runs first regardless.
+ *
+ * `excludeReservationId` skips the row being edited so an update doesn't
+ * conflict with its own prior state.
+ */
+async function checkOverlap(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  {
+    tableId,
+    reservationDate,
+    checkoutDate,
+    startTimeStr,
+    endTimeStr,
+    isHotel,
+    excludeReservationId,
+  }: {
+    tableId: string
+    reservationDate: string
+    checkoutDate: string
+    startTimeStr: string
+    endTimeStr: string
+    isHotel: boolean
+    excludeReservationId?: string
+  },
+): Promise<boolean> {
+  let query = supabase
+    .from('reservations')
+    .select('id, start_time, end_time, reservation_date, checkout_date')
+    .eq('table_id', tableId)
+    .in('status', ['pending', 'confirmed', 'arrived'])
+    .lte('reservation_date', checkoutDate)
+    .gte('checkout_date', reservationDate)
+
+  if (excludeReservationId) {
+    query = query.neq('id', excludeReservationId)
+  }
+
+  const { data: overlaps } = await query
+
+  return (overlaps || []).some(r => {
+    if (isHotel) {
+      // Hotel: Check-out today check
+      if (r.checkout_date === reservationDate && r.end_time) {
+        if (startTimeStr >= r.end_time) return false
+      }
+      // Hotel: Check-in today check
+      if (r.reservation_date === reservationDate && r.start_time) {
+        if (endTimeStr <= r.start_time) return false
+      }
+      return true
+    }
+    // Restaurant: Any booking on this day is a conflict
+    return true
+  })
+}
+
 async function getMembershipForRestaurant(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
@@ -125,34 +186,24 @@ export async function createReservation(_: ActionState, formData: FormData): Pro
 
   // AUTO-CONFIRM LOGIC: If they select 'Waiting' (pending) but the table is actually free, make it 'confirmed'
   let finalStatus = userStatus || 'confirmed'
+  const overlapArgs = { tableId, reservationDate, checkoutDate, startTimeStr, endTimeStr, isHotel }
   if (finalStatus === 'pending') {
-    // 1. Fetch potential overlaps using the unified logic rules
-    const { data: overlaps } = await supabase
-      .from('reservations')
-      .select('id, start_time, end_time, reservation_date, checkout_date')
-      .eq('table_id', tableId)
-      .in('status', ['pending', 'confirmed', 'arrived'])
-      .lte('reservation_date', reservationDate)
-      .gte('checkout_date', reservationDate)
-
-    const hasConflict = (overlaps || []).some(r => {
-      if (isHotel) {
-        // Hotel: Check-out today check
-        if (r.checkout_date === reservationDate && r.end_time) {
-          if (startTimeStr >= r.end_time) return false
-        }
-        // Hotel: Check-in today check
-        if (r.reservation_date === reservationDate && r.start_time) {
-          if (endTimeStr <= r.start_time) return false
-        }
-        return true
-      }
-      // Restaurant: Any booking on this day is a conflict
-      return true
-    })
-
+    // Pending is an intentional waitlist tier — allowed to overlap. Only
+    // decide whether to auto-upgrade it to 'confirmed' if the table is free.
+    const hasConflict = await checkOverlap(supabase, overlapArgs)
     if (!hasConflict) {
       finalStatus = 'confirmed'
+    }
+  } else if (finalStatus !== 'cancelled') {
+    // Any non-pending, non-cancelled status (confirmed/arrived/etc, and
+    // notably the default when no status is supplied) must not silently
+    // create a conflicting booking — previously this branch ran NO check
+    // at all, so two staff booking the same slot near-simultaneously (or
+    // any caller submitting status="confirmed" directly) could double-book
+    // a table with only a client-side UI hint standing in the way.
+    const hasConflict = await checkOverlap(supabase, overlapArgs)
+    if (hasConflict) {
+      return { error: 'This table/unit is already booked for the selected time. Please choose another table or time.' }
     }
   }
 
@@ -426,6 +477,23 @@ export async function updateReservation(_: ActionState, formData: FormData): Pro
   const checkoutDate = endObj.getFullYear() + '-' + String(endObj.getMonth() + 1).padStart(2,'0') + '-' + String(endObj.getDate()).padStart(2,'0')
   const startTimeStr = extractWallClockTime(startTime)
   const endTimeStr = extractWallClockTime(endObj.toISOString())
+  const businessType = (membership as any).restaurants?.business_type || 'restaurant'
+  const isHotel = businessType === 'hotel' || businessType === 'guesthouse'
+
+  // Same double-booking gate as createReservation — this action previously
+  // had NO application-level overlap check at all, relying solely on a
+  // Postgres exclusion-constraint error (23P01) bubbling up if one even
+  // still exists. Skip only for pending (intentional waitlist overlap) and
+  // cancelled (can't conflict); exclude this reservation's own prior row.
+  if (status !== 'pending' && status !== 'cancelled') {
+    const hasConflict = await checkOverlap(supabase, {
+      tableId, reservationDate, checkoutDate, startTimeStr, endTimeStr, isHotel,
+      excludeReservationId: reservationId,
+    })
+    if (hasConflict) {
+      return { error: 'This table/unit is already booked for the selected time. Please choose another table or time.' }
+    }
+  }
 
   // Fetch table name for snapshot (in case table was changed)
   const { data: tableData } = await supabase
