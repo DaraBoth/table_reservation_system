@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
-import { createClient } from '@/lib/supabase/server'
+import { cache } from 'react'
+import { createClient, getCachedUser } from '@/lib/supabase/server'
 import type { Database } from '@/lib/types/database'
 
 export const ACTIVE_RESTAURANT_COOKIE = 'active_restaurant_id'
@@ -17,9 +18,17 @@ interface MembershipWithRestaurant {
   restaurants?: RestaurantContextRow | null
 }
 
-export async function getActiveRestaurant(routeId?: string) {
+/**
+ * Resolves the active restaurant/membership/profile for the current user.
+ *
+ * Wrapped in React's `cache()` so that a layout and the page(s) it renders
+ * — which both need this same data for the same `routeId` within one
+ * request — share a single set of Supabase queries instead of each
+ * re-running auth.getUser() + the memberships join + the profile lookup.
+ */
+export const getActiveRestaurant = cache(async (routeId?: string) => {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) return null
 
   // 1. Get all memberships for the user
@@ -61,7 +70,7 @@ export async function getActiveRestaurant(routeId?: string) {
     activeSlug: activeMembership.restaurants?.slug || activeMembership.restaurant_id,
     profile: profile || null,
   }
-}
+})
 
 export async function setActiveRestaurantId(id: string) {
   const cookieStore = await cookies()

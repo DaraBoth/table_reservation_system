@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { logout } from '@/app/actions/auth'
 import { getOrCreateDeviceToken } from '@/lib/push-client'
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 interface LogoutButtonProps {
   className?: string
@@ -15,6 +16,7 @@ interface LogoutButtonProps {
 }
 
 export function LogoutButton({ className, formClassName, isCollapsed, showText = true }: LogoutButtonProps) {
+  const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleLogout = async (e: React.FormEvent) => {
@@ -55,7 +57,7 @@ export function LogoutButton({ className, formClassName, isCollapsed, showText =
         )}
       >
         <LogOut className={cn("h-4 w-4", isLoading && "animate-pulse")} />
-        {!isCollapsed && showText && <span className="text-xs font-bold uppercase tracking-wider">Sign out</span>}
+        {!isCollapsed && showText && <span className="text-xs font-bold uppercase tracking-wider">{t('common.signOut', { defaultValue: 'Sign Out' })}</span>}
       </Button>
     </form>
   )

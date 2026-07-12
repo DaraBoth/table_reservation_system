@@ -1,5 +1,5 @@
 import { getActiveRestaurant } from '@/lib/restaurant-context'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getCachedUser } from '@/lib/supabase/server'
 import { format } from 'date-fns'
 import type { BusinessType } from '@/lib/business-type'
 import { ReservationsClient } from './ReservationsClient'
@@ -24,7 +24,7 @@ export default async function ReservationsPage({ params, searchParams }: { param
   await getServerT()
   const { restaurantId } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) return null
 
   const res = await getActiveRestaurant(restaurantId)
@@ -43,23 +43,25 @@ export default async function ReservationsPage({ params, searchParams }: { param
   const todayIso = format(new Date(), 'yyyy-MM-dd')
   const initialDate = date || todayIso
 
-  // Fetch Tables for the Share Status report
-  const { data: tableData } = await supabase
-    .from('physical_tables')
-    .select('*, zones(*)')
-    .eq('restaurant_id', membership.restaurant_id)
-    .eq('is_active', true)
+  // Fetch tables (for the Share Status report) and the initial bookings list
+  // in parallel — these two queries are independent of each other.
+  const [{ data: tableData }, { data: allBookings }] = await Promise.all([
+    supabase
+      .from('physical_tables')
+      .select('*, zones(*)')
+      .eq('restaurant_id', membership.restaurant_id)
+      .eq('is_active', true),
+    // Anyone who is IN-HOUSE on the selected date
+    supabase
+      .from('reservations')
+      .select('*, physical_tables(table_name, capacity, zones(name)), profiles(full_name)')
+      .eq('restaurant_id', membership.restaurant_id!)
+      .lte('reservation_date', initialDate)
+      .gte('checkout_date', initialDate)
+      .order('created_at', { ascending: false }),
+  ])
 
   const tables = tableData || []
-
-  // Initial Fetch: Anyone who is IN-HOUSE on the selected date
-  const { data: allBookings } = await supabase
-    .from('reservations')
-    .select('*, physical_tables(table_name, capacity, zones(name)), profiles(full_name)')
-    .eq('restaurant_id', membership.restaurant_id!)
-    .lte('reservation_date', initialDate)
-    .gte('checkout_date', initialDate)
-    .order('created_at', { ascending: false })
 
 
   return (

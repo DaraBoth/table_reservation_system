@@ -4,6 +4,7 @@ import React from 'react'
 import { format, addDays, parseISO, isToday as isDateToday } from 'date-fns'
 import { ChevronLeft, ChevronRight, CalendarDays, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 interface DateNavigatorProps {
   selectedDate: string // YYYY-MM-DD
@@ -13,6 +14,7 @@ interface DateNavigatorProps {
 }
 
 export function DateNavigator({ selectedDate, onChange, className, todayDate }: DateNavigatorProps) {
+  const { t } = useTranslation()
   const date = parseISO(selectedDate)
   const isSelectedToday = todayDate ? selectedDate === todayDate : isDateToday(date)
 
@@ -43,7 +45,7 @@ export function DateNavigator({ selectedDate, onChange, className, todayDate }: 
       <div className="flex flex-col items-center px-2 sm:px-4 min-w-[120px] sm:min-w-[140px]">
         <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">
           <CalendarDays className="w-3 h-3" />
-          {isSelectedToday ? 'Showing Today' : format(date, 'EEEE')}
+          {isSelectedToday ? t('dashboard.showingToday', { defaultValue: 'Showing Today' }) : format(date, 'EEEE')}
         </div>
         <p className="text-sm sm:text-base font-black text-foreground italic tracking-tight uppercase leading-none">
           <span className="sm:hidden">{format(date, 'MMM dd')}</span>
@@ -59,7 +61,7 @@ export function DateNavigator({ selectedDate, onChange, className, todayDate }: 
             onClick={goToToday}
             className="hidden sm:flex items-center gap-1.5 px-3 h-10 rounded-xl bg-violet-600/10 border border-violet-500/20 text-violet-400 text-[10px] font-black uppercase tracking-widest hover:bg-violet-600/20 transition-all active:scale-95 whitespace-nowrap"
           >
-            <RotateCcw className="w-3 h-3" /> Today
+            <RotateCcw className="w-3 h-3" /> {t('reports.today', { defaultValue: 'Today' })}
           </button>
         )}
         <button

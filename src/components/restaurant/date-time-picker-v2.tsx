@@ -4,6 +4,7 @@ import * as React from "react"
 import { format } from "date-fns"
 import { CalendarDays, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslation } from "react-i18next"
 
 interface DateTimePickerProps {
   value?: Date
@@ -11,6 +12,7 @@ interface DateTimePickerProps {
 }
 
 export function DateTimePickerV2({ value, onChange }: DateTimePickerProps) {
+  const { t } = useTranslation()
   // ── Fully controlled — NO internal state ───────────────────────────────────
   // All display values are derived from the `value` prop every render.
   // Any user change calls `onChange`, which updates the parent, which
@@ -47,7 +49,7 @@ export function DateTimePickerV2({ value, onChange }: DateTimePickerProps) {
       {/* Date Input */}
       <div>
         <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">
-          Date
+          {t('booking.dateLabel', { defaultValue: 'Date' })}
         </label>
         <div className="relative flex items-center">
           <CalendarDays className="absolute left-3.5 w-5 h-5 text-violet-400 pointer-events-none z-10" />
@@ -69,7 +71,7 @@ export function DateTimePickerV2({ value, onChange }: DateTimePickerProps) {
       {/* Time Input */}
       <div>
         <label className="block text-xs font-bold text-muted-foreground mb-2 uppercase tracking-widest">
-          Time
+          {t('booking.timeLabel', { defaultValue: 'Time' })}
         </label>
         <div className="relative flex items-center">
           <Clock className="absolute left-3.5 w-5 h-5 text-emerald-400 pointer-events-none z-10" />

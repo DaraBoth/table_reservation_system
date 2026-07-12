@@ -1,5 +1,5 @@
 import { getActiveRestaurant } from '@/lib/restaurant-context'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getCachedUser } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { ReservationForm } from '@/components/restaurant/reservation-form'
 import type { Tables } from '@/lib/types/database'
@@ -44,7 +44,7 @@ export default async function EditReservationPage({ params }: Props) {
   const { t } = await getServerT()
   const { id, restaurantId: routeId } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) redirect('/login')
 
   const res = await getActiveRestaurant(routeId)
@@ -75,10 +75,17 @@ export default async function EditReservationPage({ params }: Props) {
     .eq('restaurant_id', membership.restaurant_id)
     .order('sort_order', { ascending: true })
 
-  const start = new Date(`${reservation.reservation_date}T${reservation.start_time}`)
-  const end = new Date(`${reservation.reservation_date}T${reservation.end_time}`)
+  // Validate the stored wall-clock strings are well-formed WITHOUT
+  // constructing a Date here — this is a Server Component, and the server's
+  // runtime timezone (UTC on Vercel) does not match the viewing browser's.
+  // Parsing `new Date(...)` here and serializing it to the client would
+  // silently shift the displayed/saved time for every non-UTC restaurant.
+  // The actual Date construction happens client-side inside
+  // RestaurantBookingForm/HotelReservationForm from these same raw strings.
+  const timeStringPattern = /^\d{2}:\d{2}(:\d{2})?$/
+  const hasValidTimes = timeStringPattern.test(reservation.start_time) && timeStringPattern.test(reservation.end_time)
 
-  if (isNaN(start.getTime())) {
+  if (!hasValidTimes) {
     return (
       <div className="p-8 text-center space-y-3">
         <p className="text-2xl">⚠️</p>
@@ -134,7 +141,7 @@ export default async function EditReservationPage({ params }: Props) {
         tables={tables || []}
         zones={zones || []}
         restaurantId={membership.restaurant_id}
-        initialData={{ ...reservation, start_time: start, end_time: end || undefined }}
+        initialData={reservation}
         businessType={businessType}
       />
     </div>

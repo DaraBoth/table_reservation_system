@@ -7,6 +7,7 @@ import { getTopCustomers, searchCustomers } from '@/app/actions/customers'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getTerms } from '@/lib/business-type'
+import { useTranslation } from 'react-i18next'
 
 interface Customer {
   id: string
@@ -23,6 +24,7 @@ interface CustomerSelectorProps {
 }
 
 export function CustomerSelector({ restaurantId, onSelect, className, businessType }: CustomerSelectorProps) {
+  const { t } = useTranslation()
   const [query, setQuery] = useState('')
   const [topCustomers, setTopCustomers] = useState<Customer[]>([])
   const [results, setResults] = useState<Customer[]>([])
@@ -67,7 +69,7 @@ export function CustomerSelector({ restaurantId, onSelect, className, businessTy
           <Search className="w-4 h-4" />
         </div>
         <Input
-          placeholder="Search returning guests by name or phone..."
+          placeholder={t('dashboard.searchReturningGuestsPlaceholder', { defaultValue: 'Search returning guests by name or phone...' })}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value)
@@ -98,7 +100,7 @@ export function CustomerSelector({ restaurantId, onSelect, className, businessTy
               <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar">
                 {isSearching ? (
                   <div className="p-4 text-center text-xs text-muted-foreground animate-pulse font-black uppercase tracking-widest">
-                    Searching database...
+                    {t('dashboard.searchingDatabase', { defaultValue: 'Searching database...' })}
                   </div>
                 ) : results.length > 0 ? (
                   <div className="grid gap-1">
@@ -115,7 +117,7 @@ export function CustomerSelector({ restaurantId, onSelect, className, businessTy
                           </div>
                           <div>
                             <p className="text-sm font-black text-foreground uppercase italic leading-none">{c.name}</p>
-                            <p className="text-[10px] text-muted-foreground font-bold mt-1 tracking-wider">{c.phone || 'No phone'}</p>
+                            <p className="text-[10px] text-muted-foreground font-bold mt-1 tracking-wider">{c.phone || t('dashboard.noPhone', { defaultValue: 'No phone' })}</p>
                           </div>
                         </div>
                         <div className="text-right">
@@ -126,7 +128,7 @@ export function CustomerSelector({ restaurantId, onSelect, className, businessTy
                   </div>
                 ) : (
                   <div className="p-4 text-center text-xs text-muted-foreground font-bold italic">
-                    No matching customers found.
+                    {t('dashboard.noMatchingCustomers', { defaultValue: 'No matching customers found.' })}
                   </div>
                 )}
               </div>
@@ -140,7 +142,7 @@ export function CustomerSelector({ restaurantId, onSelect, className, businessTy
         <div className="space-y-2">
           <div className="flex items-center gap-2 px-1">
             <Zap className="w-3 h-3 text-amber-500" />
-            <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Quick Select: Top Returning Guests</span>
+            <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{t('dashboard.quickSelectTopGuests', { defaultValue: 'Quick Select: Top Returning Guests' })}</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {topCustomers.map((c) => (

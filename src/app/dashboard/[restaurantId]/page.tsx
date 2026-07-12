@@ -1,6 +1,6 @@
 import { format } from 'date-fns'
 import { getActiveRestaurant } from '@/lib/restaurant-context'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getCachedUser } from '@/lib/supabase/server'
 import { countAvailableUnits } from '@/lib/dashboard-utils'
 import type { BusinessType } from '@/lib/business-type'
 import type { Tables } from '@/lib/types/database'
@@ -19,7 +19,7 @@ export default async function RestaurantDashboardPage({ params }: { params: Prom
 	const { restaurantId } = await params
 
 	const supabase = await createClient()
-	const { data: { user } } = await supabase.auth.getUser()
+	const user = await getCachedUser()
 	if (!user) return null
 
 	const res = await getActiveRestaurant(restaurantId)

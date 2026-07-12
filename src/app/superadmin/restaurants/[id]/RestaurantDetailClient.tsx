@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator'
 import type { Tables } from '@/lib/types/database'
 import { CalendarDays, Infinity } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface Props {
   restaurant: Tables<'restaurants'>
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export function RestaurantDetailClient({ restaurant, members }: Props) {
+  const { t } = useTranslation()
   const [subState, subAction, subPending] = useActionState(updateSubscription, null)
   const [restState, restAction, restPending] = useActionState(updateRestaurant, null)
   const [pwState, pwAction, pwPending] = useActionState(resetUserPassword, null)
@@ -47,17 +49,17 @@ export function RestaurantDetailClient({ restaurant, members }: Props) {
       <Card className="bg-card/50 border-border">
         <CardHeader>
           <CardTitle className="text-foreground flex items-center gap-2">
-            <CalendarDays className="w-5 h-5 text-violet-400" /> Subscription
+            <CalendarDays className="w-5 h-5 text-violet-400" /> {t('superadmin.subscriptionTitle', { defaultValue: 'Subscription' })}
           </CardTitle>
-          <CardDescription>Control access and billing period for this restaurant</CardDescription>
+          <CardDescription>{t('superadmin.subscriptionDescription', { defaultValue: 'Control access and billing period for this restaurant' })}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-3 mb-6">
             <Badge className={isExpired ? 'bg-red-500/20 text-red-400 border-red-500/30' : restaurant.is_active ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-muted text-muted-foreground'}>
-              {isExpired ? 'Expired' : restaurant.is_active ? 'Active' : 'Suspended'}
+              {isExpired ? t('superadmin.expired', { defaultValue: 'Expired' }) : restaurant.is_active ? t('superadmin.active', { defaultValue: 'Active' }) : t('superadmin.suspended', { defaultValue: 'Suspended' })}
             </Badge>
             <span className="text-sm text-muted-foreground">
-              Current: {restaurant.subscription_expires_at ? new Date(restaurant.subscription_expires_at).toLocaleString() : 'No Expiration'}
+              {t('superadmin.currentLabel', { defaultValue: 'Current:' })} {restaurant.subscription_expires_at ? new Date(restaurant.subscription_expires_at).toLocaleString() : t('superadmin.noExpiration', { defaultValue: 'No Expiration' })}
             </span>
           </div>
 
@@ -68,8 +70,8 @@ export function RestaurantDetailClient({ restaurant, members }: Props) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <Label className="text-foreground/70 text-sm font-bold flex items-center gap-2">
-                    Expiry Date
-                   {!expiryDate && <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-500">Unending</Badge>}
+                    {t('superadmin.expiryDateLabel', { defaultValue: 'Expiry Date' })}
+                   {!expiryDate && <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-500">{t('superadmin.unending', { defaultValue: 'Unending' })}</Badge>}
                   </Label>
                   
                   <Input
@@ -103,19 +105,19 @@ export function RestaurantDetailClient({ restaurant, members }: Props) {
                       onClick={() => setPreset(null)}
                       className="px-3 py-1.5 rounded-lg bg-muted border border-emerald-500/20 text-[10px] font-black text-emerald-500/80 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all uppercase tracking-tight flex items-center gap-1"
                     >
-                      <Infinity className="w-3 h-3" /> No Expiry
+                      <Infinity className="w-3 h-3" /> {t('superadmin.noExpiry', { defaultValue: 'No Expiry' })}
                     </button>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <Label className="text-foreground/70 text-sm font-bold">Access Status</Label>
+                  <Label className="text-foreground/70 text-sm font-bold">{t('superadmin.accessStatusLabel', { defaultValue: 'Access Status' })}</Label>
                   <select name="isActive" defaultValue={restaurant.is_active ? 'true' : 'false'}
                     className="w-full h-11 rounded-xl bg-muted/50 border border-border text-foreground px-3 text-sm focus:border-violet-500 focus:outline-none transition-all">
-                    <option value="true">Active (Allowed to Login)</option>
-                    <option value="false">Suspended (Blocked)</option>
+                    <option value="true">{t('superadmin.activeAllowedLogin', { defaultValue: 'Active (Allowed to Login)' })}</option>
+                    <option value="false">{t('superadmin.suspendedBlocked', { defaultValue: 'Suspended (Blocked)' })}</option>
                   </select>
-                  <p className="text-[10px] text-muted-foreground px-1 italic">Note: Suspended restaurants cannot access their dashboard regardless of expiry date.</p>
+                  <p className="text-[10px] text-muted-foreground px-1 italic">{t('superadmin.suspendedNote', { defaultValue: 'Note: Suspended restaurants cannot access their dashboard regardless of expiry date.' })}</p>
                 </div>
               </div>
             </div>
@@ -128,7 +130,7 @@ export function RestaurantDetailClient({ restaurant, members }: Props) {
               
               <Button type="submit" disabled={subPending}
                 className="w-full md:w-fit px-8 h-12 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 border-0 rounded-xl font-black shadow-lg shadow-violet-500/20">
-                {subPending ? 'Saving Settings...' : 'Update Subscription & Status'}
+                {subPending ? t('superadmin.savingSettings', { defaultValue: 'Saving Settings...' }) : t('superadmin.updateSubscriptionStatus', { defaultValue: 'Update Subscription & Status' })}
               </Button>
             </div>
           </form>
@@ -138,20 +140,20 @@ export function RestaurantDetailClient({ restaurant, members }: Props) {
       {/* Admin Members */}
       <Card className="bg-card/50 border-border">
         <CardHeader>
-          <CardTitle className="text-foreground">Admin Accounts</CardTitle>
-          <CardDescription>Reset passwords and manage admin status</CardDescription>
+          <CardTitle className="text-foreground">{t('nav.adminAccounts', { defaultValue: 'Admin Accounts' })}</CardTitle>
+          <CardDescription>{t('superadmin.adminAccountsDescription', { defaultValue: 'Reset passwords and manage admin status' })}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {members.filter(m => m.role === 'admin').map((m) => (
               <div key={m.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/40 border border-border/50">
                 <div>
-                  <p className="text-sm font-medium text-foreground">{m.profiles?.full_name || 'Admin'}</p>
-                  <p className="text-xs text-muted-foreground">Member ID: {m.user_id.slice(0, 8)}...</p>
+                  <p className="text-sm font-medium text-foreground">{m.profiles?.full_name || t('superadmin.defaultAdminName', { defaultValue: 'Admin' })}</p>
+                  <p className="text-xs text-muted-foreground">{t('superadmin.memberIdLabel', { id: m.user_id.slice(0, 8), defaultValue: 'Member ID: {{id}}...' })}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge className={m.is_active ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs' : 'bg-muted text-muted-foreground text-xs'}>
-                    {m.is_active ? 'Active' : 'Disabled'}
+                    {m.is_active ? t('superadmin.active', { defaultValue: 'Active' }) : t('dashboard.disabled', { defaultValue: 'Disabled' })}
                   </Badge>
                   {/* Toggle Status */}
                   <form action={toggleAction}>
@@ -159,14 +161,14 @@ export function RestaurantDetailClient({ restaurant, members }: Props) {
                     <input type="hidden" name="isActive" value={(!m.is_active).toString()} />
                     <Button type="submit" variant="outline" size="sm" disabled={togglePending}
                       className="border-border text-foreground/70 hover:text-foreground hover:bg-muted text-xs h-7">
-                      {m.is_active ? 'Disable' : 'Enable'}
+                      {m.is_active ? t('superadmin.disableAction', { defaultValue: 'Disable' }) : t('superadmin.enableAction', { defaultValue: 'Enable' })}
                     </Button>
                   </form>
                 </div>
               </div>
             ))}
             {members.filter(m => m.role === 'admin').length === 0 && (
-              <p className="text-muted-foreground text-sm text-center py-4">No admin accounts yet</p>
+              <p className="text-muted-foreground text-sm text-center py-4">{t('superadmin.noAdminAccountsYet', { defaultValue: 'No admin accounts yet' })}</p>
             )}
           </div>
 
@@ -175,7 +177,7 @@ export function RestaurantDetailClient({ restaurant, members }: Props) {
             <>
               <Separator className="my-4 bg-muted" />
               <div>
-                <p className="text-sm font-medium text-foreground/70 mb-3">Reset Admin Password</p>
+                <p className="text-sm font-medium text-foreground/70 mb-3">{t('superadmin.resetAdminPassword', { defaultValue: 'Reset Admin Password' })}</p>
                 <form action={pwAction} className="space-y-3">
                   <select name="userId"
                     className="w-full h-10 rounded-md bg-muted/50 border border-border text-foreground px-3 text-sm focus:border-violet-500 focus:outline-none">
@@ -183,13 +185,13 @@ export function RestaurantDetailClient({ restaurant, members }: Props) {
                       <option key={m.user_id} value={m.user_id}>{m.profiles?.full_name || m.user_id.slice(0, 8)}</option>
                     ))}
                   </select>
-                  <Input name="newPassword" type="password" placeholder="New password (min 6 chars)"
+                  <Input name="newPassword" type="password" placeholder={t('superadmin.newPasswordPlaceholder', { defaultValue: 'New password (min 6 chars)' })}
                     className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-violet-500" />
                   {pwState?.error && <p className="text-red-400 text-sm">{pwState.error}</p>}
                   {pwState?.success && <p className="text-emerald-400 text-sm">{pwState.success}</p>}
                   <Button type="submit" disabled={pwPending} variant="outline"
                     className="border-border text-foreground/70 hover:text-foreground hover:bg-muted">
-                    {pwPending ? 'Resetting...' : 'Reset Password'}
+                    {pwPending ? t('superadmin.resetting', { defaultValue: 'Resetting...' }) : t('superadmin.resetPasswordAction', { defaultValue: 'Reset Password' })}
                   </Button>
                 </form>
               </div>

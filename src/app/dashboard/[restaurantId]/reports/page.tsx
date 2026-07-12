@@ -1,5 +1,5 @@
 import { getActiveRestaurant } from '@/lib/restaurant-context'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getCachedUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { Tables } from '@/lib/types/database'
 import { format, startOfWeek, endOfWeek, addDays, isSameDay, parseISO } from 'date-fns'
@@ -35,7 +35,7 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
   const { t } = await getServerT()
   const { restaurantId } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) redirect('/login')
 
   const res = await getActiveRestaurant(restaurantId)

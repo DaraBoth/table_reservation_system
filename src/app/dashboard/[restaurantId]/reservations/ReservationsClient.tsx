@@ -219,12 +219,25 @@ export function ReservationsClient({
 
 
 
+  const hasMountedRef = useRef(false)
+
   useEffect(() => {
     const load = async () => {
+      if (!hasMountedRef.current) {
+        hasMountedRef.current = true
+        // The server component already fetched fresh data for `initialDate`
+        // (see reservations/page.tsx) and passed it in as `initialBookings` —
+        // re-running the identical query here on first mount would just
+        // discard that SSR head start and flash the same data in again. Only
+        // re-fetch on mount if the date has since diverged from what the
+        // server rendered for (shouldn't normally happen, but keeps this
+        // effect correct if selectedDate is ever initialized differently).
+        if (selectedDate === initialDate) return
+      }
       await fetchLatestData()
     }
     void load()
-  }, [fetchLatestData])
+  }, [fetchLatestData, selectedDate, initialDate])
 
   useEffect(() => {
     // Setup Realtime subscription

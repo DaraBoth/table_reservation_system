@@ -4,6 +4,7 @@ import React from 'react'
 import { LayoutGrid, List, Square } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 export type ViewStyle = 'grid' | 'list' | 'compact'
 
@@ -15,6 +16,7 @@ interface ViewSwitcherProps {
 }
 
 export function ViewSwitcher({ currentStyle, onStyleChange, disabled, className }: ViewSwitcherProps) {
+  const { t } = useTranslation()
   return (
     <Tabs 
       value={currentStyle} 
@@ -29,7 +31,7 @@ export function ViewSwitcher({ currentStyle, onStyleChange, disabled, className 
           className="px-3 gap-2 rounded-lg data-active:bg-background data-active:shadow-sm"
         >
           <LayoutGrid className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline text-[10px] font-black uppercase tracking-wider">Grid</span>
+          <span className="hidden sm:inline text-[10px] font-black uppercase tracking-wider">{t('dashboard.viewGrid', { defaultValue: 'Grid' })}</span>
         </TabsTrigger>
         <TabsTrigger 
           id="view-style-list"
@@ -38,7 +40,7 @@ export function ViewSwitcher({ currentStyle, onStyleChange, disabled, className 
           className="px-3 gap-2 rounded-lg data-active:bg-background data-active:shadow-sm"
         >
           <List className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline text-[10px] font-black uppercase tracking-wider">List</span>
+          <span className="hidden sm:inline text-[10px] font-black uppercase tracking-wider">{t('dashboard.viewList', { defaultValue: 'List' })}</span>
         </TabsTrigger>
         <TabsTrigger 
           id="view-style-compact"
@@ -47,7 +49,7 @@ export function ViewSwitcher({ currentStyle, onStyleChange, disabled, className 
           className="px-3 gap-2 rounded-lg data-active:bg-background data-active:shadow-sm"
         >
           <Square className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline text-[10px] font-black uppercase tracking-wider">Compact</span>
+          <span className="hidden sm:inline text-[10px] font-black uppercase tracking-wider">{t('dashboard.viewCompact', { defaultValue: 'Compact' })}</span>
         </TabsTrigger>
       </TabsList>
     </Tabs>

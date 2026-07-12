@@ -26,13 +26,21 @@ import type { BusinessType } from '@/lib/business-type'
 import { CustomerSelector } from '@/components/dashboard/CustomerSelector'
 import { groupAndSortTables } from '@/lib/sorting'
 import { getOrCreateDeviceToken } from '@/lib/push-client'
+import { useTranslation } from 'react-i18next'
 
 
 interface Props {
   tables: Tables<'physical_tables'>[]
   zones: { id: string, name: string, sort_order: number }[]
   restaurantId: string
-  initialData?: Omit<Tables<'reservations'>, 'start_time' | 'end_time'> & { start_time: Date; end_time?: Date }
+  // Raw reservation row (start_time/end_time/reservation_date stay as the
+  // naive wall-clock strings straight from the DB) — NEVER pre-parsed into a
+  // Date on the server. Constructing `new Date(...)` from these must happen
+  // client-side only (see startTime initializer below), otherwise the
+  // server's UTC runtime and the browser's local timezone disagree and the
+  // displayed/saved time silently shifts. See CLAUDE.md's note on
+  // extractWallClockTime for the same rule applied elsewhere.
+  initialData?: Tables<'reservations'>
   preSelectedTableId?: string
   businessType: BusinessType
 }
@@ -42,6 +50,7 @@ const slideInRight = 'animate-[slideInRight_0.28s_ease-out_forwards]'
 const slideInLeft = 'animate-[slideInLeft_0.28s_ease-out_forwards]'
 
 export function RestaurantBookingForm({ tables, zones, restaurantId, initialData, preSelectedTableId, businessType }: Props) {
+  const { t } = useTranslation()
   const isEdit = !!initialData
   const [state, action, pending] = useActionState(isEdit ? updateReservation : createReservation, null)
   const [isOccLoading, startOccupancyTransition] = useTransition()
@@ -56,8 +65,11 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
 
   // Primary Arrival
   const [startTime, setStartTime] = React.useState<Date>(() => {
-    if (initialData) return initialData.start_time
-    
+    // Client-side only Date construction from the raw wall-clock strings —
+    // safe because this parse and every subsequent format/display of it
+    // happen in the same (browser) timezone frame.
+    if (initialData) return new Date(`${initialData.reservation_date}T${initialData.start_time}`)
+
     const d = urlDate ? new Date(`${urlDate}T19:00:00`) : new Date()
     if (!urlDate) {
       d.setHours(19, 0, 0, 0)
@@ -174,7 +186,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
           >
             <span className="text-[10px] font-black uppercase tracking-widest mb-1">{table.table_name}</span>
             <div className="flex items-center gap-1">
-              <span className="text-[9px] font-bold">{table.capacity} Seats</span>
+              <span className="text-[9px] font-bold">{t('booking.countUnit', { count: table.capacity, unit: terms.capacityUnit, defaultValue: '{{count}} {{unit}}' })}</span>
             </div>
           </button>
         )
@@ -213,7 +225,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
             <section className="bg-card rounded-3xl p-4 border border-border space-y-4 shadow-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
-                  <CalendarDays className="w-4 h-4 text-violet-400" /> When are you dining?
+                  <CalendarDays className="w-4 h-4 text-violet-400" /> {t('booking.whenAreYouDining', { defaultValue: 'When are you dining?' })}
                 </h2>
               </div>
 
@@ -225,7 +237,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
                       <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center">
                         <Star className={cn("w-4 h-4", bookingStatus === 'confirmed' ? "text-emerald-400 fill-emerald-400" : "text-muted-foreground/60")} />
                       </div>
-                      <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Primary Slot</p>
+                      <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">{t('booking.primarySlot', { defaultValue: 'Primary Slot' })}</p>
                     </div>
 
                     <div className="flex bg-card/80 p-0.5 rounded-xl border border-border">
@@ -237,7 +249,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
                           bookingStatus === 'confirmed' ? "bg-emerald-500 text-foreground shadow-lg shadow-emerald-500/20" : "text-muted-foreground"
                         )}
                       >
-                        Conf
+                        {t('booking.confShort', { defaultValue: 'Conf' })}
                       </button>
                       <button
                         type="button"
@@ -247,7 +259,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
                           bookingStatus === 'pending' ? "bg-amber-500 text-foreground shadow-lg shadow-amber-500/20" : "text-muted-foreground"
                         )}
                       >
-                        Wait
+                        {t('booking.waitShort', { defaultValue: 'Wait' })}
                       </button>
                     </div>
                   </div>
@@ -257,7 +269,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
                       <DateTimePickerV2 value={startTime} onChange={setStartTime} />
                     </div>
                     <div className="w-full sm:w-24">
-                      <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">Guests</Label>
+                      <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">{t('booking.guestsFieldLabel', { defaultValue: 'Guests' })}</Label>
                       <div className="relative">
                         <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400 pointer-events-none" />
                         <Input
@@ -282,7 +294,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
                               <div className="w-8 h-8 rounded-xl bg-violet-500/10 flex items-center justify-center">
                                 <CalendarDays className="w-4 h-4 text-violet-400" />
                               </div>
-                              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Added Slot #{index + 1}</p>
+                              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{t('booking.addedSlotNumber', { number: index + 1, defaultValue: 'Added Slot #{{number}}' })}</p>
                             </div>
 
                             <div className="flex items-center gap-2">
@@ -295,7 +307,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
                                     slot.status === 'confirmed' ? "bg-emerald-500 text-foreground" : "text-muted-foreground"
                                   )}
                                 >
-                                  Conf
+                                  {t('booking.confShort', { defaultValue: 'Conf' })}
                                 </button>
                                 <button
                                   type="button"
@@ -305,7 +317,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
                                     slot.status === 'pending' ? "bg-amber-500 text-foreground" : "text-muted-foreground"
                                   )}
                                 >
-                                  Wait
+                                  {t('booking.waitShort', { defaultValue: 'Wait' })}
                                 </button>
                               </div>
                               <button
@@ -323,7 +335,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
                               <DateTimePickerV2 value={slot.date} onChange={(date) => updateExtraSlot(slot.id, date)} />
                             </div>
                             <div className="w-full sm:w-24">
-                              <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">Guests</Label>
+                              <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">{t('booking.guestsFieldLabel', { defaultValue: 'Guests' })}</Label>
                               <div className="relative">
                                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-400 pointer-events-none" />
                                 <Input
@@ -348,7 +360,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
                   className="w-full h-16 flex items-center justify-center gap-3 bg-background/20 border-2 border-dashed border-border rounded-[2rem] text-muted-foreground hover:border-violet-500/50 hover:text-violet-400 transition-all hover:bg-violet-500/5 group"
                 >
                   <PlusCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                  <span className="text-sm font-black uppercase tracking-[0.2em]">Add Another Date</span>
+                  <span className="text-sm font-black uppercase tracking-[0.2em]">{t('booking.addAnotherDate', { defaultValue: 'Add Another Date' })}</span>
                 </button>
               </div>
             </section>
@@ -358,10 +370,12 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-6">
                 <div className="space-y-1">
                   <h2 className="text-sm font-black text-foreground uppercase tracking-[0.2em] flex items-center gap-2">
-                    Table Selection
+                    {t('booking.unitSelectionHeading', { unit: terms.unit, defaultValue: '{{unit}} Selection' })}
                   </h2>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">
-                    {bookingStatus === 'confirmed' ? 'Select an available table' : 'Choose any table for waitlist'}
+                    {bookingStatus === 'confirmed'
+                      ? t('booking.selectAvailableUnit', { unit: terms.unitLower, defaultValue: 'Select an available {{unit}}' })
+                      : t('booking.chooseAnyUnitWaitlist', { unit: terms.unitLower, defaultValue: 'Choose any {{unit}} for waitlist' })}
                   </p>
                 </div>
               </div>
@@ -385,7 +399,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 px-1">
                       <div className="h-4 w-1 rounded-full bg-muted" />
-                      <h3 className="text-xs font-black text-muted-foreground uppercase tracking-widest italic">Unassigned</h3>
+                      <h3 className="text-xs font-black text-muted-foreground uppercase tracking-widest italic">{t('dashboard.unassigned', { defaultValue: 'Unassigned' })}</h3>
                     </div>
                     {renderTableGrid(unassigned)}
                   </div>
@@ -399,7 +413,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
               onClick={() => goTo(2)}
               className="w-full h-16 bg-gradient-to-r from-emerald-600 to-indigo-600 text-foreground font-black text-lg rounded-[2rem] shadow-xl active:scale-[0.98] transition-all"
             >
-              Next: Customer Details <ArrowRight className="w-6 h-6 ml-2" />
+              {t('booking.nextCustomerDetails', { defaultValue: 'Next: Customer Details' })} <ArrowRight className="w-6 h-6 ml-2" />
             </Button>
           </div>
         )}
@@ -409,7 +423,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
           <div key={`step2-${renderKey}`} className={cn('space-y-6', slideClass)}>
             <section className="bg-card rounded-3xl p-4 border border-border space-y-4">
               <h2 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-amber-400" /> Guest Details
+                <User className="w-3.5 h-3.5 text-amber-400" /> {t('booking.guestDetailsHeading', { defaultValue: 'Guest Details' })}
               </h2>
 
               <CustomerSelector
@@ -424,37 +438,37 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
 
               <div className="space-y-4">
                 <div>
-                  <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">Name</Label>
+                  <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">{t('booking.nameLabel', { defaultValue: 'Name' })}</Label>
                   <div className="relative">
                     <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
                     <Input
                       value={guestName}
                       onChange={(e) => setGuestName(e.target.value)}
-                      placeholder="Who is dining?"
+                      placeholder={t('booking.whoIsDiningPlaceholder', { defaultValue: 'Who is dining?' })}
                       className="h-14 bg-background border-border text-foreground pl-10 font-bold rounded-2xl focus:border-emerald-500 transition-all"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">Phone Number (Optional)</Label>
+                  <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">{t('booking.phoneNumberOptionalLabel', { defaultValue: 'Phone Number (Optional)' })}</Label>
                   <div className='relative'>
                     <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
                     <Input
                       value={guestPhone}
                       onChange={(e) => setGuestPhone(e.target.value)}
-                      placeholder="0123456789"
+                      placeholder={t('booking.phoneNumberPlaceholder', { defaultValue: '0123456789' })}
                       className="h-14 bg-background border-border text-foreground pl-10 font-bold rounded-2xl focus:border-emerald-500 transition-all"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">Special Requests / Notes</Label>
+                  <Label className="text-[10px] font-black text-muted-foreground uppercase mb-2 px-1 block tracking-widest">{t('booking.specialRequestsLabel', { defaultValue: 'Special Requests / Notes' })}</Label>
                   <Textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Birthdays, allergies, etc..."
+                    placeholder={t('booking.specialRequestsPlaceholder', { defaultValue: 'Birthdays, allergies, etc...' })}
                     className="bg-background border-border text-foreground font-bold rounded-2xl resize-none h-32"
                   />
                 </div>
@@ -471,7 +485,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
                 disabled={!guestName}
                 className="flex-1 h-16 bg-gradient-to-r from-emerald-600 to-indigo-600 text-foreground font-black text-lg rounded-[2rem] shadow-xl active:scale-[0.98] transition-all"
               >
-                Review Schedule <ArrowRight className="w-6 h-6 ml-2" />
+                {t('booking.reviewSchedule', { defaultValue: 'Review Schedule' })} <ArrowRight className="w-6 h-6 ml-2" />
               </Button>
             </div>
           </div>
@@ -483,9 +497,9 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
 
             <div className="px-1 pt-2">
               <h2 className="text-xl font-black text-foreground tracking-tight flex items-center gap-2">
-                Ready to dining? <Sparkles className="w-5 h-5 text-amber-400 fill-amber-400" />
+                {t('booking.readyToDine', { defaultValue: 'Ready to dining?' })} <Sparkles className="w-5 h-5 text-amber-400 fill-amber-400" />
               </h2>
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Review your dining schedule before confirming</p>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">{t('booking.reviewDiningSchedule', { defaultValue: 'Review your dining schedule before confirming' })}</p>
             </div>
 
             <div className="space-y-4">
@@ -494,7 +508,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
                   <div className="w-9 h-9 rounded-xl bg-violet-600/20 flex items-center justify-center">
                     <Clock className="w-4 h-4 text-violet-400" />
                   </div>
-                  <p className="text-xs font-black text-foreground uppercase tracking-widest">Dining Schedule</p>
+                  <p className="text-xs font-black text-foreground uppercase tracking-widest">{t('booking.diningScheduleHeading', { defaultValue: 'Dining Schedule' })}</p>
                 </div>
 
                 <div className="relative pl-4 space-y-8">
@@ -508,13 +522,13 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
                       bookingStatus === 'confirmed' ? "bg-emerald-500 shadow-lg shadow-emerald-500/40" : "bg-amber-500"
                     )} />
                     <div className="flex flex-col">
-                      <p className="text-xs text-muted-foreground font-black uppercase tracking-widest mb-1.5 opacity-60">Primary Slot</p>
+                      <p className="text-xs text-muted-foreground font-black uppercase tracking-widest mb-1.5 opacity-60">{t('booking.primarySlot', { defaultValue: 'Primary Slot' })}</p>
                       <div className="flex items-center gap-2 flex-wrap text-foreground">
                         <span className="font-black text-base">{startTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
                         <span className="text-muted-foreground text-sm opacity-50">at</span>
                         <span className="font-black text-base text-violet-400">{startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                         <span className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-wider border border-emerald-500/20">
-                          {partySize} People
+                          {t('booking.countUnit', { count: partySize, unit: terms.partyUnit, defaultValue: '{{count}} {{unit}}' })}
                         </span>
                       </div>
                     </div>
@@ -527,13 +541,13 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
                         slot.status === 'confirmed' ? "bg-emerald-500 shadow-lg shadow-emerald-500/40" : "bg-amber-500"
                       )} />
                       <div className="flex flex-col">
-                        <p className="text-xs text-muted-foreground font-black uppercase tracking-widest mb-1.5 opacity-60 italic">Added Slot #{i + 1}</p>
+                        <p className="text-xs text-muted-foreground font-black uppercase tracking-widest mb-1.5 opacity-60 italic">{t('booking.addedSlotNumber', { number: i + 1, defaultValue: 'Added Slot #{{number}}' })}</p>
                         <div className="flex items-center gap-2 flex-wrap text-foreground">
                           <span className="font-black text-base">{slot.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
                           <span className="text-muted-foreground text-sm opacity-50">at</span>
                           <span className="font-black text-base text-violet-400">{slot.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                           <span className="px-2 py-0.5 rounded-lg bg-violet-500/10 text-violet-300 text-[10px] font-black uppercase tracking-wider border border-violet-500/20">
-                            {slot.partySize} People
+                            {t('booking.countUnit', { count: slot.partySize, unit: terms.partyUnit, defaultValue: '{{count}} {{unit}}' })}
                           </span>
                         </div>
                       </div>
@@ -550,10 +564,10 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
                       <UtensilsCrossed className="w-6 h-6 text-indigo-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Assigned Table</p>
+                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">{t('booking.assignedUnitLabel', { unit: terms.unit, defaultValue: 'Assigned {{unit}}' })}</p>
                       <div className="flex items-baseline gap-2">
                         <p className="text-foreground font-black text-lg truncate">{selectedTable.table_name}</p>
-                        <p className="text-muted-foreground text-xs font-bold whitespace-nowrap">up to {selectedTable.capacity} Seats</p>
+                        <p className="text-muted-foreground text-xs font-bold whitespace-nowrap">{t('booking.upToCapacity', { capacity: selectedTable.capacity, unit: terms.capacityUnit, defaultValue: 'up to {{capacity}} {{unit}}' })}</p>
                       </div>
                     </div>
                   </div>
@@ -565,7 +579,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
                     <User className="w-6 h-6 text-amber-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Guest Details</p>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">{t('booking.guestDetailsHeading', { defaultValue: 'Guest Details' })}</p>
                     <p className="text-foreground font-black text-lg truncate">{guestName}</p>
                     {guestPhone && <p className="text-muted-foreground text-sm font-bold mt-0.5">{guestPhone}</p>}
                   </div>
@@ -579,9 +593,9 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
                 disabled={pending || !selectedTableId || !guestName}
                 className="w-full h-16 bg-gradient-to-r from-violet-600 to-indigo-600 text-foreground font-black text-lg rounded-[2rem] shadow-xl shadow-violet-500/30 active:scale-[0.98] transition-all"
               >
-                {pending ? 'Reserving...' : (
+                {pending ? t('booking.reserving', { defaultValue: 'Reserving...' }) : (
                   <span className="flex items-center gap-2">
-                    Confirm Dining <ArrowRight className="w-6 h-6" />
+                    {t('booking.confirmDining', { defaultValue: 'Confirm Dining' })} <ArrowRight className="w-6 h-6" />
                   </span>
                 )}
               </Button>
@@ -590,7 +604,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
                 onClick={() => goTo(2)}
                 className="w-full h-12 bg-card border border-border text-foreground/70 font-semibold text-sm rounded-2xl flex items-center justify-center gap-2"
               >
-                <ChevronLeft className="w-4 h-4" /> Go Back
+                <ChevronLeft className="w-4 h-4" /> {t('booking.goBack', { defaultValue: 'Go Back' })}
               </button>
             </div>
           </div>

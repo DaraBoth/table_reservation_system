@@ -1,6 +1,6 @@
 import { getActiveRestaurant } from '@/lib/restaurant-context'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getCachedUser } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { CreateStaffDialog } from './CreateStaffDialog'
 import { StaffPasswordResetButton } from './StaffPasswordReset'
@@ -22,7 +22,7 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
   const { t, language } = await getServerT()
   const { restaurantId } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) return null
 
   const res = await getActiveRestaurant(restaurantId)

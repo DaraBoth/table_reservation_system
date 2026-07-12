@@ -16,6 +16,7 @@ import {
   X,
   ChevronRight,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface SuperadminNavProps {
   userName: string
@@ -23,16 +24,17 @@ interface SuperadminNavProps {
   avatarUrl?: string | null
 }
 
-const NAV_ITEMS = [
-  { href: '/superadmin',             label: 'Overview',       icon: LayoutDashboard },
-  { href: '/superadmin/restaurants', label: 'Restaurants',    icon: Utensils },
-  { href: '/superadmin/users',       label: 'Users',          icon: Users },
-  { href: '/superadmin/admins',      label: 'Admin Accounts', icon: ShieldCheck },
-]
-
 export function SuperadminNav({ userName, userEmail, avatarUrl }: SuperadminNavProps) {
+  const { t } = useTranslation()
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+
+  const NAV_ITEMS = [
+    { href: '/superadmin',             label: t('nav.overview', { defaultValue: 'Overview' }),           icon: LayoutDashboard },
+    { href: '/superadmin/restaurants', label: t('superadmin.restaurants', { defaultValue: 'Restaurants' }), icon: Utensils },
+    { href: '/superadmin/users',       label: t('nav.users', { defaultValue: 'Users' }),                  icon: Users },
+    { href: '/superadmin/admins',      label: t('nav.adminAccounts', { defaultValue: 'Admin Accounts' }), icon: ShieldCheck },
+  ]
 
   const NavLinks = ({ onClick }: { onClick?: () => void }) => (
     <>
@@ -73,10 +75,11 @@ export function SuperadminNav({ userName, userEmail, avatarUrl }: SuperadminNavP
             <Image src="/logo.png" alt="TableBook Logo" fill className="object-cover" />
           </div>
           <div>
+            {/* Brand name — intentionally not translated (see comment on task 5adc8651 re: BookJM vs TableBook inconsistency, a product decision not a coder call) */}
             <p className="text-foreground font-bold text-sm">TableBook</p>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Superadmin</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t('superadmin.superadminLabel', { defaultValue: 'Superadmin' })}</span>
             </div>
           </div>
         </div>
@@ -104,7 +107,7 @@ export function SuperadminNav({ userName, userEmail, avatarUrl }: SuperadminNavP
           <form action={logout}>
             <button type="submit" className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm text-muted-foreground hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all font-semibold">
               <LogOut className="w-4 h-4" />
-              Sign Out
+              {t('common.signOut', { defaultValue: 'Sign Out' })}
             </button>
           </form>
         </div>
@@ -116,7 +119,7 @@ export function SuperadminNav({ userName, userEmail, avatarUrl }: SuperadminNavP
           <div className="relative w-8 h-8 overflow-hidden">
             <Image src="/logo.png" alt="TableBook Logo" fill className="object-cover" />
           </div>
-          <span className="text-foreground font-bold text-sm">Superadmin</span>
+          <span className="text-foreground font-bold text-sm">{t('superadmin.superadminLabel', { defaultValue: 'Superadmin' })}</span>
         </div>
         <button
           onClick={() => setOpen(true)}
@@ -140,6 +143,7 @@ export function SuperadminNav({ userName, userEmail, avatarUrl }: SuperadminNavP
                 <div className="relative w-8 h-8 overflow-hidden">
                   <Image src="/logo.png" alt="TableBook Logo" fill className="object-cover" />
                 </div>
+                {/* Brand name — intentionally not translated (see comment on task 5adc8651 re: BookJM vs TableBook inconsistency, a product decision not a coder call) */}
                 <span className="text-foreground font-bold text-sm">TableBook</span>
               </div>
               <button onClick={() => setOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground">
@@ -170,7 +174,7 @@ export function SuperadminNav({ userName, userEmail, avatarUrl }: SuperadminNavP
               <form action={logout}>
                 <button type="submit" className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all font-semibold">
                   <LogOut className="w-4 h-4" />
-                  Sign Out
+                  {t('common.signOut', { defaultValue: 'Sign Out' })}
                 </button>
               </form>
             </div>

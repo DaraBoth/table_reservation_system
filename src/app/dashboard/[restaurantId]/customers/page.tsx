@@ -1,5 +1,5 @@
 import { getActiveRestaurant } from '@/lib/restaurant-context'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getCachedUser } from '@/lib/supabase/server'
 import { AddCustomerForm } from './AddCustomerForm'
 import { DeleteCustomerButton } from './DeleteCustomerButton'
 import { Phone, Users2, Plus } from 'lucide-react'
@@ -7,6 +7,7 @@ import { EditCustomerDialog } from './EditCustomerDialog'
 import { Button } from '@/components/ui/button'
 import { createPrivateMetadata } from '@/lib/seo'
 import { getServerT } from '@/i18n/server'
+import { getInitials } from '@/lib/utils'
 
 export const metadata = createPrivateMetadata('Customers', 'Manage saved guest profiles and repeat customer details.')
 
@@ -14,7 +15,7 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
   const { t } = await getServerT()
   const { restaurantId } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) return null
 
   const res = await getActiveRestaurant(restaurantId)
@@ -59,7 +60,7 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
             <div key={c.id} className="bg-card border border-border rounded-3xl p-5 flex items-center gap-4">
               {/* Avatar */}
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center text-base font-black text-foreground flex-shrink-0 shadow-lg shadow-violet-500/20">
-                {c.name.slice(0, 2).toUpperCase()}
+                {getInitials(c.name)}
               </div>
 
               {/* Info */}

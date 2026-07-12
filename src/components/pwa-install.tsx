@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react'
 import { Download, X, Smartphone } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 export function PWAInstallBanner() {
+  const { t } = useTranslation()
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [isInstalled, setIsInstalled] = useState(false)
   const [isIOS, setIsIOS] = useState(false)
@@ -34,7 +36,7 @@ export function PWAInstallBanner() {
     const handleAppInstalled = () => {
       setIsInstalled(true)
       setInstallPrompt(null)
-      toast.success('App installed successfully!')
+      toast.success(t('dashboard.appInstalledSuccess', { defaultValue: 'App installed successfully!' }))
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
@@ -44,6 +46,7 @@ export function PWAInstallBanner() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
       window.removeEventListener('appinstalled', handleAppInstalled)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `t` is stable from i18next; only run this setup once on mount
   }, [])
 
   const handleInstall = async () => {
@@ -57,7 +60,7 @@ export function PWAInstallBanner() {
   }
 
   const handleIOSPrompt = () => {
-    toast.info('To install: tap the Share button in Safari, then select "Add to Home Screen"', {
+    toast.info(t('dashboard.iosInstallInstructions', { defaultValue: 'To install: tap the Share button in Safari, then select "Add to Home Screen"' }), {
       duration: 7000,
       icon: <Smartphone className="w-4 h-4 text-violet-500" />,
     })
@@ -80,11 +83,11 @@ export function PWAInstallBanner() {
           <Download className="w-4 h-4 text-violet-400" />
         </div>
         <div className="min-w-0">
-          <p className="text-xs font-black text-foreground uppercase tracking-tight">Install the App</p>
+          <p className="text-xs font-black text-foreground uppercase tracking-tight">{t('dashboard.installTheApp', { defaultValue: 'Install the App' })}</p>
           <p className="text-[10px] text-muted-foreground font-medium truncate">
             {isIOS
-              ? 'Add to Home Screen to receive push notifications'
-              : 'Get push notifications and a native app experience'}
+              ? t('dashboard.addToHomeScreenHint', { defaultValue: 'Add to Home Screen to receive push notifications' })
+              : t('dashboard.getPushNotificationsHint', { defaultValue: 'Get push notifications and a native app experience' })}
           </p>
         </div>
       </div>
@@ -94,13 +97,13 @@ export function PWAInstallBanner() {
           onClick={isIOS ? handleIOSPrompt : handleInstall}
           className="h-8 px-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg shadow-violet-500/20"
         >
-          {isIOS ? 'How?' : 'Install'}
+          {isIOS ? t('dashboard.howToInstall', { defaultValue: 'How?' }) : t('dashboard.install', { defaultValue: 'Install' })}
         </button>
         <button
           type="button"
           onClick={dismiss}
           className="w-8 h-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
-          aria-label="Dismiss"
+          aria-label={t('dashboard.dismiss', { defaultValue: 'Dismiss' })}
         >
           <X className="w-4 h-4" />
         </button>

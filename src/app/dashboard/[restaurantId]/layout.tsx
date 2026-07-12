@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { getCachedUser } from '@/lib/supabase/server'
 import { BottomNav } from '@/components/layout/bottom-nav'
 import { TopBar } from '@/components/layout/top-bar'
 import { Sidebar } from '@/components/layout/sidebar'
@@ -31,8 +31,7 @@ export default async function DashboardLayout({
   params: Promise<{ restaurantId: string }>
 }) {
   const { restaurantId } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) redirect('/login')
 
   const res = await getActiveRestaurant(restaurantId)
@@ -50,12 +49,11 @@ export default async function DashboardLayout({
     redirect(`/dashboard/${activeSlug}`)
   }
 
-  const { membership: membershipRaw, allMemberships: allMembershipsRaw } = res as any
+  const { membership: membershipRaw, allMemberships: allMembershipsRaw, profile: profileRaw } = res as any
   const membership = membershipRaw
   const allMemberships = allMembershipsRaw
   if (membership.role === 'superadmin') redirect('/superadmin')
 
-  const { data: profileRaw } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', user.id).single()
   const profile = profileRaw as { full_name: string | null, avatar_url: string | null } | null
 
   const isAdmin = membership.role === 'admin'

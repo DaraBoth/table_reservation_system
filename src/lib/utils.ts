@@ -6,6 +6,34 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Returns up to `count` grapheme clusters from `text` for use as avatar
+ * initials, uppercased where the script has letter casing (Latin, Cyrillic,
+ * etc.) — toUpperCase() is a harmless no-op for scripts without casing
+ * (Khmer, Chinese, Korean), so it's safe to always apply.
+ *
+ * Uses Intl.Segmenter for grapheme-cluster-aware slicing so combining marks
+ * (e.g. Khmer consonant shifters/subscripts) don't get split apart — a plain
+ * string.slice()/substring() operates on UTF-16 code units and can cut a
+ * multi-part grapheme cluster in half, producing a broken/malformed glyph.
+ */
+export function getInitials(text: string, count = 2): string {
+  const trimmed = text.trim()
+  if (!trimmed) return ''
+
+  if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
+    const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+    const graphemes = Array.from(segmenter.segment(trimmed), (s) => s.segment)
+    return graphemes.slice(0, count).join('').toUpperCase()
+  }
+
+  // Fallback for environments without Intl.Segmenter: iterate by Unicode
+  // code point (Array.from on a string) rather than raw UTF-16 code units —
+  // still not fully grapheme-cluster-safe, but a meaningful improvement over
+  // a plain slice() for the common case of astral-plane characters.
+  return Array.from(trimmed).slice(0, count).join('').toUpperCase()
+}
+
+/**
  * Parses a Postgres tsrange string like '["2024-01-01 12:00:00+00", "2024-01-01 14:00:00+00")'
  * and returns the start Date.
  */

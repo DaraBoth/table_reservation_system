@@ -229,7 +229,7 @@ export function BottomNav({
                         className="w-full h-11 pl-11 pr-12 rounded-2xl bg-card border border-border/50 text-[11px] text-foreground font-bold placeholder:text-muted-foreground focus:outline-none focus:border-violet-500/50 focus:ring-4 focus:ring-violet-500/5 transition-all"
                       />
                       <div className="absolute right-4 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded border border-border text-[8px] font-black text-muted-foreground uppercase tracking-widest hidden sm:block">
-                        Esc
+                        {t('common.escKey', { defaultValue: 'Esc' })}
                       </div>
                     </div>
 
@@ -367,6 +367,7 @@ export function BottomNav({
               </div>
 
               <div className="p-8 bg-card/10 border-t border-border/50 flex flex-col gap-1 items-center">
+                {/* Brand name — intentionally not translated (see comment on task 5adc8651 re: BookJM vs TableBook inconsistency, a product decision not a coder call) */}
                 <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em]">
                   BookJM
                 </p>

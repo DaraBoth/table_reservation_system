@@ -10,7 +10,10 @@ interface Props {
   tables: Tables<'physical_tables'>[]
   zones: { id: string, name: string, sort_order: number }[]
   restaurantId: string
-  initialData?: Omit<Tables<'reservations'>, 'start_time' | 'end_time'> & { start_time: Date; end_time?: Date }
+  // Raw reservation row — see the timezone-safety comment on this same prop
+  // in RestaurantBookingForm/HotelReservationForm. Never pre-parse
+  // start_time/end_time into a Date before this reaches a client component.
+  initialData?: Tables<'reservations'>
   preSelectedTableId?: string
   businessType?: BusinessType
 }

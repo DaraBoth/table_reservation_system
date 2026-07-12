@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getCachedUser } from '@/lib/supabase/server'
 import type { BusinessType } from '@/lib/business-type'
 import { UnitsClient } from '../UnitsClient'
 import { getActiveRestaurant } from '@/lib/restaurant-context'
@@ -18,7 +18,7 @@ export default async function ManageUnitsPage({ params }: { params: Promise<{ re
   await getServerT()
   const { restaurantId } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) return null
 
   const res = await getActiveRestaurant(restaurantId)

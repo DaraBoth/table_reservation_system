@@ -1,5 +1,5 @@
 import { getActiveRestaurant } from '@/lib/restaurant-context'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getCachedUser } from '@/lib/supabase/server'
 import { CreateReservationForm } from './CreateReservationForm'
 import type { BusinessType } from '@/lib/business-type'
 import { createPrivateMetadata } from '@/lib/seo'
@@ -17,7 +17,7 @@ export default async function NewReservationPage({ params, searchParams }: { par
   const { t } = await getServerT()
   const { restaurantId: routeId } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCachedUser()
   if (!user) return null
 
   const res = await getActiveRestaurant(routeId)
