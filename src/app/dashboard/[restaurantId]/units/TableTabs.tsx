@@ -7,10 +7,10 @@ import { LayoutGrid, Settings2, ShieldCheck, CircleCheck, CircleX, User } from '
 import { CreateUnitDialog } from './CreateUnitDialog'
 import { EditUnitSheet } from './EditUnitSheet'
 import { Badge } from '@/components/ui/badge'
-import Link from 'next/link'
 import type { Tables } from '@/lib/types/database'
 import { getTerms } from '@/lib/business-type'
 import { useTranslation } from 'react-i18next'
+import { useBookingSheet } from '@/components/dashboard/BookingSheetProvider'
 
 interface TableTabsProps {
   tables: Tables<'physical_tables'>[]
@@ -23,6 +23,7 @@ interface TableTabsProps {
 
 export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, restaurantId }: TableTabsProps) {
   const { t } = useTranslation()
+  const { openBooking } = useBookingSheet()
   const [activeTab, setActiveTab] = useState<'status' | 'settings'>('status')
   const terms = getTerms(businessType)
   const occupiedLabel = terms.hasCheckout
@@ -144,9 +145,14 @@ export function TableTabs({ tables, busyMap, unitsLabel, isAdmin, businessType, 
               )
 
               return isTappable ? (
-                <Link key={table.id} href={`/dashboard/${restaurantId}/reservations/new?tableId=${table.id}`} className="h-full">
+                <button
+                  key={table.id}
+                  type="button"
+                  onClick={() => openBooking({ tableId: table.id })}
+                  className="h-full text-left"
+                >
                   {card}
-                </Link>
+                </button>
               ) : (
                 <div key={table.id} className="h-full">{card}</div>
               )

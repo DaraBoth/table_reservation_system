@@ -4,13 +4,13 @@ import * as React from 'react'
 import { format, parseISO } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
-import Link from 'next/link'
 import { EditUnitSheet } from './EditUnitSheet'
 import { User, Settings2, Activity } from 'lucide-react'
 import { motion, useMotionValue, useTransform } from 'framer-motion'
 import type { Tables } from '@/lib/types/database'
 import { getTerms } from '@/lib/business-type'
 import { useTranslation } from 'react-i18next'
+import { useBookingSheet } from '@/components/dashboard/BookingSheetProvider'
 
 type TableWithZone = Tables<'physical_tables'> & { zones?: { name?: string | null } | null }
 
@@ -47,10 +47,10 @@ export function UnitCard({
   canManage,
   zones = [],
   mode = 'monitoring',
-  currentSlug,
   selectedDate
 }: UnitCardProps) {
   const { t } = useTranslation()
+  const { openBooking } = useBookingSheet()
   const terms = getTerms(businessType)
   const occupiedLabel = terms.hasCheckout
     ? t('dashboard.occupied', { defaultValue: 'Occupied' })
@@ -106,9 +106,11 @@ export function UnitCard({
       {/* Main Tappable Area (The Link) — Lower Index */}
       {mode === 'monitoring' ? (
         isTappable ? (
-          <Link 
-            href={`/dashboard/${currentSlug || table.restaurant_id}/reservations/new?tableId=${table.id}${selectedDate ? `&date=${selectedDate}` : ''}`} 
-            className="absolute inset-0 z-10"
+          <button
+            type="button"
+            aria-label={`Book ${table.table_name}`}
+            onClick={() => openBooking({ tableId: table.id, date: selectedDate })}
+            className="absolute inset-0 z-10 w-full h-full cursor-pointer"
           />
         ) : (
           <div className="absolute inset-0 z-10" />

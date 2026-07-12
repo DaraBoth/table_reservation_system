@@ -15,6 +15,7 @@ import type { Tables } from '@/lib/types/database'
 import { toast } from 'sonner'
 import { countAvailableUnits } from '@/lib/dashboard-utils'
 import { useTranslation } from 'react-i18next'
+import { useBookingSheet } from '@/components/dashboard/BookingSheetProvider'
 
 interface DashboardClientProps {
   restaurantId: string
@@ -40,6 +41,7 @@ const statusColors: Record<string, string> = {
 
 export function DashboardClient({ initialData, restaurantId, activeSlug }: DashboardClientProps) {
   const { t } = useTranslation()
+  const { openBooking } = useBookingSheet()
   const [stats, setStats] = useState(initialData)
   const [liveMessage, setLiveMessage] = useState<string | null>(null)
   const { totalToday, pendingCount, availableUnits, upcomingReservations, businessType, todayStr } = stats
@@ -249,8 +251,9 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.3 }}
       >
-        <Link
-          href={`/dashboard/${dashSlug}/reservations/new`}
+        <button
+          type="button"
+          onClick={() => openBooking()}
           className="relative group flex items-center justify-between w-full bg-linear-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-foreground rounded-2xl p-4 shadow-lg shadow-violet-500/25 transition-all active:scale-[0.98] overflow-hidden"
         >
           {/* Animated Shine Layer */}
@@ -270,7 +273,7 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
             </div>
           </div>
           <ChevronRight className="w-5 h-5 text-foreground/60 group-hover:translate-x-1 transition-transform" />
-        </Link>
+        </button>
       </motion.div>
 
       {/* Upcoming Bookings with Staggered List Animation */}
@@ -335,12 +338,13 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
               >
                 <Clock className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-50" />
                 <p className="text-muted-foreground text-xs font-black uppercase tracking-widest italic">{t('dashboard.noBookingsToday', { bookingsLower: terms.bookingsLower })}</p>
-                <Link
-                  href={`/dashboard/${dashSlug}/reservations/new`}
+                <button
+                  type="button"
+                  onClick={() => openBooking()}
                   className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-violet-600/10 text-violet-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-violet-600/20 transition-all"
                 >
                   {t('dashboard.createOne')} <ChevronRight className="w-3 h-3" />
-                </Link>
+                </button>
               </motion.div>
             )}
           </AnimatePresence>

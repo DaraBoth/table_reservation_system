@@ -17,10 +17,10 @@ import { UnitCard } from './UnitCard'
 import { CreateUnitDialog } from './CreateUnitDialog'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
-import Link from 'next/link'
 import { ActionHub } from '@/components/dashboard/ActionHub'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
+import { useBookingSheet } from '@/components/dashboard/BookingSheetProvider'
 
 interface BusyInfo {
   guestName: string
@@ -81,6 +81,7 @@ export function UnitsClient({
   currentSlug
 }: UnitsClientProps) {
   const { t } = useTranslation()
+  const { openBooking } = useBookingSheet()
   const [tables, setTables] = useState<TableWithZone[]>(initialTables as TableWithZone[])
   const [zones, setZones] = useState<ZoneRow[]>(initialZones ?? [])
   const [busyRows, setBusyRows] = useState(initialBusyRows)
@@ -352,7 +353,7 @@ export function UnitsClient({
           {mode === 'management' ? (
             <EditUnitSheet table={tableItem} businessType={businessType} canManage={canManage} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${tableItem.table_name}`} className="absolute inset-0 z-20 cursor-pointer w-full h-full" />} />
           ) : isTappable ? (
-            <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${tableItem.id}`} className="absolute inset-0 z-20" />
+            <button type="button" aria-label={`Book ${tableItem.table_name}`} onClick={() => openBooking({ tableId: tableItem.id, date: selectedDate })} className="absolute inset-0 z-20" />
           ) : (
             <div className="absolute inset-0 z-20" />
           )}
@@ -408,7 +409,7 @@ export function UnitsClient({
           {mode === 'management' ? (
             <EditUnitSheet table={tableItem} businessType={businessType} canManage={canManage} zones={zones} trigger={<button type="button" aria-label={`Edit ${terms.unitLower} ${tableItem.table_name}`} className="absolute inset-0 z-10 cursor-pointer w-full h-full" />} />
           ) : isTappable ? (
-            <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${tableItem.id}&date=${selectedDate}`} className="absolute inset-0 z-10" />
+            <button type="button" aria-label={`Book ${tableItem.table_name}`} onClick={() => openBooking({ tableId: tableItem.id, date: selectedDate })} className="absolute inset-0 z-10" />
 
           ) : (
             <div className="absolute inset-0 z-10" />
@@ -599,7 +600,7 @@ export function UnitsClient({
                             ) : busyMap.has(t.id) || !t.is_active ? (
                               <div className="absolute inset-0 z-20" />
                             ) : (
-                              <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}&date=${selectedDate}`} className="absolute inset-0 z-20" />
+                              <button type="button" aria-label={`Book ${t.table_name}`} onClick={() => openBooking({ tableId: t.id, date: selectedDate })} className="absolute inset-0 z-20" />
 
                             )}
                           </motion.div>
@@ -631,7 +632,7 @@ export function UnitsClient({
                             ) : busyMap.has(t.id) || !t.is_active ? (
                               <div className="absolute inset-0 z-10" />
                             ) : (
-                              <Link href={`/dashboard/${dashboardSlug}/reservations/new?tableId=${t.id}&date=${selectedDate}`} className="absolute inset-0 z-10" />
+                              <button type="button" aria-label={`Book ${t.table_name}`} onClick={() => openBooking({ tableId: t.id, date: selectedDate })} className="absolute inset-0 z-10" />
 
                             )}
                           </motion.div>

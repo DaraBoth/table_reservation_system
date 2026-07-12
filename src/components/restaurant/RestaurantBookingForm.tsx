@@ -42,6 +42,7 @@ interface Props {
   // extractWallClockTime for the same rule applied elsewhere.
   initialData?: Tables<'reservations'>
   preSelectedTableId?: string
+  presetDate?: string
   businessType: BusinessType
 }
 
@@ -49,7 +50,7 @@ type SlideDir = 'right' | 'left'
 const slideInRight = 'animate-[slideInRight_0.28s_ease-out_forwards]'
 const slideInLeft = 'animate-[slideInLeft_0.28s_ease-out_forwards]'
 
-export function RestaurantBookingForm({ tables, zones, restaurantId, initialData, preSelectedTableId, businessType }: Props) {
+export function RestaurantBookingForm({ tables, zones, restaurantId, initialData, preSelectedTableId, presetDate, businessType }: Props) {
   const { t } = useTranslation()
   const isEdit = !!initialData
   const [state, action, pending] = useActionState(isEdit ? updateReservation : createReservation, null)
@@ -61,7 +62,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
   const [renderKey, setRenderKey] = useState(0)
 
   const searchParams = useSearchParams()
-  const urlDate = searchParams.get('date')
+  const urlDate = presetDate || searchParams.get('date')
 
   // Primary Arrival
   const [startTime, setStartTime] = React.useState<Date>(() => {

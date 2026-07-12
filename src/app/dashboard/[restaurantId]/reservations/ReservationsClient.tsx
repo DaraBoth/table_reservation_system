@@ -19,6 +19,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ActionHub } from '@/components/dashboard/ActionHub'
 import { BarChart3 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useBookingSheet } from '@/components/dashboard/BookingSheetProvider'
 
 interface Reservation extends Tables<'reservations'> {
   physical_tables: Pick<Tables<'physical_tables'>, 'table_name' | 'capacity'> | null
@@ -77,6 +78,7 @@ export function ReservationsClient({
   tables 
 }: Props) {
   const { t } = useTranslation()
+  const { openBooking } = useBookingSheet()
   const dashboardSlug = currentSlug || restaurantId
   const [selectedDate, setSelectedDate] = useState(initialDate)
   const [bookings, setBookings] = useState<Reservation[]>(initialBookings)
@@ -350,16 +352,17 @@ export function ReservationsClient({
         </div>
 
         <div className="flex items-center gap-3 sm:justify-end">
-          <Link
+          <button
             id="new-booking-button"
-            href={`/dashboard/${dashboardSlug}/reservations/new`}
+            type="button"
+            onClick={() => openBooking({ date: selectedDate })}
             className={cn(
               buttonVariants({ size: 'sm' }),
               'w-full sm:w-auto bg-gradient-to-r from-violet-600 to-indigo-600 border-0 rounded-xl gap-1.5 font-black text-foreground shadow-lg shadow-violet-500/20 h-10 px-4 transition-all duration-300 active:scale-95'
             )}
           >
             <Plus className="w-4 h-4" /> {t('dashboard.newBooking', { defaultValue: 'New {{booking}}', booking: terms.booking })}
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -520,7 +523,7 @@ export function ReservationsClient({
               label: t('dashboard.newBooking', { defaultValue: 'New {{booking}}', booking: terms.booking }), 
               icon: <Plus className="w-6 h-6" />, 
               color: 'bg-violet-600 text-white',
-              onClick: () => window.location.href = `/dashboard/${dashboardSlug}/reservations/new`
+              onClick: () => openBooking({ date: selectedDate })
             },
             { 
               label: t('dashboard.viewReports', { defaultValue: 'View Reports' }), 

@@ -15,6 +15,10 @@ interface Props {
   // start_time/end_time into a Date before this reaches a client component.
   initialData?: Tables<'reservations'>
   preSelectedTableId?: string
+  // Explicit date override for callers that aren't a URL navigation (e.g.
+  // the global booking sheet) — falls back to the `?date=` search param
+  // when not provided, so direct /reservations/new?date=... links still work.
+  presetDate?: string
   businessType?: BusinessType
 }
 
