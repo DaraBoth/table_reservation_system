@@ -125,8 +125,27 @@ export async function deletePhysicalTable(_: ActionState, formData: FormData): P
   const tableId = formData.get('tableId') as string
   if (!tableId) return { error: 'Table ID missing' }
 
-  // We no longer block deletion if history exists, 
-  // because reservations now store a static snapshot in 'unit_name'.
+  // We no longer block deletion if only PAST history exists, because
+  // reservations now store a static snapshot in 'unit_name'. But ACTIVE
+  // future/ongoing bookings (pending/confirmed/arrived) still point at this
+  // table_id -- deleting the table out from under those is unsafe (either a
+  // cascading delete of the booking or an orphaned/nulled table_id), so we
+  // block the delete if any such reservation exists.
+  const today = new Date().toISOString().split('T')[0]
+  const { data: activeReservations, error: activeCheckError } = await supabase
+    .from('reservations')
+    .select('id')
+    .eq('table_id', tableId)
+    .in('status', ['pending', 'confirmed', 'arrived'])
+    .gte('checkout_date', today)
+
+  if (activeCheckError) return { error: activeCheckError.message }
+
+  if (activeReservations && activeReservations.length > 0) {
+    return {
+      error: `This unit has ${activeReservations.length} upcoming booking(s). Cancel or reassign them before deleting.`,
+    }
+  }
 
   const { error } = await supabase
     .from('physical_tables')

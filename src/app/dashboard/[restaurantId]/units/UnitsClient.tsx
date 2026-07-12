@@ -49,9 +49,16 @@ interface BusyRow {
 
 type TableWithZone = Tables<'physical_tables'> & { zones?: { id?: string; name: string; sort_order: number } | null }
 
+interface ZoneRow {
+  id: string
+  name: string
+  sort_order: number
+}
+
 interface UnitsClientProps {
   initialTables: Tables<'physical_tables'>[]
   initialBusyRows: BusyRow[]
+  initialZones?: ZoneRow[]
   restaurantId: string
   businessType: string
   canManage: boolean
@@ -64,6 +71,7 @@ interface UnitsClientProps {
 export function UnitsClient({
   initialTables,
   initialBusyRows,
+  initialZones,
   restaurantId,
   businessType,
   canManage,
@@ -74,7 +82,7 @@ export function UnitsClient({
 }: UnitsClientProps) {
   const { t } = useTranslation()
   const [tables, setTables] = useState<TableWithZone[]>(initialTables as TableWithZone[])
-  const [zones, setZones] = useState<{ id: string; name: string; sort_order: number }[]>([])
+  const [zones, setZones] = useState<ZoneRow[]>(initialZones ?? [])
   const [busyRows, setBusyRows] = useState(initialBusyRows)
   const [now, setNow] = useState(() => new Date(initialNowIso))
   const [viewStyle, setViewStyle] = useState<ViewStyle>('grid')
@@ -171,12 +179,21 @@ export function UnitsClient({
     if (data) setZones(data)
   }, [supabase, restaurantId])
 
+  // The server component already fetched zones fresh (see units/page.tsx and
+  // units/manage/page.tsx) and passed them in as `initialZones` -- only
+  // re-fetch on mount if the server didn't provide any (older callers /
+  // defensive fallback). Realtime `zones` table changes still trigger
+  // fetchZones() via the subscription below.
+  const hasFetchedZonesRef = useRef(false)
   useEffect(() => {
-    const load = async () => {
-      await fetchZones()
-    }
-    void load()
-  }, [fetchZones])
+    if (hasFetchedZonesRef.current) return
+    hasFetchedZonesRef.current = true
+    // initialZones being undefined means the server didn't supply any (an
+    // older/defensive caller) -- an empty array is a legitimate "no zones
+    // yet" result and should NOT trigger a redundant re-fetch.
+    if (initialZones !== undefined) return
+    void fetchZones()
+  }, [fetchZones, initialZones])
 
   useEffect(() => {
     const channel = supabase
@@ -238,12 +255,25 @@ export function UnitsClient({
     }
   }, [fetchLatestBusyRows, fetchLatestTables, fetchZones])
 
+  const hasMountedBusyRowsRef = useRef(false)
+
   useEffect(() => {
     const load = async () => {
+      if (!hasMountedBusyRowsRef.current) {
+        hasMountedBusyRowsRef.current = true
+        // The server component already fetched fresh busy rows for
+        // `initialDate` (see units/page.tsx and units/manage/page.tsx) and
+        // passed them in as `initialBusyRows` -- re-running the identical
+        // query here on first mount would just discard that SSR head start
+        // and re-fetch the same data before the user does anything. Only
+        // re-fetch on mount if selectedDate has since diverged from what the
+        // server rendered for.
+        if (selectedDate === initialDate) return
+      }
       await fetchLatestBusyRows()
     }
     void load()
-  }, [fetchLatestBusyRows])
+  }, [fetchLatestBusyRows, selectedDate, initialDate])
 
   const isHotel = businessType === 'hotel' || businessType === 'guesthouse'
   const todayStr = format(now, 'yyyy-MM-dd')

@@ -111,17 +111,44 @@ export async function getTopCustomers(restaurantId: string) {
   return data || []
 }
 
+/**
+ * Escapes a raw search string for safe embedding inside a PostgREST
+ * `.or()` filter value used with `ilike`. Handles two distinct concerns:
+ *  1. PostgREST's own filter-string syntax treats `,` as a condition
+ *     separator and `(`/`)` as grouping -- wrapping the value in double
+ *     quotes (PostgREST's quoted-value syntax) makes those characters
+ *     literal instead of breaking the filter.
+ *  2. Postgres `ilike` treats `%` and `_` as pattern wildcards -- since we
+ *     want a literal substring match on whatever the staff member typed,
+ *     those (and a literal backslash, the escape char) are backslash-escaped
+ *     so they're matched as literal characters, not wildcards.
+ */
+function escapeIlikeSearchTerm(raw: string): string {
+  const escaped = raw
+    .replace(/\\/g, '\\\\')
+    .replace(/%/g, '\\%')
+    .replace(/_/g, '\\_')
+    .replace(/"/g, '\\"')
+  return `"%${escaped}%"`
+}
+
 export async function searchCustomers(restaurantId: string, query: string) {
   if (!restaurantId || !query) return []
   const supabase = await createClient()
-  const { data } = await supabase
+  const pattern = escapeIlikeSearchTerm(query)
+  const { data, error } = await supabase
     .from('common_customers')
     .select('*')
     .eq('restaurant_id', restaurantId)
-    .or(`name.ilike.%${query}%,phone.ilike.%${query}%`)
+    .or(`name.ilike.${pattern},phone.ilike.${pattern}`)
     .order('total_bookings', { ascending: false })
     .limit(10)
-  
+
+  if (error) {
+    console.error('searchCustomers failed:', error.message)
+    return []
+  }
+
   return data || []
 }
 

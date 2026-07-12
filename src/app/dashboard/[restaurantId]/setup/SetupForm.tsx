@@ -118,7 +118,7 @@ export function SetupForm({ restaurant, restaurantId }: { restaurant: any; resta
                 <Upload className="w-5 h-5 text-muted-foreground group-hover:text-violet-400 transition-colors" />
               </div>
               <span className="text-[9px] text-muted-foreground font-black uppercase tracking-widest text-center leading-tight">{t('setup.tapToUploadLogo', { defaultValue: 'Tap to upload logo' })}</span>
-              <span className="text-[8px] text-muted-foreground font-bold">PNG · JPG · WEBP</span>
+              <span className="text-[8px] text-muted-foreground font-bold">{t('setup.pngJpgWebp', { defaultValue: 'PNG · JPG · WEBP' })}</span>
             </div>
           )}
         </button>
@@ -177,7 +177,9 @@ export function SetupForm({ restaurant, restaurantId }: { restaurant: any; resta
             type="email"
             value={contactEmail}
             onChange={e => setContactEmail(e.target.value)}
-            placeholder="info@restaurant.com.kh"
+            // Illustrative example value only, not translatable content -- kept as a single
+            // fixed format across all locales for simplicity (see setup.contactEmailExamplePlaceholder).
+            placeholder={t('setup.contactEmailExamplePlaceholder', { defaultValue: 'info@restaurant.com.kh' })}
             className="h-10 bg-background border-border text-foreground font-bold rounded-xl focus:border-violet-500 transition-all placeholder:text-muted-foreground text-xs"
           />
         </div>
@@ -191,7 +193,9 @@ export function SetupForm({ restaurant, restaurantId }: { restaurant: any; resta
             type="tel"
             value={contactPhone}
             onChange={e => setContactPhone(e.target.value)}
-            placeholder="+855 12 345 678"
+            // Illustrative example value only -- reuses the same fixed format as the
+            // brand-creation form's phone field (setup.phoneRegistryPlaceholder).
+            placeholder={t('setup.phoneRegistryPlaceholder', { defaultValue: '+855 12 345 678' })}
             className="h-10 bg-background border-border text-foreground font-bold rounded-xl focus:border-violet-500 transition-all placeholder:text-muted-foreground text-xs"
           />
         </div>

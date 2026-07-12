@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Store, Mail, Link as LinkIcon, ShieldCheck, Activity } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 interface RestaurantPreviewProps {
   name: string
@@ -13,6 +14,7 @@ interface RestaurantPreviewProps {
 }
 
 export function RestaurantPreview({ name, slug, email, isActive }: RestaurantPreviewProps) {
+  const { t } = useTranslation()
   const displayName = name || 'New Restaurant'
   const displaySlug = slug || 'restaurant-slug'
   const displayEmail = email || 'contact@restaurant.com'
@@ -22,7 +24,7 @@ export function RestaurantPreview({ name, slug, email, isActive }: RestaurantPre
     <div className="sticky top-12 space-y-6 animate-in fade-in slide-in-from-right-4 duration-1000">
       <div className="flex items-center gap-2 mb-2">
         <Activity className="h-4 w-4 text-violet-400" />
-        <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">Live Studio Preview</span>
+        <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">{t('setup.liveStudioPreview', { defaultValue: 'Live Studio Preview' })}</span>
       </div>
 
       {/* Main Card Preview */}
@@ -37,7 +39,7 @@ export function RestaurantPreview({ name, slug, email, isActive }: RestaurantPre
               "text-[10px] font-black uppercase tracking-tighter px-3",
               isActive ? 'bg-emerald-500 text-black' : 'bg-muted text-muted-foreground'
             )}>
-              {isActive ? 'Live' : 'Draft'}
+              {isActive ? t('setup.live', { defaultValue: 'Live' }) : t('setup.draft', { defaultValue: 'Draft' })}
             </Badge>
           </div>
           <CardTitle className="text-2xl font-black text-foreground tracking-tight break-words">
@@ -60,16 +62,16 @@ export function RestaurantPreview({ name, slug, email, isActive }: RestaurantPre
             <div className="w-8 h-8 rounded-xl bg-muted/50 flex items-center justify-center">
               <ShieldCheck className="h-4 w-4 text-muted-foreground" />
             </div>
-            <span className="text-xs font-medium">Platform Admin Access Enabled</span>
+            <span className="text-xs font-medium">{t('setup.platformAdminAccessEnabled', { defaultValue: 'Platform Admin Access Enabled' })}</span>
           </div>
         </CardContent>
       </Card>
 
       {/* Helper Tip */}
       <div className="p-6 rounded-3xl bg-violet-600/5 border border-violet-500/10 backdrop-blur-sm">
-        <h4 className="text-violet-400 text-xs font-black uppercase tracking-widest mb-2">Design Pro-Tip</h4>
+        <h4 className="text-violet-400 text-xs font-black uppercase tracking-widest mb-2">{t('setup.designProTip', { defaultValue: 'Design Pro-Tip' })}</h4>
         <p className="text-muted-foreground text-xs leading-relaxed font-medium">
-          Make sure your <span className="text-foreground">Slug</span> is URL-friendly. Use lowercase letters and hyphens only—this will be the unique link your customers use to book tables.
+          {t('setup.slugTipPrefix', { defaultValue: 'Make sure your' })} <span className="text-foreground">{t('setup.slugLabel', { defaultValue: 'Slug' })}</span> {t('setup.slugTipSuffix', { defaultValue: 'is URL-friendly. Use lowercase letters and hyphens only—this will be the unique link your customers use to book tables.' })}
         </p>
       </div>
     </div>

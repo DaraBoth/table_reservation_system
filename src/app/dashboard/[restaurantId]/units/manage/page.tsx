@@ -61,11 +61,20 @@ export default async function ManageUnitsPage({ params }: { params: Promise<{ re
     .lte('reservation_date', todayDate)
     .gte('checkout_date', todayDate)
 
+  // Initial Fetch for Zones (so UnitsClient doesn't need a client-side
+  // round-trip on mount just to render zone groupings)
+  const { data: zones } = await supabase
+    .from('zones')
+    .select('*')
+    .eq('restaurant_id', membership.restaurant_id!)
+    .order('sort_order', { ascending: true })
+
   return (
     <div className="max-w-6xl mx-auto pb-10 md:pb-6">
-      <UnitsClient 
+      <UnitsClient
         initialTables={tables || []}
         initialBusyRows={busyRows || []}
+        initialZones={zones || []}
         restaurantId={membership.restaurant_id!}
         businessType={businessType}
         canManage={canManage}
