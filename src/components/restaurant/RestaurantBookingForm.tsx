@@ -32,6 +32,10 @@ import { useTranslation } from 'react-i18next'
 interface Props {
   tables: Tables<'physical_tables'>[]
   zones: { id: string, name: string, sort_order: number }[]
+  // True only while the New Booking flow is still fetching tables/zones
+  // client-side (see CreateReservationForm) — shows a skeleton in place of
+  // the unit grid instead of blocking the whole form on this data.
+  tablesLoading?: boolean
   restaurantId: string
   // Raw reservation row (start_time/end_time/reservation_date stay as the
   // naive wall-clock strings straight from the DB) — NEVER pre-parsed into a
@@ -49,7 +53,7 @@ type SlideDir = 'right' | 'left'
 const slideInRight = 'animate-[slideInRight_0.28s_ease-out_forwards]'
 const slideInLeft = 'animate-[slideInLeft_0.28s_ease-out_forwards]'
 
-export function RestaurantBookingForm({ tables, zones, restaurantId, initialData, preSelectedTableId, businessType }: Props) {
+export function RestaurantBookingForm({ tables, zones, tablesLoading = false, restaurantId, initialData, preSelectedTableId, businessType }: Props) {
   const { t } = useTranslation()
   const isEdit = !!initialData
   const [state, action, pending] = useActionState(isEdit ? updateReservation : createReservation, null)
@@ -97,6 +101,21 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
 
   const [notes, setNotes] = useState(initialData?.notes || '')
   const [extraSlots, setExtraSlots] = useState<{ id: string; date: Date; partySize: number; status: string }[]>([])
+
+  // When tables are still loading at mount (New Booking flow — see
+  // tablesLoading), the partySize initializer above couldn't look up
+  // preSelectedTableId's capacity yet since `tables` was empty. Apply it
+  // once, the moment real table data arrives.
+  const appliedPreselectCapacity = React.useRef(false)
+  useEffect(() => {
+    if (appliedPreselectCapacity.current) return
+    if (initialData || !preSelectedTableId || tables.length === 0) return
+    const table = tables.find(t => t.id === preSelectedTableId)
+    if (table) {
+      setPartySize(String(table.capacity))
+      appliedPreselectCapacity.current = true
+    }
+  }, [tables, preSelectedTableId, initialData])
 
   const addExtraSlot = () => {
     const baseDate = extraSlots.length > 0 ? extraSlots[extraSlots.length - 1].date : startTime
@@ -381,28 +400,42 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
               </div>
 
               <div className="space-y-8">
-                {sortedZones.map((zone: { id: string; name: string }) => {
-                  const zoneTables = grouped[zone.id] || []
-                  if (zoneTables.length === 0) return null
-                  return (
-                    <div key={zone.id} className="space-y-3">
-                      <div className="flex items-center gap-2 px-1">
-                        <div className="h-4 w-1 rounded-full bg-violet-500/50" />
-                        <h3 className="text-xs font-black text-foreground uppercase tracking-widest italic">{zone.name}</h3>
-                      </div>
-                      {renderTableGrid(zoneTables)}
-                    </div>
-                  )
-                })}
-
-                {unassigned.length > 0 && (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 px-1">
-                      <div className="h-4 w-1 rounded-full bg-muted" />
-                      <h3 className="text-xs font-black text-muted-foreground uppercase tracking-widest italic">{t('dashboard.unassigned', { defaultValue: 'Unassigned' })}</h3>
-                    </div>
-                    {renderTableGrid(unassigned)}
+                {tablesLoading ? (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                    {Array.from({ length: 10 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-16 rounded-2xl border-2 border-border bg-card/40 animate-pulse"
+                        style={{ opacity: 0.9 - (i % 5) * 0.1 }}
+                      />
+                    ))}
                   </div>
+                ) : (
+                  <>
+                    {sortedZones.map((zone: { id: string; name: string }) => {
+                      const zoneTables = grouped[zone.id] || []
+                      if (zoneTables.length === 0) return null
+                      return (
+                        <div key={zone.id} className="space-y-3">
+                          <div className="flex items-center gap-2 px-1">
+                            <div className="h-4 w-1 rounded-full bg-violet-500/50" />
+                            <h3 className="text-xs font-black text-foreground uppercase tracking-widest italic">{zone.name}</h3>
+                          </div>
+                          {renderTableGrid(zoneTables)}
+                        </div>
+                      )
+                    })}
+
+                    {unassigned.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 px-1">
+                          <div className="h-4 w-1 rounded-full bg-muted" />
+                          <h3 className="text-xs font-black text-muted-foreground uppercase tracking-widest italic">{t('dashboard.unassigned', { defaultValue: 'Unassigned' })}</h3>
+                        </div>
+                        {renderTableGrid(unassigned)}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </section>
