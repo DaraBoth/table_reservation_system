@@ -161,20 +161,27 @@ export function HotelReservationForm({ tables, zones, restaurantId, initialData,
       {rooms.map((table) => {
         const isOccupied = occupiedIds.includes(table.id)
         const isSelected = selectedTableId === table.id
+        // While the occupancy check for this stay is still in flight,
+        // occupiedIds is stale (usually empty) — disable selection instead
+        // of letting every room render as available/tappable until we
+        // actually know.
+        const isDisabled = isOccLoading || isOccupied
 
         return (
           <button
             key={table.id}
             type="button"
-            disabled={isOccupied}
+            disabled={isDisabled}
             onClick={() => handleTableSelect(table)}
             className={cn(
               "h-12 rounded-xl border flex flex-col items-center justify-center transition-all active:scale-95",
-              isOccupied
-                ? "bg-background/50 border-border text-muted-foreground cursor-not-allowed opacity-40"
-                : isSelected
-                  ? "bg-emerald-500 border-emerald-400 text-foreground shadow-lg shadow-emerald-500/20 z-10"
-                  : "bg-background border-border text-muted-foreground hover:border-border hover:text-foreground/80 shadow-xl"
+              isOccLoading
+                ? "bg-background/50 border-border/50 text-muted-foreground/40 animate-pulse cursor-wait"
+                : isOccupied
+                  ? "bg-background/50 border-border text-muted-foreground cursor-not-allowed opacity-40"
+                  : isSelected
+                    ? "bg-emerald-500 border-emerald-400 text-foreground shadow-lg shadow-emerald-500/20 z-10"
+                    : "bg-background border-border text-muted-foreground hover:border-border hover:text-foreground/80 shadow-xl"
             )}
           >
             <span className="text-[10px] font-black uppercase tracking-widest">{table.table_name}</span>
@@ -275,7 +282,7 @@ export function HotelReservationForm({ tables, zones, restaurantId, initialData,
 
             <Button
               type="button"
-              disabled={!selectedTableId || endTime <= startTime}
+              disabled={!selectedTableId || endTime <= startTime || isOccLoading}
               onClick={() => goTo(2)}
               className="w-full h-16 bg-gradient-to-r from-emerald-600 to-indigo-600 text-foreground font-black text-lg rounded-[2rem] shadow-xl active:scale-[0.98] transition-all"
             >

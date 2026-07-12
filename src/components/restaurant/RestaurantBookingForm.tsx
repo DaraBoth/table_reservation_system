@@ -185,7 +185,13 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
       {tablesList.map((table) => {
         const isOccupied = occupiedDetails.some(o => o.table_id === table.id)
         const isSelected = selectedTableId === table.id
-        const isDisabled = isOccupied && bookingStatus === 'confirmed'
+        // While the occupancy check for this date/time is still in flight,
+        // occupiedDetails is stale (usually empty), so every table would
+        // otherwise render as available/tappable. Disable selection until
+        // we actually know — previously this let users pick, and even
+        // submit toward, a table that turns out busy (caught late by the
+        // server-side overlap check instead of shown up front).
+        const isDisabled = isOccLoading || (isOccupied && bookingStatus === 'confirmed')
 
         return (
           <button
@@ -199,11 +205,13 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
 
             className={cn(
               "relative group flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all duration-300",
-              isSelected
-                ? "bg-emerald-500 border-emerald-400 text-foreground ring-4 ring-emerald-500/20 z-10 scale-[1.05]"
-                : isOccupied
-                  ? "bg-rose-500/5 border-rose-500/20 text-rose-400/60 opacity-60"
-                  : "bg-background border-border hover:border-violet-500/40 text-muted-foreground hover:text-foreground"
+              isOccLoading
+                ? "bg-background border-border/50 text-muted-foreground/40 animate-pulse cursor-wait"
+                : isSelected
+                  ? "bg-emerald-500 border-emerald-400 text-foreground ring-4 ring-emerald-500/20 z-10 scale-[1.05]"
+                  : isOccupied
+                    ? "bg-rose-500/5 border-rose-500/20 text-rose-400/60 opacity-60"
+                    : "bg-background border-border hover:border-violet-500/40 text-muted-foreground hover:text-foreground"
             )}
           >
             <span className="text-[10px] font-black uppercase tracking-widest mb-1">{table.table_name}</span>
@@ -431,7 +439,7 @@ export function RestaurantBookingForm({ tables, zones, restaurantId, initialData
 
             <Button
               type="button"
-              disabled={!selectedTableId}
+              disabled={!selectedTableId || isOccLoading}
               onClick={() => goTo(2)}
               className="w-full h-16 bg-gradient-to-r from-emerald-600 to-indigo-600 text-foreground font-black text-lg rounded-[2rem] shadow-xl active:scale-[0.98] transition-all"
             >
