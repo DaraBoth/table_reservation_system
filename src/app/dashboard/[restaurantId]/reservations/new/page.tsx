@@ -27,17 +27,19 @@ export default async function NewReservationPage({ params, searchParams }: { par
   const restaurantId = membership.restaurant_id
   const businessType = (membership.restaurants?.business_type as BusinessType) || 'restaurant'
 
-  const { data: tableData } = await supabase
-    .from('physical_tables')
-    .select('*')
-    .eq('restaurant_id', restaurantId)
-    .eq('is_active', true)
-  
-  const { data: zones } = await supabase
-    .from('zones')
-    .select('*')
-    .eq('restaurant_id', restaurantId)
-    .order('sort_order', { ascending: true })
+  // Independent queries — run in parallel instead of one after another.
+  const [{ data: tableData }, { data: zones }] = await Promise.all([
+    supabase
+      .from('physical_tables')
+      .select('*')
+      .eq('restaurant_id', restaurantId)
+      .eq('is_active', true),
+    supabase
+      .from('zones')
+      .select('*')
+      .eq('restaurant_id', restaurantId)
+      .order('sort_order', { ascending: true }),
+  ])
 
   const tables = tableData || []
 
