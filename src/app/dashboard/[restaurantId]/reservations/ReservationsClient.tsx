@@ -7,7 +7,7 @@ import { Plus, ChevronRight, ClipboardList, CalendarDays } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { buttonVariants } from '@/components/ui/button-variants'
-import { cn } from '@/lib/utils'
+import { cn, getInitials } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { getTerms } from '@/lib/business-type'
 import { DateNavigator } from '@/components/dashboard/DateNavigator'
@@ -412,7 +412,7 @@ export function ReservationsClient({
                         "w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center text-sm font-black",
                         statusAvatarBg[res.status] ?? "from-violet-600/30 to-indigo-600/30"
                       )}>
-                        {res.guest_name?.slice(0, 1).toUpperCase()}
+                        {getInitials(res.guest_name || '', 1)}
                       </div>
                       
                       <div className="flex-1 min-w-0 grid grid-cols-2 sm:grid-cols-4 gap-4 items-center">
@@ -561,7 +561,7 @@ function BookingCard({ res, dashboardSlug, todayIso, currentUserId }: { res: Res
           'w-12 h-12 rounded-2xl bg-gradient-to-br border flex items-center justify-center text-xl font-black text-foreground flex-shrink-0 shadow-lg',
           statusAvatarBg[res.status] ?? 'from-violet-600/30 to-indigo-600/30 border-violet-500/20'
         )}>
-          {res.guest_name?.slice(0, 1).toUpperCase() || '?'}
+          {getInitials(res.guest_name || '', 1) || '?'}
         </div>
         <Badge className={cn('text-[10px] font-black px-2 py-0.5 border rounded-xl whitespace-nowrap leading-none transition-all', statusColors[res.status] ?? '')}>
           {t(`status.${res.status}`, { defaultValue: statusLabels[res.status] ?? res.status })}

@@ -9,6 +9,7 @@ import type { Tables } from '@/lib/types/database'
 import { UserCheck, UserX, Plus, Users } from 'lucide-react'
 import { createPrivateMetadata } from '@/lib/seo'
 import { getServerT } from '@/i18n/server'
+import { getInitials } from '@/lib/utils'
 
 export async function generateMetadata() {
   const { t } = await getServerT()
@@ -84,7 +85,7 @@ export default async function ({ params }: { params: Promise<{ restaurantId: str
         <div className="space-y-3">
           {staff.map((s) => {
             const name = s.profiles?.full_name || t('roles.staff', { defaultValue: 'Staff Member' })
-            const initials = name.slice(0, 2).toUpperCase()
+            const initials = getInitials(name)
             const joinedDate = new Date(s.created_at).toLocaleDateString(language, {
               month: 'short', day: 'numeric', year: 'numeric'
             })

@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion'
 import { CalendarDays, Clock, Plus, ChevronRight, BedDouble, Table2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
+import { cn, getInitials } from '@/lib/utils'
 import { NumberTicker } from '@/components/magicui/number-ticker'
 import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
@@ -303,7 +303,7 @@ export function DashboardClient({ initialData, restaurantId, activeSlug }: Dashb
                     >
                       {/* Avatar */}
                       <div className="w-11 h-11 rounded-xl bg-linear-to-br from-violet-600/20 to-indigo-600/20 border border-violet-500/10 flex items-center justify-center text-lg font-black text-violet-300 shrink-0 group-hover:scale-105 transition-transform">
-                        {res.guest_name.slice(0, 1).toUpperCase()}
+                        {getInitials(res.guest_name, 1)}
                       </div>
 
                       {/* Info */}

@@ -13,7 +13,7 @@ import { useSidebar } from './sidebar-provider'
 import { PWAInstallBanner } from '@/components/pwa-install'
 import { LanguageSwitcher } from './language-switcher'
 import { useTranslation } from 'react-i18next'
-import { cn } from '@/lib/utils'
+import { cn, getInitials } from '@/lib/utils'
 
 interface TopBarProps {
   brandName: string
@@ -119,7 +119,7 @@ export function TopBar({
                {avatarUrl ? (
                  <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
                ) : (
-                 (userName || '??').slice(0, 2).toUpperCase()
+                 getInitials(userName || '??')
                )}
             </div>
           </Link>

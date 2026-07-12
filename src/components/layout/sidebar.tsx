@@ -4,7 +4,7 @@ import { useState, useEffect, useTransition } from 'react'
 import { useSidebar } from './sidebar-provider'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { cn } from '@/lib/utils'
+import { cn, getInitials } from '@/lib/utils'
 import { getTerms } from '@/lib/business-type'
 import type { BusinessType } from '@/lib/business-type'
 import { 
@@ -170,7 +170,7 @@ export function Sidebar({
               {avatarUrl ? (
                 <img src={avatarUrl} alt={user.name} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-white font-black text-xs">{user.name.slice(0, 2).toUpperCase()}</span>
+                <span className="text-white font-black text-xs">{getInitials(user.name)}</span>
               )}
             </div>
             <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-background shadow-sm" />
@@ -200,7 +200,7 @@ export function Sidebar({
                 ) : account.avatar ? (
                   <img src={account.avatar} alt={account.name} className="w-full h-full object-cover grayscale group-hover/acc:grayscale-0 transition-all" />
                 ) : (
-                  <span className="text-[9px] font-black">{account.name.slice(0, 2).toUpperCase()}</span>
+                  <span className="text-[9px] font-black">{getInitials(account.name)}</span>
                 )}
               </button>
             ))}

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
-import { cn } from '@/lib/utils'
+import { cn, getInitials } from '@/lib/utils'
 import { logout } from '@/app/actions/auth'
 import {
   LayoutDashboard,
@@ -96,7 +96,7 @@ export function SuperadminNav({ userName, userEmail, avatarUrl }: SuperadminNavP
               {avatarUrl ? (
                 <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
               ) : (
-                userName.slice(0, 2).toUpperCase()
+                getInitials(userName)
               )}
             </div>
             <div className="min-w-0">
@@ -163,7 +163,7 @@ export function SuperadminNav({ userName, userEmail, avatarUrl }: SuperadminNavP
                   {avatarUrl ? (
                     <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
                   ) : (
-                    userName.slice(0, 2).toUpperCase()
+                    getInitials(userName)
                   )}
                 </div>
                 <div className="min-w-0">

@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Store, Mail, Link as LinkIcon, ShieldCheck, Activity } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, getInitials } from '@/lib/utils'
 
 interface RestaurantPreviewProps {
   name: string
@@ -16,7 +16,7 @@ export function RestaurantPreview({ name, slug, email, isActive }: RestaurantPre
   const displayName = name || 'New Restaurant'
   const displaySlug = slug || 'restaurant-slug'
   const displayEmail = email || 'contact@restaurant.com'
-  const initials = displayName.slice(0, 2).toUpperCase()
+  const initials = getInitials(displayName)
 
   return (
     <div className="sticky top-12 space-y-6 animate-in fade-in slide-in-from-right-4 duration-1000">

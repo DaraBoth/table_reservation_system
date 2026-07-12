@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { RestaurantDetailClient } from './RestaurantDetailClient'
 import { createPrivateMetadata } from '@/lib/seo'
 import { getServerT } from '@/i18n/server'
+import { getInitials } from '@/lib/utils'
 
 export const metadata = createPrivateMetadata('Restaurant Details', 'Review a restaurant account, slug, and assigned team members.')
 
@@ -27,7 +28,7 @@ export default async function RestaurantDetailPage({ params }: { params: Promise
         </Link>
         <div className="flex items-center gap-3 mt-2">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center text-lg font-bold text-foreground">
-            {restaurant.name.slice(0, 2).toUpperCase()}
+            {getInitials(restaurant.name)}
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">{restaurant.name}</h1>

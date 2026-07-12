@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import Image from 'next/image'
 import { X, Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { getInitials } from '@/lib/utils'
 
 function LoginErrorBanner() {
   const { t } = useTranslation()
@@ -167,7 +168,7 @@ function LoginForm() {
                       {account.avatar ? (
                         <img src={account.avatar} alt={account.name} className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-sm font-black text-foreground/50">{account.name.slice(0, 2).toUpperCase()}</span>
+                        <span className="text-sm font-black text-foreground/50">{getInitials(account.name)}</span>
                       )}
                     </div>
                     <span className="text-[10px] font-bold text-foreground/80 truncate w-full text-center group-hover:text-foreground transition-colors">{account.name}</span>

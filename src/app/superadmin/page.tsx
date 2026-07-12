@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
+import { cn, getInitials } from '@/lib/utils'
 import {
   Store, ShieldCheck, CalendarDays, Activity,
   Plus, ArrowRight, Zap, UserPlus, Clock,
@@ -111,7 +111,7 @@ export default async function SuperadminPage() {
                   className="flex items-center gap-4 px-5 py-4 hover:bg-muted/50 transition-colors group"
                 >
                   <div className="w-10 h-10 rounded-xl bg-muted border border-border flex items-center justify-center text-sm font-black text-muted-foreground group-hover:text-foreground group-hover:border-border transition-all flex-shrink-0">
-                    {r.name.slice(0, 2).toUpperCase()}
+                    {getInitials(r.name)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-foreground truncate group-hover:text-violet-300 transition-colors">{r.name}</p>
